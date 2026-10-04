@@ -6,6 +6,13 @@ export const ingredientInput = z.object({
   defaultUnit: z.string().min(1),
 });
 
+export const recipeIngredientInput = z.object({
+  ingredientId: z.string().uuid(),
+  quantity: z.coerce.number().positive('La quantité doit être positive'),
+  unit: z.string().min(1, 'L\'unité est requise'),
+  note: z.string().optional().nullable(),
+});
+
 export const recipeInput = z.object({
   title: z.string().min(1, 'Titre requis').max(150),
   description: z.string().optional().nullable(),
@@ -13,12 +20,8 @@ export const recipeInput = z.object({
   cookTime: z.coerce.number().int().min(0),
   defaultServings: z.coerce.number().int().min(1).default(3),
   instructions: z.string().min(1, 'Les étapes sont requises'),
-  tags: z.string().optional().nullable(),       // "Végé, Rapide"
+  tags: z.string().optional().nullable(),
   source: z.string().optional().nullable(),
-  ingredients: z.array(z.object({
-    ingredientId: z.string().uuid(),            // ou name pour création à la volée
-    quantity: z.coerce.number().positive(),
-    unit: z.string().min(1),
-    note: z.string().optional().nullable(),
-  })).min(1, 'Au moins un ingrédient'),
+  // ✅ Ingrédients maintenant optionnels avec valeur par défaut
+  ingredients: z.array(recipeIngredientInput).default([]),
 });

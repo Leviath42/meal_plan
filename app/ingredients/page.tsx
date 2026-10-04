@@ -1,21 +1,24 @@
-// app/ingredients/NewIngredientForm.tsx
-'use client';
+import { db } from '@/lib/db';
+import { ingredients } from '@/lib/db/schema';
+import { desc } from 'drizzle-orm';
+import NewIngredientForm from './NewIngredientForm';
+import IngredientRow from './IngredientRow';
 
-import { useActionState } from 'react';
-import { createIngredient } from '@/app/actions/ingredients';
-
-export default function NewIngredientForm() {
-  const [state, formAction, pending] = useActionState(createIngredient, null);
+export default async function IngredientsPage() {
+  const all = await db.select().from(ingredients).orderBy(ingredients.name);
 
   return (
-    <form action={formAction} className="flex gap-2 mb-8">
-      <input name="name" placeholder="Nom" required className="border rounded px-3 py-2 flex-1" />
-      {state?.errors?.name && <p className="text-red-600 text-sm">{state.errors.name[0]}</p>}
-      <input name="category" placeholder="Rayon" required className="border rounded px-3 py-2 w-36" />
-      <input name="defaultUnit" placeholder="Unité" required className="border rounded px-3 py-2 w-24" />
-      <button disabled={pending} className="bg-blue-600 text-white rounded px-4">
-        {pending ? 'Ajout…' : 'Ajouter'}
-      </button>
-    </form>
+    <main className="p-6 max-w-2xl mx-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Ingrédients</h1>
+      </div>
+      <NewIngredientForm />
+      <ul className="divide-y">
+        {all.map((i) => (
+          <IngredientRow key={i.id} {...i} />
+        ))}
+        {all.length === 0 && <li className="py-4 text-gray-500">Aucun ingrédient — ajoutez-en un !</li>}
+      </ul>
+    </main>
   );
 }
