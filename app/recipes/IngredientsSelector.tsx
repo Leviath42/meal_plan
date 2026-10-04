@@ -38,6 +38,8 @@ export default function IngredientsSelector({
   useEffect(() => {
     if (selectedIngredient) {
       setUnit(selectedIngredient.defaultUnit);
+    } else {
+      setUnit('');
     }
   }, [selectedIngredient]);
 
@@ -50,7 +52,7 @@ export default function IngredientsSelector({
       setError('Veuillez indiquer une quantité valide');
       return;
     }
-    if (!unit) {
+    if (!unit && !selectedIngredient?.defaultUnit) {
       setError('Veuillez indiquer une unité');
       return;
     }
@@ -60,7 +62,7 @@ export default function IngredientsSelector({
     const newIngredient: RecipeIngredient = {
       ingredientId: selectedIngredientId,
       quantity: parseFloat(quantity) || 1,
-      unit: unit || selectedIngredient?.defaultUnit || '',
+      unit: unit || selectedIngredient?.defaultUnit || 'unité',
       note: note || null,
     };
 
@@ -102,6 +104,9 @@ export default function IngredientsSelector({
               <a href="/ingredients" className="text-blue-600 hover:underline">
                 Ajoutez des ingrédients d'abord
               </a>
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              Vous pouvez créer une recette sans ingrédients et les ajouter plus tard.
             </p>
           </div>
         ) : (
@@ -186,6 +191,7 @@ export default function IngredientsSelector({
             <button
               type="button"
               onClick={addIngredient}
+              disabled={!selectedIngredientId || !quantity || parseFloat(quantity) <= 0 || (!unit && !selectedIngredient?.defaultUnit)}
               className="w-full bg-green-600 text-white rounded py-2 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + Ajouter l&apos;ingrédient

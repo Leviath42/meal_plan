@@ -21,7 +21,7 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
             setEditing(false);
             setError(null);
           }
-        }} className="flex gap-2">
+        }} className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
           <input name="name" defaultValue={name} className="border rounded px-3 py-2 flex-1" />
           <input name="category" defaultValue={category} className="border rounded px-3 py-2 w-36" />
           <input name="defaultUnit" defaultValue={defaultUnit} className="border rounded px-3 py-2 w-24" />

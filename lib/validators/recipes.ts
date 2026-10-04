@@ -8,7 +8,7 @@ export const ingredientInput = z.object({
 
 export const recipeIngredientInput = z.object({
   ingredientId: z.string().uuid(),
-  quantity: z.coerce.number().positive('La quantité doit être positive'),
+  quantity: z.coerce.number().gt(0, 'La quantité doit être supérieure à 0'),
   unit: z.string().min(1, 'L\'unité est requise'),
   note: z.string().optional().nullable(),
 });
