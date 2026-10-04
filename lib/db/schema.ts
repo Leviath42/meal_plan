@@ -167,3 +167,46 @@ export const mealPlansRelations = relations(mealPlans, ({ one }) => ({
     references: [recipes.id],
   }),
 }));
+// ============================================================================
+// 6. UTILISATEURS (Gestion des comptes)
+// ============================================================================
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  password: text("password").notNull(),
+  role: text("role", { enum: ["ADMIN", "MEMBER", "GUEST"] })
+    .notNull()
+    .default("MEMBER"),
+  createdAt: text("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: text("updated_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+// ============================================================================
+// 7. SESSIONS (Gestion des connexions)
+// ============================================================================
+export const sessions = sqliteTable("sessions", {
+  sessionToken: text("session_token").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: text("expires").notNull(),
+});
+
+// ============================================================================
+// DÉFINITION DES RELATIONS POUR L'AUTHENTIFICATION
+// ============================================================================
+export const usersRelations = relations(users, ({ many }) => ({
+  sessions: many(sessions),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));

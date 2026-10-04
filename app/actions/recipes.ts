@@ -3,9 +3,9 @@
 import { db } from '@/lib/db';
 import { recipes, recipeIngredients } from '@/lib/db/schema';
 import { recipeInput } from '@/lib/validators/recipes';
-import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { eq } from 'drizzle-orm';
 
 export type RecipeFormState = {
   errors?: Record<string, string[]>;
@@ -60,7 +60,9 @@ export async function updateRecipe(
   const { ingredients: items, ...recipeData } = parsed.data;
 
   // Mettre à jour la recette
-  await db.update(recipes).set({ ...recipeData, updatedAt: new Date().toISOString() }).where(eq(recipes.id, id));
+  await db.update(recipes)
+    .set({ ...recipeData, updatedAt: new Date().toISOString() })
+    .where(eq(recipes.id, id));
 
   // Supprimer les anciens ingrédients et en ajouter les nouveaux
   await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
