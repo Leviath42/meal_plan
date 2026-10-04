@@ -24,7 +24,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
         </Link>
       </div>
 
-      <form action={formAction} className="space-y-6">
+      <form action={formAction} className="space-y-6" noValidate>
         {/* Titre */}
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">

@@ -28,13 +28,7 @@ export default function IngredientsSelector({
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('');
   const [note, setNote] = useState('');
-
-  // Initialiser les champs si un ingrédient est pré-sélectionné
-  useEffect(() => {
-    if (existingIngredients.length > 0 && selectedIngredientId === '') {
-      // On ne fait rien, l'utilisateur peut ajouter de nouveaux ingrédients
-    }
-  }, [existingIngredients, selectedIngredientId]);
+  const [error, setError] = useState<string | null>(null);
 
   const selectedIngredient = availableIngredients.find(
     (i) => i.id === selectedIngredientId
@@ -48,7 +42,20 @@ export default function IngredientsSelector({
   }, [selectedIngredient]);
 
   const addIngredient = () => {
-    if (!selectedIngredientId || !quantity) return;
+    if (!selectedIngredientId) {
+      setError('Veuillez sélectionner un ingrédient');
+      return;
+    }
+    if (!quantity || parseFloat(quantity) <= 0) {
+      setError('Veuillez indiquer une quantité valide');
+      return;
+    }
+    if (!unit) {
+      setError('Veuillez indiquer une unité');
+      return;
+    }
+
+    setError(null);
 
     const newIngredient: RecipeIngredient = {
       ingredientId: selectedIngredientId,
@@ -99,15 +106,22 @@ export default function IngredientsSelector({
           </div>
         ) : (
           <div className="space-y-3">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+            
             <div>
               <label htmlFor="ingredient" className="block text-sm font-medium text-gray-700 mb-1">
-                Ingrédient *
+                Ingrédient
               </label>
               <select
                 id="ingredient"
                 value={selectedIngredientId}
                 onChange={(e) => {
                   setSelectedIngredientId(e.target.value);
+                  setError(null);
                 }}
                 className="w-full border rounded px-3 py-2"
               >
@@ -123,7 +137,7 @@ export default function IngredientsSelector({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantité *
+                  Quantité
                 </label>
                 <input
                   id="quantity"
@@ -131,19 +145,25 @@ export default function IngredientsSelector({
                   step="0.1"
                   min="0.1"
                   value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
+                  onChange={(e) => {
+                    setQuantity(e.target.value);
+                    setError(null);
+                  }}
                   className="w-full border rounded px-3 py-2"
                 />
               </div>
               <div>
                 <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
-                  Unité *
+                  Unité
                 </label>
                 <input
                   id="unit"
                   type="text"
                   value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
+                  onChange={(e) => {
+                    setUnit(e.target.value);
+                    setError(null);
+                  }}
                   className="w-full border rounded px-3 py-2"
                 />
               </div>
@@ -166,7 +186,6 @@ export default function IngredientsSelector({
             <button
               type="button"
               onClick={addIngredient}
-              disabled={!selectedIngredientId || !quantity || !unit}
               className="w-full bg-green-600 text-white rounded py-2 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + Ajouter l&apos;ingrédient

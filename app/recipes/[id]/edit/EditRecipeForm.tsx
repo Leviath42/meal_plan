@@ -74,7 +74,7 @@ export default function EditRecipeForm({
         </div>
       </div>
 
-      <form action={formAction} className="space-y-6">
+      <form action={formAction} className="space-y-6" noValidate>
         <input type="hidden" name="id" value={recipe.id} />
 
         {/* Titre */}
