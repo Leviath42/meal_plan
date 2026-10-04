@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "./lib/auth";
 
 // Configurer le runtime pour éviter l'Edge Runtime (qui ne supporte pas better-sqlite3)
-export const runtime = "nodejs"; // ou "experimental-edge" mais on utilise nodejs
+export const runtime = "nodejs";
 
 export default auth((req) => {
   // Si non authentifié, rediriger vers /login
