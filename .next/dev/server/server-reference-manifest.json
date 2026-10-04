@@ -1,5 +1,50 @@
 {
-  "node": {},
+  "node": {
+    "409efa1970970414b64388814fbe1fd397d6223476": {
+      "workers": {
+        "app/recipes/page": {
+          "moduleId": "[project]/.next-internal/server/app/recipes/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/recipes.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/recipes.ts",
+      "exportedName": "deleteRecipe"
+    },
+    "40ae80306f30209c58de9ca8a78ab65c133722c780": {
+      "workers": {
+        "app/ingredients/page": {
+          "moduleId": "[project]/.next-internal/server/app/ingredients/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/ingredients.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/ingredients.ts",
+      "exportedName": "deleteIngredient"
+    },
+    "6037d5b7c478480b813ca40db12a5d4d6d8439c61c": {
+      "workers": {
+        "app/ingredients/page": {
+          "moduleId": "[project]/.next-internal/server/app/ingredients/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/ingredients.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/ingredients.ts",
+      "exportedName": "updateIngredient"
+    },
+    "60d9833e146bad40e07e29a42757fe1cc40b73a656": {
+      "workers": {
+        "app/ingredients/page": {
+          "moduleId": "[project]/.next-internal/server/app/ingredients/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/ingredients.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/ingredients.ts",
+      "exportedName": "createIngredient"
+    }
+  },
   "edge": {},
   "encryptionKey": "GEE3qke+8L26E0fqhbf+h79YJYD2iPFNa+64aHFJriQ="
 }
