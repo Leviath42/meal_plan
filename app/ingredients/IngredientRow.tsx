@@ -15,14 +15,20 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
       <li className="py-2">
         <form action={async (fd) => {
           const res = await updateIngredient(id, fd);
-          if (res?.errors) setError(Object.values(res.errors).flat().join(' '));
+          if (res?.errors) {
+            setError(Object.values(res.errors).flat().join(' '));
+          } else {
+            setEditing(false);
+            setError(null);
+          }
         }} className="flex gap-2">
           <input name="name" defaultValue={name} className="border rounded px-3 py-2 flex-1" />
           <input name="category" defaultValue={category} className="border rounded px-3 py-2 w-36" />
           <input name="defaultUnit" defaultValue={defaultUnit} className="border rounded px-3 py-2 w-24" />
-          <button className="bg-green-600 text-white rounded px-3">OK</button>
-          <button type="button" onClick={() => setEditing(false)} className="rounded px-3">Annuler</button>
+          <button type="submit" className="bg-green-600 text-white rounded px-3">OK</button>
+          <button type="button" onClick={() => { setEditing(false); setError(null); }} className="rounded px-3">Annuler</button>
         </form>
+        {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
       </li>
     );
   }
