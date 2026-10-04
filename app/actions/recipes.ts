@@ -31,9 +31,12 @@ export async function createRecipe(
     .values(recipeData)
     .returning({ id: recipes.id });
 
-  await db.insert(recipeIngredients).values(
-    items.map((it) => ({ ...it, recipeId: recipe.id }))
-  );
+  // Only insert ingredients if there are any
+  if (items.length > 0) {
+    await db.insert(recipeIngredients).values(
+      items.map((it) => ({ ...it, recipeId: recipe.id }))
+    );
+  }
 
   revalidatePath('/recipes');
   redirect(`/recipes/${recipe.id}`);
