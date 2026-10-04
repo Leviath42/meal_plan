@@ -3,6 +3,7 @@
 import { db } from '@/lib/db';
 import { recipes, recipeIngredients } from '@/lib/db/schema';
 import { recipeInput } from '@/lib/validators/recipes';
+import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -36,6 +37,40 @@ export async function createRecipe(
 
   revalidatePath('/recipes');
   redirect(`/recipes/${recipe.id}`);
+}
+
+export async function updateRecipe(
+  prevState: RecipeFormState,
+  formData: FormData
+): Promise<RecipeFormState> {
+  const id = String(formData.get('id'));
+  
+  const parsed = recipeInput.safeParse({
+    ...Object.fromEntries(formData),
+    ingredients: JSON.parse(String(formData.get('ingredients') ?? '[]')),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  const { ingredients: items, ...recipeData } = parsed.data;
+
+  // Mettre à jour la recette
+  await db.update(recipes).set({ ...recipeData, updatedAt: new Date().toISOString() }).where(eq(recipes.id, id));
+
+  // Supprimer les anciens ingrédients et en ajouter les nouveaux
+  await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
+  
+  if (items.length > 0) {
+    await db.insert(recipeIngredients).values(
+      items.map((it) => ({ ...it, recipeId: id }))
+    );
+  }
+
+  revalidatePath('/recipes');
+  revalidatePath(`/recipes/${id}`);
+  redirect(`/recipes/${id}`);
 }
 
 export async function deleteRecipe(id: string) {

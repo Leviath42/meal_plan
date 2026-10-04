@@ -1,3 +1,12 @@
+'use server';
+
+import { db } from '@/lib/db';
+import { ingredients } from '@/lib/db/schema';
+import { ingredientInput } from '@/lib/validators/ingredients';
+import { eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+
 export type IngredientFormState = {
   errors?: Record<string, string[]>;
 } | null;
@@ -19,4 +28,32 @@ export async function createIngredient(
 
   revalidatePath('/ingredients');
   redirect('/ingredients');
+}
+
+export async function updateIngredient(
+  id: string,
+  formData: FormData
+): Promise<IngredientFormState> {
+  const parsed = ingredientInput.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  try {
+    await db.update(ingredients).set(parsed.data).where(eq(ingredients.id, id));
+    revalidatePath('/ingredients');
+    return null;
+  } catch {
+    return { errors: { name: ['Erreur lors de la mise à jour'] } };
+  }
+}
+
+export async function deleteIngredient(id: string): Promise<{ error?: string }> {
+  try {
+    await db.delete(ingredients).where(eq(ingredients.id, id));
+    revalidatePath('/ingredients');
+    return {};
+  } catch {
+    return { error: 'Impossible de supprimer cet ingrédient (peut-être utilisé dans une recette)' };
+  }
 }

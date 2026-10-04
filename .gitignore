@@ -1,1 +1,44 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+build/
+
+# SQLite database
+*.db
+*.db-journal
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Drizzle
+.drizzle/
+
+# Temporary files
+tmp/
+temp/
