@@ -100,7 +100,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null; // Mot de passe incorrect
         }
 
-        // 3. Retourner l'utilisateur (sans le password)
+        // 3. Vérifier que l'utilisateur n'est pas GUEST (non validé)
+        if (user.role === "GUEST") {
+          console.log("Auth: User is GUEST, awaiting admin validation:", user.email);
+          return null; // Compte non validé par l'admin
+        }
+
+        // 4. Retourner l'utilisateur (sans le password)
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
       },

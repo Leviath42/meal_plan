@@ -11,6 +11,7 @@ export default auth((req) => {
       '/api/auth',
       '/login',
       '/logout',
+      '/register',
       '/_next/static',
       '/_next/image',
       '/favicon.ico'
