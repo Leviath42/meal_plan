@@ -14,6 +14,7 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
     <PlannerBoard
       recipes={recipes}
       daysCount={7}
+      enableMonthNavigation
       footer={
         <Link href="/calendar" className="text-sm text-blue-600 hover:underline">
           Voir le calendrier complet →

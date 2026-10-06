@@ -77,7 +77,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [ ] Ajout d'une recette à un créneau vide directement par glisser-déposer (actuellement via le modal « + »)
 - [x] **Navigation calendrier**
   - [x] Boutons Précédent/Suivant par jour + retour à la journée en cours
-  - [x] Boutons Précédent/Suivant par mois (page calendrier)
+  - [x] Boutons Précédent/Suivant par mois (accueil et calendrier)
   - [x] Clic sur une date affichée pour la placer en première position (accueil et calendrier)
   - [ ] Sélecteur de date direct (saisie d'une date arbitraire)
 - [ ] **Affichage des détails**
