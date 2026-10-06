@@ -78,6 +78,7 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - ✅ **Sélection de recettes** pour chaque créneau
 - ✅ **Repas personnalisés** (notes textuelles sans recette)
 - ✅ **Gestion des couverts** par repas planifié
+- ✅ **Page `/calendar` refondue** : composant partagé `PlannerBoard`, 13 jours (J → J+12) en structure 1-3-3-3-3, avec DnD, zone de suppression et modals — identique à la page d'accueil
 
 #### 🔧 Corrections Techniques et UX
 - ✅ **Séparation des types Server Actions** - Résolution du problème "use server" exportant des objets
@@ -90,11 +91,6 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 ---
 
 ### 🟚 **En Développement** (Branche: `feat--Implémentation-calendrier`)
-
-#### 📅 Page Calendrier (`/calendar`)
-- [ ] Refonte de la page : réutiliser le composant de la page d'accueil
-- [ ] Structure 1-3-3-3-3 (jour principal + 4 lignes de 3 jours, J → J+12)
-- [ ] Conserver DnD, zone de suppression et modals
 
 #### 📋 Liste de Courses
 - [ ] Agrégation automatique des ingrédients planifiés
@@ -272,17 +268,12 @@ npm run seed -- --clear
 ## 🎯 Prochaines Étapes
 
 ### **Priorité Immédiate**
-1. **Refonte de la page `/calendar`** (F01)
-   - ✅ CRUD, DnD et modals terminés sur la page d'accueil
-   - [ ] Extraire le composant calendrier partagé (actuellement dans `HomeCalendar`)
-   - [ ] L'utiliser sur `/calendar` avec 13 jours (structure 1-3-3-3-3)
-
-2. **Génération de la liste de courses** (F05)
+1. **Génération de la liste de courses** (F05)
    - Agrégation des ingrédients du planning
    - Fusion des doublons et sommation des quantités
    - Export en texte brut
 
-3. **Partage du planning** (F04)
+2. **Partage du planning** (F04)
    - Export ICS
    - Page publique avec jeton d'accès
    - Intégration Home Assistant (préparation)
