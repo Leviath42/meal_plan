@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <SessionProvider session={session}>
           <Nav session={session} />
-          <div className="min-h-screen">{children}</div>
+          <div>{children}</div>
         </SessionProvider>
       </body>
     </html>

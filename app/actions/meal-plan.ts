@@ -60,15 +60,23 @@ export async function createMealPlan(
 }
 
 // Mettre à jour un repas planifié
+// Accepte les mises à jour partielles : seuls les champs présents dans le
+// FormData sont modifiés. Une chaîne vide sur un champ nullable (recipeId,
+// customNote, mealCourse) vide le champ.
 export async function updateMealPlan(
   id: string,
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
   const rawData = formDataToRecord(formData);
-  
-  const parsed = mealPlanInput.safeParse(rawData);
-  
+
+  const raw: Record<string, string | null> = { ...rawData };
+  for (const key of ['recipeId', 'customNote', 'mealCourse']) {
+    if (raw[key] === '') raw[key] = null;
+  }
+
+  const parsed = mealPlanInput.partial().safeParse(raw);
+
   if (!parsed.success) {
     return {
       errors: parsed.error.flatten().fieldErrors,
@@ -77,6 +85,12 @@ export async function updateMealPlan(
   }
 
   const data = parsed.data;
+
+  // Ne conserver que les champs réellement présents dans le FormData
+  // (évite qu'un default Zod, ex. servings=4, écrase une valeur existante)
+  for (const key of Object.keys(data)) {
+    if (!(key in raw)) delete data[key];
+  }
 
   try {
     await db
@@ -111,28 +125,13 @@ export async function deleteMealPlan(id: string): Promise<{ error?: string }> {
 }
 
 // Replanifier un repas (déplacer via drag & drop)
+// Plusieurs repas peuvent coexister sur un même créneau (date + type de repas)
 export async function replanMealPlan(
   mealPlanId: string,
   newDate: string,
   newMealType: string
 ): Promise<{ error?: string }> {
   try {
-    // Vérifier qu'il n'y a pas déjà un repas à ce créneau
-    const existing = await db
-      .select()
-      .from(mealPlans)
-      .where(
-        and(
-          eq(mealPlans.date, newDate),
-          eq(mealPlans.mealType, newMealType)
-        )
-      )
-      .limit(1);
-
-    if (existing.length > 0 && existing[0].id !== mealPlanId) {
-      return { error: 'Un repas existe déjà à ce créneau' };
-    }
-
     await db
       .update(mealPlans)
       .set({
@@ -281,16 +280,6 @@ export async function addMealPlan(
     };
   } catch (error: any) {
     console.error('Erreur lors de l\'ajout du repas planifié:', error);
-    
-    // Vérifier si c'est une erreur de contrainte unique (même date + même mealType)
-    if (error.message?.includes('UNIQUE constraint failed')) {
-      return {
-        success: false,
-        message: 'Un repas existe déjà à ce créneau',
-        errors: { general: ['Un repas existe déjà à ce créneau'] }
-      };
-    }
-    
     return {
       success: false,
       message: 'Une erreur est survenue lors de l\'ajout',

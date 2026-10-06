@@ -1,18 +1,30 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { getMealPlansByDateRange, deleteMealPlan, updateMealPlan } from './actions/meal-plan';
-import { useRouter } from 'next/navigation';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  closestCenter,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { getMealPlans, addMealPlan, deleteMealPlan, updateMealPlan } from './actions/meal-plan';
 import type { MealPlan, MealType, Recipe } from '@/app/types/meal-plan';
 
 interface HomeCalendarProps {
   recipes: Recipe[];
 }
 
-// Map des types de repas en français
+// Noms des types de repas en français
 const MEAL_TYPE_LABELS: Record<string, string> = {
-  breakfast: 'Petit-déjeuner',
+  breakfast: 'Petit-déj',
   lunch: 'Déjeuner',
   snack: 'Goûter',
   dinner: 'Dîner',
@@ -26,8 +38,301 @@ const MEAL_TYPE_COLORS: Record<string, string> = {
   dinner: 'bg-purple-100 text-purple-800',
 };
 
-// Jours de la semaine en français
-const DAYS_OF_WEEK = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+// Ordre chronologique des types de repas
+const MEAL_TYPE_ORDER: string[] = ['breakfast', 'lunch', 'snack', 'dinner'];
+
+// Types de plats pour l'ordre chronologique dans un repas
+const MEAL_COURSE_ORDER: string[] = ['apéritif', 'entrée', 'plat', 'accompagnement', 'dessert', 'boisson'];
+
+// ID de la zone de suppression (fixe en bas de l'écran pendant un drag)
+const DELETE_ZONE_ID = 'delete-meal-zone';
+
+// Badge de repas draggable : glisser pour replanifier/supprimer, cliquer pour gérer
+function DraggableMealBadge({
+  plan,
+  displayText,
+  badgeClass,
+  onClick,
+}: {
+  plan: MealPlan;
+  displayText: string;
+  badgeClass: string;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: plan.id,
+    data: { plan },
+  });
+
+  return (
+    <button
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      className={`${badgeClass} ${isDragging ? 'opacity-30' : ''} cursor-grab active:cursor-grabbing touch-none`}
+      title={`Glissez pour replanifier ou supprimer, cliquez pour gérer : ${displayText}`}
+    >
+      {displayText}
+    </button>
+  );
+}
+
+// Zone de dépôt pour un jour (date seule) ou une cellule jour + type de repas
+function DroppableDayZone({
+  dropId,
+  dropDate,
+  dropMealType,
+  disabled = false,
+  className = '',
+  children,
+}: {
+  dropId: string;
+  dropDate: string;
+  dropMealType?: string;
+  disabled?: boolean;
+  className?: string;
+  children?: ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: dropId,
+    disabled,
+    data: { date: dropDate, mealType: dropMealType },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${className} ${!disabled && isOver ? 'ring-2 ring-blue-400 rounded-lg bg-blue-50' : ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Zone de suppression fixe en bas de l'écran, visible uniquement pendant un drag
+function DeleteDropZone({ label }: { label: string }) {
+  const { setNodeRef, isOver } = useDroppable({ id: DELETE_ZONE_ID });
+
+  return (
+    <div ref={setNodeRef} className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pb-4 pointer-events-none">
+      <div
+        className={`flex items-center gap-2 px-6 py-3 rounded-lg shadow-lg border-2 font-medium transition-transform ${
+          isOver
+            ? 'bg-red-600 border-red-700 text-white scale-105'
+            : 'bg-red-500 border-red-600 text-white'
+        }`}
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        <span className="text-sm">
+          {isOver ? `Relâchez pour supprimer « ${label} »` : `Supprimer « ${label} »`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Modal pour la création d'un repas planifié
+function MealPlanCreationModal({
+  isOpen,
+  onClose,
+  date,
+  recipes,
+  onCreate,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  date: string;
+  recipes: Recipe[];
+  onCreate: (data: { date: string; mealType: MealType; recipeId?: string | null; customNote?: string | null; servings: number }) => Promise<void>;
+}) {
+  const [mealType, setMealType] = useState<MealType | ''>('');
+  const [recipeId, setRecipeId] = useState<string | ''>('');
+  const [customNote, setCustomNote] = useState<string>('');
+  const [servings, setServings] = useState<number>(4);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Réinitialiser les états quand le modal s'ouvre ou se ferme
+  useEffect(() => {
+    if (!isOpen) {
+      // Réinitialiser tous les champs quand on ferme
+      setMealType('');
+      setRecipeId('');
+      setCustomNote('');
+      setServings(4);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const minDate = new Date(today);
+  const dateObj = new Date(date);
+  const isPastDate = dateObj < minDate;
+
+  const handleSubmit = async () => {
+    if (!mealType) {
+      setError('Le type de repas est requis');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await onCreate({
+        date,
+        mealType: mealType as MealType,
+        recipeId: recipeId || null,
+        customNote: customNote || null,
+        servings: servings || 4,
+      });
+      
+      // Réinitialiser le formulaire
+      setMealType('');
+      setRecipeId('');
+      setCustomNote('');
+      setServings(4);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Impossible de créer ce repas planifié');
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setMealType('');
+    setRecipeId('');
+    setCustomNote('');
+    setServings(4);
+    setError(null);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
+        <div className="p-4 border-b">
+          <h3 className="font-bold text-lg">Créer un repas planifié</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {new Date(date).toLocaleDateString('fr-FR', {
+              weekday: 'long', day: 'numeric', month: 'long'
+            })}
+          </p>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {isPastDate ? (
+            <div className="text-center py-4">
+              <p className="text-gray-500">Impossible de planifier un repas dans le passé.</p>
+              <button
+                onClick={handleCancel}
+                className="mt-4 px-4 py-2 border rounded hover:bg-gray-50"
+              >
+                Fermer
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Type de repas */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Type de repas *
+                </label>
+                <select
+                  value={mealType}
+                  onChange={(e) => setMealType(e.target.value as MealType | '')}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">-- Sélectionnez un type --</option>
+                  {(Object.keys(MEAL_TYPE_LABELS) as MealType[]).map(type => (
+                    <option key={type} value={type}>
+                      {MEAL_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Recette */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Recette (optionnel)
+                </label>
+                <select
+                  value={recipeId}
+                  onChange={(e) => setRecipeId(e.target.value)}
+                  className="w-full p-2 border rounded"
+                  disabled={!mealType}
+                >
+                  <option value="">-- Aucune recette --</option>
+                  {recipes.map(recipe => (
+                    <option key={recipe.id} value={recipe.id}>
+                      {recipe.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Note personnalisée */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Note personnalisée (optionnel)
+                </label>
+                <input
+                  type="text"
+                  value={customNote}
+                  onChange={(e) => setCustomNote(e.target.value)}
+                  placeholder="Ex: Soirée Pizza, Barbecue..."
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+
+              {/* Nombre de couverts */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre de couverts *
+                </label>
+                <input
+                  type="number"
+                  value={servings}
+                  onChange={(e) => setServings(parseInt(e.target.value) || 4)}
+                  min="1"
+                  max="20"
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  onClick={handleCancel}
+                  className="px-4 py-2 border rounded hover:bg-gray-50"
+                  disabled={isLoading}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={isLoading || !mealType}
+                >
+                  {isLoading ? 'Création...' : 'Créer'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Modal pour les actions sur un repas planifié
 function MealPlanActionsModal({
@@ -37,22 +342,43 @@ function MealPlanActionsModal({
   recipes,
   onDelete,
   onUpdate,
+  onRefresh,
 }: {
   isOpen: boolean;
   onClose: () => void;
   mealPlan: MealPlan | null;
   recipes: Recipe[];
-  onDelete: (id: string) => Promise<void>;
-  onUpdate: (id: string, updates: Partial<MealPlan>) => Promise<void>;
+  onDelete: (id: string) => Promise<string | null>;
+  onUpdate: (id: string, updates: Partial<MealPlan>) => Promise<string | null>;
+  onRefresh: () => Promise<void>;
 }) {
   const [action, setAction] = useState<'delete' | 'reschedule' | 'edit' | null>(null);
-  const [newDate, setNewDate] = useState<string>(mealPlan?.date || '');
+  const [newDate, setNewDate] = useState<string>('');
   const [newMealType, setNewMealType] = useState<MealType | null>(null);
   const [newRecipeId, setNewRecipeId] = useState<string | null>(null);
-  const [newCustomNote, setNewCustomNote] = useState<string | null>(null);
-  const [newServings, setNewServings] = useState<number | null>(null);
+  const [newCustomNote, setNewCustomNote] = useState<string>('');
+  const [newServings, setNewServings] = useState<number>(4);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Réinitialiser les états quand le modal s'ouvre ou quand mealPlan change
+  useEffect(() => {
+    if (isOpen && mealPlan) {
+      setNewDate(mealPlan.date);
+      setNewMealType(null);
+      setNewRecipeId(null);
+      setNewCustomNote('');
+      setNewServings(4);
+      setAction(null);
+      setError(null);
+      setIsLoading(false);
+    } else if (!isOpen) {
+      // Réinitialiser aussi quand on ferme le modal
+      setAction(null);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, [isOpen, mealPlan]);
 
   if (!isOpen || !mealPlan) return null;
 
@@ -64,7 +390,13 @@ function MealPlanActionsModal({
     setError(null);
     
     try {
-      await onDelete(mealPlan.id);
+      const errorMsg = await onDelete(mealPlan.id);
+      if (errorMsg) {
+        setError(errorMsg);
+        setIsLoading(false);
+        return;
+      }
+      await onRefresh();
       onClose();
     } catch (err) {
       setError('Impossible de supprimer ce repas planifié');
@@ -78,10 +410,16 @@ function MealPlanActionsModal({
     setError(null);
     
     try {
-      await onUpdate(mealPlan.id, {
+      const errorMsg = await onUpdate(mealPlan.id, {
         date: newDate,
         mealType: newMealType || mealPlan.mealType,
       });
+      if (errorMsg) {
+        setError(errorMsg);
+        setIsLoading(false);
+        return;
+      }
+      await onRefresh();
       onClose();
     } catch (err) {
       setError('Impossible de replanifier ce repas');
@@ -95,12 +433,19 @@ function MealPlanActionsModal({
     setError(null);
     
     try {
-      const updates: Partial<MealPlan> = {};
-      if (newRecipeId !== null) updates.recipeId = newRecipeId;
-      if (newCustomNote !== null) updates.customNote = newCustomNote;
-      if (newServings !== null) updates.servings = newServings;
-      
-      await onUpdate(mealPlan.id, updates);
+      const updates: Partial<MealPlan> = {
+        recipeId: newRecipeId,
+        customNote: newCustomNote || null,
+        servings: newServings,
+      };
+
+      const errorMsg = await onUpdate(mealPlan.id, updates);
+      if (errorMsg) {
+        setError(errorMsg);
+        setIsLoading(false);
+        return;
+      }
+      await onRefresh();
       onClose();
     } catch (err) {
       setError('Impossible de modifier ce repas');
@@ -111,7 +456,17 @@ function MealPlanActionsModal({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const minDate = new Date(today);
-  minDate.setDate(minDate.getDate() - 1); // Autoriser aujourd'hui et le futur
+
+  // Récupérer le titre de la recette
+  const getRecipeTitle = (recipeId: string | null): string => {
+    if (!recipeId) return '';
+    const recipe = recipes.find(r => r.id === recipeId);
+    return recipe ? recipe.title : 'Recette inconnue';
+  };
+
+  const displayRecipe = newRecipeId ? 
+    recipes.find(r => r.id === newRecipeId)?.title || 'Recette inconnue' :
+    mealPlan.recipeId ? getRecipeTitle(mealPlan.recipeId) : 'Aucune recette';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -128,10 +483,40 @@ function MealPlanActionsModal({
         <div className="p-4">
           {!action ? (
             <>
+              {/* Informations sur le repas */}
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-sm text-gray-700 mb-2">Informations du repas</h4>
+                <div className="space-y-1 text-sm">
+                  <div>
+                    <span className="text-gray-500">Type: </span>
+                    <span className="font-medium">{MEAL_TYPE_LABELS[mealPlan.mealType]}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Recette: </span>
+                    <span className="font-medium">{mealPlan.customNote || getRecipeTitle(mealPlan.recipeId) || 'Aucune'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Couverts: </span>
+                    <span className="font-medium">{mealPlan.servings}</span>
+                  </div>
+                  {mealPlan.mealCourse && (
+                    <div>
+                      <span className="text-gray-500">Type de plat: </span>
+                      <span className="font-medium">{mealPlan.mealCourse}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Menu d'actions */}
               <div className="space-y-2">
                 <button
-                  onClick={() => setAction('edit')}
+                  onClick={() => {
+                    setNewRecipeId(mealPlan.recipeId);
+                    setNewCustomNote(mealPlan.customNote ?? '');
+                    setNewServings(mealPlan.servings ?? 4);
+                    setAction('edit');
+                  }}
                   className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
                 >
                   <span className="font-medium text-blue-600">Modifier</span>
@@ -139,7 +524,11 @@ function MealPlanActionsModal({
                 </button>
                 
                 <button
-                  onClick={() => setAction('reschedule')}
+                  onClick={() => {
+                    setNewDate(mealPlan.date);
+                    setNewMealType(null);
+                    setAction('reschedule');
+                  }}
                   className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
                 >
                   <span className="font-medium text-blue-600">Replanifier</span>
@@ -174,7 +563,10 @@ function MealPlanActionsModal({
                   </p>
                   <div className="flex gap-3 justify-center">
                     <button
-                      onClick={onClose}
+                      onClick={() => {
+                        setAction(null);
+                        setError(null);
+                      }}
                       className="px-4 py-2 border rounded hover:bg-gray-50"
                       disabled={isLoading}
                     >
@@ -212,7 +604,7 @@ function MealPlanActionsModal({
                       Type de repas *
                     </label>
                     <select
-                      value={newMealType || mealPlan.mealType}
+                      value={newMealType || mealPlan?.mealType}
                       onChange={(e) => setNewMealType(e.target.value as MealType)}
                       className="w-full p-2 border rounded"
                     >
@@ -256,7 +648,7 @@ function MealPlanActionsModal({
                       Recette (optionnel)
                     </label>
                     <select
-                      value={newRecipeId === null ? '' : (newRecipeId || mealPlan.recipeId || '')}
+                      value={newRecipeId ?? ''}
                       onChange={(e) => setNewRecipeId(e.target.value || null)}
                       className="w-full p-2 border rounded"
                     >
@@ -275,8 +667,8 @@ function MealPlanActionsModal({
                     </label>
                     <input
                       type="text"
-                      value={newCustomNote === null ? (mealPlan.customNote || '') : newCustomNote}
-                      onChange={(e) => setNewCustomNote(e.target.value || null)}
+                      value={newCustomNote}
+                      onChange={(e) => setNewCustomNote(e.target.value)}
                       placeholder="Ex: Soirée Pizza, Barbecue..."
                       className="w-full p-2 border rounded"
                     />
@@ -288,8 +680,8 @@ function MealPlanActionsModal({
                     </label>
                     <input
                       type="number"
-                      value={newServings === null ? mealPlan.servings : newServings}
-                      onChange={(e) => setNewServings(parseInt(e.target.value) || mealPlan.servings)}
+                      value={newServings}
+                      onChange={(e) => setNewServings(parseInt(e.target.value) || 4)}
                       min="1"
                       max="20"
                       className="w-full p-2 border rounded"
@@ -327,17 +719,25 @@ function MealPlanActionsModal({
   );
 }
 
-// Composant pour afficher un repas dans la grille
+// Composant principal
 export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
-  const router = useRouter();
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Modal pour la création
+  const [selectedDateForCreation, setSelectedDateForCreation] = useState<string | null>(null);
+  const [showCreationModal, setShowCreationModal] = useState(false);
+
   // Modal pour les actions sur un repas
   const [selectedMealPlan, setSelectedMealPlan] = useState<MealPlan | null>(null);
   const [showActionsModal, setShowActionsModal] = useState(false);
+
+  // Repas en cours de drag & drop
+  const [activeDragPlan, setActiveDragPlan] = useState<MealPlan | null>(null);
+  // Clic vs drag : le drag démarre après 6px de mouvement, le clic ouvre toujours le modal
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   // Formater une date en YYYY-MM-DD
   const formatDate = (date: Date): string => date.toISOString().split('T')[0];
@@ -354,8 +754,8 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
       const startStr = formatDate(startDate);
       const endStr = formatDate(endDate);
 
-      const result = await getMealPlansByDateRange(startStr, endStr);
-      setMealPlans(result);
+      const result = await getMealPlans(startStr, endStr);
+      setMealPlans(result.mealPlans);
     } catch (err) {
       console.error('Erreur lors du chargement des repas:', err);
       setError('Impossible de charger les repas planifiés');
@@ -368,72 +768,119 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
     fetchMealPlans();
   }, [fetchMealPlans, startDate]);
 
-  // Naviguer vers la semaine suivante/précédente
+  // Navigation : jour suivant
   const goToNextDay = () => {
     const newDate = new Date(startDate);
     newDate.setDate(newDate.getDate() + 1);
     setStartDate(newDate);
   };
 
+  // Navigation : jour précédent
   const goToPreviousDay = () => {
     const newDate = new Date(startDate);
     newDate.setDate(newDate.getDate() - 1);
     setStartDate(newDate);
   };
 
+  // Navigation : retourner à aujourd'hui
   const goToToday = () => {
     setStartDate(new Date());
   };
 
-  // Formater la date pour affichage
-  const formatShortDate = (date: Date): string => {
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-  };
-
-  const formatFullDate = (date: Date): string => {
-    return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-  };
-
+  // Formatage des dates
   const getDateString = (date: Date): string => {
     return formatDate(date);
   };
 
-  // Supprimer un repas planifié
-  const handleDeleteMealPlan = async (id: string) => {
-    try {
-      await deleteMealPlan(id);
-      setError(null);
-      await fetchMealPlans();
-    } catch (err) {
-      console.error('Erreur:', err);
-      setError('Erreur lors de la suppression du repas');
-    }
-  };
-
-  // Mettre à jour un repas planifié
-  const handleUpdateMealPlan = async (id: string, updates: Partial<MealPlan>) => {
-    try {
-      // Appeler updateMealPlan avec les bonnes données
-      const formData = new FormData();
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formData.append(key, String(value));
-        }
-      });
-      
-      await updateMealPlan(id, null, formData);
-      setError(null);
-      await fetchMealPlans();
-    } catch (err) {
-      console.error('Erreur:', err);
-      setError('Erreur lors de la mise à jour du repas');
-    }
+  // Ouvrir le modal de création pour une date
+  const openCreationModal = (dateStr: string) => {
+    setSelectedDateForCreation(dateStr);
+    setShowCreationModal(true);
   };
 
   // Ouvrir le modal d'actions pour un repas
   const openActionsModal = (mealPlan: MealPlan) => {
     setSelectedMealPlan(mealPlan);
     setShowActionsModal(true);
+  };
+
+  // Créer un repas planifié
+  const handleCreateMealPlan = async (data: { 
+    date: string; 
+    mealType: MealType; 
+    recipeId?: string | null; 
+    customNote?: string | null; 
+    servings: number 
+  }) => {
+    try {
+      const formData = new FormData();
+      formData.append('date', data.date);
+      formData.append('mealType', data.mealType);
+      if (data.recipeId) formData.append('recipeId', data.recipeId);
+      if (data.customNote) formData.append('customNote', data.customNote);
+      formData.append('servings', data.servings.toString());
+      
+      const result = await addMealPlan(null, formData);
+      if (result && result.success === false) {
+        const message = result.message || 'Erreur lors de la création du repas';
+        setError(message);
+        throw new Error(message);
+      }
+      await fetchMealPlans();
+      setError(null);
+    } catch (err) {
+      console.error('Erreur:', err);
+      setError(err instanceof Error && err.message ? err.message : 'Erreur lors de la création du repas');
+      throw err;
+    }
+  };
+
+  // Supprimer un repas planifié
+  // Retourne un message d'erreur en cas d'échec, null en cas de succès
+  const handleDeleteMealPlan = async (id: string): Promise<string | null> => {
+    try {
+      const result = await deleteMealPlan(id);
+      if (result.error) {
+        setError(result.error);
+        return result.error;
+      }
+      await fetchMealPlans();
+      setError(null);
+      return null;
+    } catch (err) {
+      console.error('Erreur:', err);
+      const message = 'Erreur lors de la suppression du repas';
+      setError(message);
+      return message;
+    }
+  };
+
+  // Mettre à jour un repas planifié
+  // Retourne un message d'erreur en cas d'échec, null en cas de succès
+  const handleUpdateMealPlan = async (id: string, updates: Partial<MealPlan>): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value !== undefined) {
+          formData.append(key, value === null ? '' : String(value));
+        }
+      });
+      
+      const result = await updateMealPlan(id, null, formData);
+      if (result?.errors && Object.keys(result.errors).length > 0) {
+        const message = result.errors.general?.[0] || 'Erreur lors de la mise à jour du repas';
+        setError(message);
+        return message;
+      }
+      await fetchMealPlans();
+      setError(null);
+      return null;
+    } catch (err) {
+      console.error('Erreur:', err);
+      const message = 'Erreur lors de la mise à jour du repas';
+      setError(message);
+      return message;
+    }
   };
 
   // Récupérer le titre d'une recette
@@ -443,12 +890,186 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
     return recipe ? recipe.title : 'Recette inconnue';
   };
 
-  // Vérifier si une date est dans le passé
-  const isPastDate = (dateStr: string): boolean => {
-    const date = new Date(dateStr + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date < today;
+  // Texte affiché pour un repas planifié (note, recette ou type de repas)
+  const getPlanDisplayText = (plan: MealPlan): string =>
+    plan.customNote || getRecipeTitle(plan.recipeId) || MEAL_TYPE_LABELS[plan.mealType as MealType];
+
+  // Début du drag : mémoriser le repas déplacé
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragPlan((event.active.data.current?.plan as MealPlan) ?? null);
+  };
+
+  const handleDragCancel = () => setActiveDragPlan(null);
+
+  // Fin du drag : replanifier vers la zone de dépôt ou supprimer
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const plan = event.active.data.current?.plan as MealPlan | undefined;
+    const over = event.over;
+    setActiveDragPlan(null);
+
+    if (!plan || !over) return;
+
+    // Dépôt sur la zone de suppression
+    if (over.id === DELETE_ZONE_ID) {
+      await handleDeleteMealPlan(plan.id);
+      return;
+    }
+
+    const overData = over.data.current as { date?: string; mealType?: string } | undefined;
+    if (!overData?.date) return;
+
+    const targetDate = overData.date;
+    const targetMealType = overData.mealType || plan.mealType;
+
+    // Pas de replanification vers une date passée
+    if (targetDate < formatDate(new Date())) {
+      setError('Impossible de replanifier un repas dans le passé');
+      return;
+    }
+
+    // Rien ne change : pas d'appel serveur
+    if (targetDate === plan.date && targetMealType === plan.mealType) return;
+
+    await handleUpdateMealPlan(plan.id, { date: targetDate, mealType: targetMealType });
+  };
+
+  // Composant DayCard pour le layout vertical
+  // (fonction de rendu appelée directement : voir commentaire au site d'appel)
+  const DayCard = ({ 
+    day, 
+    dateStr, 
+    isToday, 
+    isPast, 
+    plans, 
+    size = 'medium',
+    isMainDay = false
+  }: {
+    day: Date;
+    dateStr: string;
+    isToday: boolean;
+    isPast: boolean;
+    plans: MealPlan[];
+    size: 'large' | 'medium' | 'small';
+    isMainDay: boolean;
+  }) => {
+    const sizeClasses = {
+      large: 'w-full max-w-xs',
+      medium: 'w-[92px] min-w-[92px]',
+      small: 'w-[79px] min-w-[79px]'
+    };
+    
+    const textSizeClasses = {
+      large: {
+        dayName: 'text-sm',
+        date: 'text-lg font-bold',
+        mealBadge: 'text-sm',
+        noMeal: 'text-sm'
+      },
+      medium: {
+        dayName: 'text-xs',
+        date: 'text-sm font-bold',
+        mealBadge: 'text-xs',
+        noMeal: 'text-xs'
+      },
+      small: {
+        dayName: 'text-xs',
+        date: 'text-sm font-bold',
+        mealBadge: 'text-xs',
+        noMeal: 'text-xs'
+      }
+    };
+
+    const classes = textSizeClasses[size];
+
+    // Trier les repas par ordre chronologique
+    const sortedPlans = [...plans].sort((a, b) => {
+      const mealTypeOrderA = MEAL_TYPE_ORDER.indexOf(a.mealType as MealType);
+      const mealTypeOrderB = MEAL_TYPE_ORDER.indexOf(b.mealType as MealType);
+      
+      if (mealTypeOrderA !== mealTypeOrderB) {
+        return mealTypeOrderA - mealTypeOrderB;
+      }
+      
+      const courseA = a.mealCourse || '';
+      const courseB = b.mealCourse || '';
+      const courseOrderA = MEAL_COURSE_ORDER.indexOf(courseA);
+      const courseOrderB = MEAL_COURSE_ORDER.indexOf(courseB);
+      
+      if (courseOrderA !== courseOrderB) {
+        return courseOrderA - courseOrderB;
+      }
+      
+      return a.id.localeCompare(b.id);
+    });
+
+    // Formater le jour + date
+    const formatDayHeader = () => {
+      if (isMainDay) {
+        const dayName = day.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase();
+        return `${dayName} ${day.getDate()}`;
+      } else {
+        const dayName = day.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
+        return `${dayName}. ${day.getDate()}`;
+      }
+    };
+
+    // Afficher les repas
+    const renderMeals = () => {
+      if (sortedPlans.length === 0) {
+        return (
+          <div className="flex items-center justify-center h-4">
+            <span className={`text-gray-400 ${classes.noMeal}`}>Aucun repas</span>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="flex flex-col gap-1 w-full">
+          {sortedPlans.map(plan => (
+            <DraggableMealBadge
+              key={plan.id}
+              plan={plan}
+              displayText={getPlanDisplayText(plan)}
+              badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType as MealType]} ${classes.mealBadge} truncate text-center w-full text-left`}
+              onClick={() => openActionsModal(plan)}
+            />
+          ))}
+        </div>
+      );
+    };
+
+    return (
+      <DroppableDayZone
+        dropId={`day-card:${dateStr}`}
+        dropDate={dateStr}
+        disabled={isPast}
+        className={`flex flex-col items-center p-1.5 bg-gray-50 rounded-lg ${sizeClasses[size]}`}
+      >
+        {/* Jour de la semaine + date */}
+        <div className={`font-medium text-center mb-1 ${isToday ? 'text-blue-600' : 'text-gray-800'} ${classes.date}`}>
+          {formatDayHeader()}
+        </div>
+        
+        {/* Repas planifiés */}
+        <div className="w-full mb-1 min-h-[20px]">
+          {renderMeals()}
+        </div>
+        
+        {/* Bouton de planification (+) */}
+        <button
+          onClick={() => openCreationModal(dateStr)}
+          className={`w-14 text-xs py-1 rounded border transition-colors ${
+            isPast 
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+              : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+          }`}
+          disabled={isPast}
+          title={isPast ? 'Date dans le passé' : 'Ajouter un repas'}
+        >
+          +
+        </button>
+      </DroppableDayZone>
+    );
   };
 
   // Générer les jours à afficher (7 jours) - Layout 1-3-3
@@ -474,96 +1095,22 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
       return date.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
     };
 
-    // Helper pour obtenir le texte d'affichage d'un repas
-    const getDisplayText = (plan: MealPlan) => {
-      return plan.customNote || getRecipeTitle(plan.recipeId) || MEAL_TYPE_LABELS[plan.mealType];
-    };
-
-    // Composant pour une ligne de jours (J+1-J+3 ou J+4-J+6) avec alignement par type de repas
-    const MealTypeRow = ({ 
-      days, 
-      mealType, 
-    }: { 
-      days: typeof daysData;
-      mealType: MealType;
-    }) => {
-      // Vérifier si au moins un jour a ce type de repas
-      const hasMealInAnyDay = days.some(day => 
-        day.plans.some(p => p.mealType === mealType)
-      );
-      
-      if (!hasMealInAnyDay) return null;
-
-      return (
-        <div className="flex gap-3 justify-center">
-          {days.map(dayData => {
-            const planForType = dayData.plans.find(p => p.mealType === mealType);
-            const displayText = planForType ? getDisplayText(planForType) : '';
-            
-            return (
-              <div key={`${dayData.dateStr}-${mealType}`} className="w-[120px] flex justify-center">
-                {displayText && (
-                  <button
-                    onClick={() => openActionsModal(planForType!)}
-                    className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[mealType]} text-xs truncate text-center max-w-[116px]`}
-                    title={`Cliquez pour gérer: ${displayText}`}
-                  >
-                    {displayText}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
-    };
-
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {/* Ligne 1 : J (aujourd'hui ou date de départ) */}
         <div className="flex justify-center">
-          <div className="bg-gray-50 rounded-lg p-2 w-full max-w-xs flex flex-col items-center">
-            {/* Jour de la semaine + date */}
-            <div className="font-medium text-center mb-1 text-blue-600 text-lg">
-              {daysData[0].date.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase()} {daysData[0].date.getDate()}
-            </div>
-            
-            {/* Repas planifiés */}
-            <div className="w-full mb-1 min-h-[20px]">
-              {daysData[0].plans.length > 0 ? (
-                <div className="flex flex-col gap-1 w-full">
-                  {daysData[0].plans.map(plan => (
-                    <button
-                      key={plan.id}
-                      onClick={() => openActionsModal(plan)}
-                      className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]} text-xs truncate text-center w-full`}
-                      title={`Cliquez pour gérer: ${getDisplayText(plan)}`}
-                    >
-                      {getDisplayText(plan)}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-4">
-                  <span className="text-gray-400 text-xs">Aucun repas</span>
-                </div>
-              )}
-            </div>
-            
-            {/* Bouton de planification */}
-            <button
-              onClick={() => router.push('/calendar')}
-              className={`w-16 text-xs py-1.5 rounded border transition-colors ${
-                daysData[0].isPast 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
-              }`}
-              disabled={daysData[0].isPast}
-              title={daysData[0].isPast ? 'Date dans le passé' : 'Voir le calendrier'}
-            >
-              Calendrier
-            </button>
-          </div>
+          {/* DayCard est appelée comme une fonction (et non comme un composant)
+              pour éviter un remontage du sous-arbre à chaque re-render de HomeCalendar,
+              qui détruirait le nœud en cours de drag (dnd-kit). */}
+          {DayCard({
+            day: daysData[0].date,
+            dateStr: daysData[0].dateStr,
+            isToday: daysData[0].isToday,
+            isPast: daysData[0].isPast,
+            plans: daysData[0].plans,
+            size: 'large',
+            isMainDay: true,
+          })}
         </div>
         
         {/* Ligne 2 : J+1, J+2, J+3 */}
@@ -571,20 +1118,79 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
           {/* En-têtes des jours */}
           <div className="flex gap-3 justify-center mb-1">
             {daysData.slice(1, 4).map(dayData => (
-              <div key={`header-${dayData.dateStr}`} className="w-[120px] text-center text-sm">
+              <DroppableDayZone
+                key={`header-${dayData.dateStr}`}
+                dropId={`header:${dayData.dateStr}`}
+                dropDate={dayData.dateStr}
+                disabled={dayData.isPast}
+                className="w-[92px] text-center text-sm"
+              >
                 {formatShortDay(dayData.date)}. {dayData.date.getDate()}
-              </div>
+              </DroppableDayZone>
             ))}
           </div>
           
           {/* Lignes par type de repas (seulement ceux qui ont des repas) */}
-          {(['breakfast', 'lunch', 'snack', 'dinner'] as MealType[]).map(mealType => (
-            <MealTypeRow 
-              key={mealType} 
-              days={daysData.slice(1, 4)} 
-              mealType={mealType}
-            />
-          ))}
+          {MEAL_TYPE_ORDER.map(mealType => {
+            // Vérifier si au moins un jour a ce type de repas
+            const hasMealInAnyDay = daysData.slice(1, 4).some(day => 
+              day.plans.some(p => p.mealType === mealType)
+            );
+            
+            if (!hasMealInAnyDay) return null;
+            
+            return (
+              <div key={mealType} className="flex gap-3 justify-center">
+                {daysData.slice(1, 4).map(dayData => {
+                  const plansForType = dayData.plans.filter(p => p.mealType === mealType);
+                  
+                  return (
+                    <DroppableDayZone
+                      key={`${dayData.dateStr}-${mealType}`}
+                      dropId={`cell:${dayData.dateStr}:${mealType}`}
+                      dropDate={dayData.dateStr}
+                      dropMealType={mealType}
+                      disabled={dayData.isPast}
+                      className="w-[92px] flex flex-col items-center gap-1"
+                    >
+                      {plansForType.map(plan => (
+                        <DraggableMealBadge
+                          key={plan.id}
+                          plan={plan}
+                          displayText={getPlanDisplayText(plan)}
+                          badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[mealType as MealType]} text-xs truncate text-center max-w-[88px]`}
+                          onClick={() => openActionsModal(plan)}
+                        />
+                      ))}
+                      {plansForType.length === 0 && activeDragPlan && !dayData.isPast && (
+                        <div className="w-full h-5 border-2 border-dashed border-gray-300 rounded-full" />
+                      )}
+                    </DroppableDayZone>
+                  );
+                })}
+              </div>
+            );
+          })}
+          
+          {/* Boutons + sous chaque colonne */}
+          <div className="flex gap-3 justify-center">
+            {daysData.slice(1, 4).map(dayData => (
+              <div key={`plus-${dayData.dateStr}`} className="w-[92px] flex justify-center">
+                <button
+                  onClick={() => openCreationModal(dayData.dateStr)}
+                  className={`w-14 text-xs py-1 rounded border transition-colors ${
+                    dayData.isPast 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+                  }`}
+                  disabled={dayData.isPast}
+                  title={dayData.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
+                >
+                  +
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
         
         {/* Ligne 3 : J+4, J+5, J+6 */}
@@ -592,29 +1198,95 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
           {/* En-têtes des jours */}
           <div className="flex gap-3 justify-center mb-1">
             {daysData.slice(4, 7).map(dayData => (
-              <div key={`header-${dayData.dateStr}`} className="w-[120px] text-center text-sm">
+              <DroppableDayZone
+                key={`header-${dayData.dateStr}`}
+                dropId={`header:${dayData.dateStr}`}
+                dropDate={dayData.dateStr}
+                disabled={dayData.isPast}
+                className="w-[92px] text-center text-sm"
+              >
                 {formatShortDay(dayData.date)}. {dayData.date.getDate()}
-              </div>
+              </DroppableDayZone>
             ))}
           </div>
           
           {/* Lignes par type de repas (seulement ceux qui ont des repas) */}
-          {(['breakfast', 'lunch', 'snack', 'dinner'] as MealType[]).map(mealType => (
-            <MealTypeRow 
-              key={mealType} 
-              days={daysData.slice(4, 7)} 
-              mealType={mealType}
-            />
-          ))}
+          {MEAL_TYPE_ORDER.map(mealType => {
+            // Vérifier si au moins un jour a ce type de repas
+            const hasMealInAnyDay = daysData.slice(4, 7).some(day => 
+              day.plans.some(p => p.mealType === mealType)
+            );
+            
+            if (!hasMealInAnyDay) return null;
+            
+            return (
+              <div key={mealType} className="flex gap-3 justify-center">
+                {daysData.slice(4, 7).map(dayData => {
+                  const plansForType = dayData.plans.filter(p => p.mealType === mealType);
+                  
+                  return (
+                    <DroppableDayZone
+                      key={`${dayData.dateStr}-${mealType}`}
+                      dropId={`cell:${dayData.dateStr}:${mealType}`}
+                      dropDate={dayData.dateStr}
+                      dropMealType={mealType}
+                      disabled={dayData.isPast}
+                      className="w-[92px] flex flex-col items-center gap-1"
+                    >
+                      {plansForType.map(plan => (
+                        <DraggableMealBadge
+                          key={plan.id}
+                          plan={plan}
+                          displayText={getPlanDisplayText(plan)}
+                          badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[mealType as MealType]} text-xs truncate text-center max-w-[88px]`}
+                          onClick={() => openActionsModal(plan)}
+                        />
+                      ))}
+                      {plansForType.length === 0 && activeDragPlan && !dayData.isPast && (
+                        <div className="w-full h-5 border-2 border-dashed border-gray-300 rounded-full" />
+                      )}
+                    </DroppableDayZone>
+                  );
+                })}
+              </div>
+            );
+          })}
+          
+          {/* Boutons + sous chaque colonne */}
+          <div className="flex gap-3 justify-center">
+            {daysData.slice(4, 7).map(dayData => (
+              <div key={`plus-${dayData.dateStr}`} className="w-[92px] flex justify-center">
+                <button
+                  onClick={() => openCreationModal(dayData.dateStr)}
+                  className={`w-14 text-xs py-1 rounded border transition-colors ${
+                    dayData.isPast 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+                  }`}
+                  disabled={dayData.isPast}
+                  title={dayData.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
+                >
+                  +
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <section className="w-full max-w-4xl mx-auto mb-8">
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex items-center justify-between mb-2">
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+    <section className="w-full max-w-4xl mx-auto mb-3">
+      <div className="bg-white rounded-lg shadow-sm p-3">
+        <div className="flex items-center justify-between mb-1">
           <h2 className="text-base font-bold text-gray-800 capitalize">
             {startDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
           </h2>
@@ -649,12 +1321,12 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Chargement...</div>
+          <div className="text-center py-4">Chargement...</div>
         ) : (
           renderDays()
         )}
 
-        <div className="mt-4 flex justify-end">
+        <div className="mt-2 flex justify-end">
           <Link
             href="/calendar"
             className="text-sm text-blue-600 hover:underline"
@@ -671,18 +1343,52 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
         </div>
       )}
 
+      {/* Modal de création */}
+      {showCreationModal && selectedDateForCreation && (
+        <MealPlanCreationModal
+          key={selectedDateForCreation}
+          isOpen={showCreationModal && !!selectedDateForCreation}
+          onClose={() => {
+            setShowCreationModal(false);
+            setSelectedDateForCreation(null);
+          }}
+          date={selectedDateForCreation || ''}
+          recipes={recipes}
+          onCreate={handleCreateMealPlan}
+        />
+      )}
+
       {/* Modal d'actions pour un repas */}
-      <MealPlanActionsModal
-        isOpen={showActionsModal}
-        onClose={() => {
-          setShowActionsModal(false);
-          setSelectedMealPlan(null);
-        }}
-        mealPlan={selectedMealPlan}
-        recipes={recipes}
-        onDelete={handleDeleteMealPlan}
-        onUpdate={handleUpdateMealPlan}
-      />
+      {showActionsModal && selectedMealPlan && (
+        <MealPlanActionsModal
+          key={selectedMealPlan.id}
+          isOpen={showActionsModal}
+          onClose={() => {
+            setShowActionsModal(false);
+            setSelectedMealPlan(null);
+          }}
+          mealPlan={selectedMealPlan}
+          recipes={recipes}
+          onDelete={handleDeleteMealPlan}
+          onUpdate={handleUpdateMealPlan}
+          onRefresh={fetchMealPlans}
+        />
+      )}
     </section>
+
+    {/* Zone de suppression : n'apparaît que pendant un drag */}
+    {activeDragPlan && <DeleteDropZone label={getPlanDisplayText(activeDragPlan)} />}
+
+    {/* Badge flottant qui suit le pointeur pendant le drag */}
+    <DragOverlay dropAnimation={null}>
+      {activeDragPlan && (
+        <div
+          className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[activeDragPlan.mealType]} text-xs truncate shadow-lg border border-gray-300 cursor-grabbing`}
+        >
+          {getPlanDisplayText(activeDragPlan)}
+        </div>
+      )}
+    </DragOverlay>
+    </DndContext>
   );
 }
