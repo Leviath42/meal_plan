@@ -22,7 +22,7 @@ function isValidRole(role: string): role is "ADMIN" | "MEMBER" | "GUEST" {
 }
 
 // Configuration principale de NextAuth
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, SessionProvider } = NextAuth({
   // Secret pour signer les cookies JWT
   // IMPORTANT: Définir AUTH_SECRET dans .env pour la production
   secret: process.env.AUTH_SECRET || 'dev-secret-change-in-production',
