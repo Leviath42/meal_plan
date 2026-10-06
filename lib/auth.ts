@@ -66,10 +66,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     // 3. Personnaliser la redirection en cas d'erreur de connexion
     async signIn({ user, account, profile, email, credentials }) {
-      // Si l'utilisateur est un GUEST, rediriger avec un paramètre d'erreur
+      // Si l'utilisateur est un GUEST (via user object)
       if (user?.role === 'GUEST') {
         return '/login?error=pending';
       }
+      
+      // Si user est null (erreur d'auth), vérifier si c'est dû à un compte GUEST
+      if (!user && credentials?.email) {
+        const [foundUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, credentials.email as string))
+          .limit(1) as UserWithRole[];
+        
+        if (foundUser?.role === 'GUEST') {
+          return '/login?error=pending';
+        }
+      }
+      
       return true;
     },
   },

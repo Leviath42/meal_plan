@@ -27,7 +27,6 @@ interface RegisterClientProps {
 
 export default function RegisterClient({ session, users: initialUsers, currentUserId }: RegisterClientProps) {
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>(initialUsers);
   const [formState, setFormState] = useState<{
     errors?: Record<string, string[]>;
     success?: boolean;
@@ -176,7 +175,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
           <div className="bg-white rounded-lg shadow-md p-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Utilisateurs à valider</h2>
             
-            {users.length === 0 ? (
+            {initialUsers.length === 0 ? (
               <p className="text-gray-600">Aucun utilisateur en attente de validation.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -201,7 +200,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {users.map((user) => (
+                    {initialUsers.map((user) => (
                       <tr key={user.id} className={user.role === 'GUEST' ? 'bg-yellow-50' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {user.name || 'N/A'}
@@ -222,11 +221,11 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                           {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             {user.role === 'GUEST' && (
                               <button
                                 onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-green-600 hover:text-green-800"
+                                className="text-green-600 hover:text-green-800 px-2 py-1 whitespace-nowrap"
                               >
                                 Valider
                               </button>
@@ -235,13 +234,13 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                               <>
                                 <button
                                   onClick={() => handleUpdateRole(user.id, 'ADMIN')}
-                                  className="text-blue-600 hover:text-blue-800"
+                                  className="text-blue-600 hover:text-blue-800 px-2 py-1 whitespace-nowrap"
                                 >
                                   Promouvoir
                                 </button>
                                 <button
                                   onClick={() => handleUpdateRole(user.id, 'GUEST')}
-                                  className="text-orange-600 hover:text-orange-800"
+                                  className="text-orange-600 hover:text-orange-800 px-2 py-1 whitespace-nowrap"
                                 >
                                   Rétrograder
                                 </button>
@@ -250,7 +249,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.role === 'ADMIN' && user.id !== currentUserId && (
                               <button
                                 onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-orange-600 hover:text-orange-800"
+                                className="text-orange-600 hover:text-orange-800 px-2 py-1 whitespace-nowrap"
                               >
                                 Rétrograder
                               </button>
@@ -258,7 +257,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.id !== currentUserId && (
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:text-red-800"
+                                className="text-red-600 hover:text-red-800 px-2 py-1 whitespace-nowrap"
                               >
                                 Supprimer
                               </button>
