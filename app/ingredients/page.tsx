@@ -9,7 +9,7 @@ export default async function IngredientsPage() {
 
   return (
     <main className="px-3 sm:px-6 py-4">
-      <div className="max-w-full mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-3">
           <h1 className="text-lg sm:text-xl font-bold">Ingrédients</h1>
         </div>

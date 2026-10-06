@@ -17,7 +17,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
 
   return (
     <main className="px-3 sm:px-6 py-4">
-      <div className="max-w-full mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
           <h1 className="text-lg sm:text-xl font-bold">Nouvelle recette</h1>
           <Link href="/recipes" className="bg-gray-200 text-gray-800 rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-gray-300 transition-colors whitespace-nowrap">

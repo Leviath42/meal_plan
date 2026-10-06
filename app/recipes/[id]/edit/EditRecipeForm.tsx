@@ -55,7 +55,7 @@ export default function EditRecipeForm({
 
   return (
     <main className="px-3 sm:px-6 py-4">
-      <div className="max-w-full mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
           <h1 className="text-lg sm:text-xl font-bold truncate">Modifier : {recipe.title}</h1>
           <div className="flex gap-2 flex-shrink-0">

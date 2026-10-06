@@ -9,7 +9,7 @@ export default async function RecipesPage() {
 
   return (
     <main className="px-3 sm:px-6 py-4">
-      <div className="max-w-full mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
           <h1 className="text-lg sm:text-xl font-bold">Mes recettes</h1>
           <Link href="/recipes/new" className="bg-blue-600 text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-blue-700 transition-colors whitespace-nowrap">
@@ -25,7 +25,7 @@ export default async function RecipesPage() {
             </Link>
           </div>
         ) : (
-          <ul className="divide-y border rounded-lg overflow-hidden">
+          <ul className="divide-y border rounded-lg overflow-hidden max-w-2xl mx-auto">
             {all.map((r) => {
               const totalTime = r.prepTime + r.cookTime;
               return (
