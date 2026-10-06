@@ -12,7 +12,7 @@ export type MealPlanFormState = {
 } | null;
 
 // Types pour les repas
-const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'] as const;
+const MEAL_TYPES = ['breakfast', 'lunch', 'snack', 'dinner'] as const;
 export type MealType = typeof MEAL_TYPES[number];
 
 // Récupérer tous les repas planifiés pour une période
@@ -83,21 +83,7 @@ export async function addMealPlan(
     return { errors: { mealType: ['Type de repas invalide'] } };
   }
 
-  // Vérifier si un repas existe déjà pour ce créneau
-  const existing = await db
-    .select()
-    .from(mealPlans)
-    .where(
-      and(
-        eq(mealPlans.date, date),
-        eq(mealPlans.mealType, mealType)
-      )
-    )
-    .limit(1);
-
-  if (existing.length > 0) {
-    return { errors: { form: ['Un repas est déjà planifié pour ce créneau'] } };
-  }
+  // Autoriser plusieurs plats par créneau (ex: entrée + plat principal pour le dîner)
 
   try {
     await db.insert(mealPlans).values({
