@@ -1,13 +1,25 @@
 import Link from 'next/link';
+import { db } from '@/lib/db';
+import { recipes } from '@/lib/db/schema';
+import Calendar from './Calendar';
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Récupérer les recettes pour le sélecteur
+  const allRecipes = await db.select({
+    id: recipes.id,
+    title: recipes.title,
+  }).from(recipes).orderBy(recipes.title);
+
   return (
     <main className="px-3 sm:px-6 py-4 max-w-2xl sm:max-w-4xl mx-auto">
-      <div className="text-center py-8 sm:py-12">
+      <div className="text-center py-4 sm:py-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-3">Planning</h1>
         <p className="text-sm sm:text-lg text-gray-600 mb-6">
           Application de planification des repas et de gestion de recettes
         </p>
+        
+        {/* Calendrier des repas */}
+        <Calendar recipes={allRecipes} />
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">
           <Link
