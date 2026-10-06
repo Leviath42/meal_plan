@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from "next-auth/react";
 import { Session } from "next-auth";
+import ThemeToggle from './ThemeToggle';
 
 export default function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
@@ -53,9 +54,10 @@ export default function Nav({ session }: { session: Session | null }) {
             ) : (
               <Link href="/login" className="text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors">Se connecter</Link>
             )}
+            <ThemeToggle />
           </div>
 
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-1">
             {session ? (
               <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-1.5 sm:p-2 rounded text-gray-600 hover:text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Menu">
                 <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -65,6 +67,7 @@ export default function Nav({ session }: { session: Session | null }) {
             ) : (
               <Link href="/login" className="text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors">Se connecter</Link>
             )}
+            <ThemeToggle />
           </div>
         </div>
 

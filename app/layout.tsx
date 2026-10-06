@@ -18,12 +18,19 @@ export const viewport = {
   userScalable: false,
 };
 
+// Applique le thème avant le premier rendu pour éviter un flash de mode clair :
+// préférence enregistrée, sinon préférence système
+const themeInitScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
   return (
-    <html lang="fr" className="h-full">
+    // suppressHydrationWarning : le script ci-dessous ajoute la classe .dark
+    // sur <html> avant l'hydratation React
+    <html lang="fr" className="h-full" suppressHydrationWarning>
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <SessionProvider session={session}>
           <Nav session={session} />
           <div>{children}</div>

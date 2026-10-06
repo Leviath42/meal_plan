@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V2 - Planification Complète du Cahier des Charges
 
 *Dernière mise à jour : 2026-10-06*
-*Version : 2.4*
+*Version : 2.5*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md)*
 
 ---
@@ -78,20 +78,22 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [x] Boutons Précédent/Suivant par jour + retour à la journée en cours
   - [x] Boutons Précédent/Suivant par mois (accueil et calendrier)
   - [x] Clic sur une date affichée pour la placer en première position (accueil et calendrier)
-  - [ ] Sélecteur de date direct (saisie d'une date arbitraire)
-- [ ] **Affichage des détails**
-  - [ ] Voir les informations de la recette directement dans le calendrier
+- [x] **Affichage des détails**
   - [x] Modal d'actions par repas (modifier — type de repas, recette, note, couverts —, replanifier, supprimer)
-- [ ] **Création d'une page de paramétrage**
-  - [ ] Nombres de couverts par défaut
-  - [ ] Mode de planification
-  - [ ] autres ?
-  - [ ] **Vérifier l'ensemble des interaction utilisateur possible**
-    - [ ] Formulaires
-    - [ ] Chaque page
+- [ ] **Vérifier l'ensemble des interaction utilisateur possible**
+  - [ ] Formulaires
+  - [ ] Chaque page
   - [x] **Revoir la mise en page de la page calendier** (structure 1-3-3-3-3 via `PlannerBoard`)
+
+- [ ] **A faire plus tard en option**
   - [ ] Ajout d'une recette à un créneau vide directement par glisser-déposer (actuellement via le modal « + »)
-  
+  - [ ] Voir les informations de la recette directement dans le calendrier
+  - [ ] **Création d'une page de paramétrage**
+    - [ ] Nombres de couverts par défaut
+    - [ ] Mode de planification
+    - [x] Gestion du thème (sombre/clair/système) - *fait via la bascule de la navigation : défaut = préférence système, persistance localStorage, anti-flash au chargement*
+    - [ ] autres ?
+
 **Fichiers à créer/modifier** :
 - `app/calendar/page.tsx` (page principale)
 - `app/calendar/CalendarClient.tsx` (composant client avec dnd-kit)
@@ -478,6 +480,7 @@ CREATE TABLE pantry_items (
 - ✅ **Suppression de la contrainte d'unicité** - plusieurs plats par créneau (date + type de repas)
 - ✅ **Corrections UX/scroll** - min-h-screen fautif supprimé (layout, profil, register), pages compactées (accueil, profil, register)
 - ✅ **Modal de création d'utilisateur** sur la page register (admin)
+- ✅ **Mode sombre** - palette remappée via les variables Tailwind v4, bascule dans la navigation (défaut : préférence système), persistance localStorage, anti-flash au chargement
 
 ### **Fonctionnalités à Implémenter** : ~25%
 - ✅ **F01 - Planification** : MVP complet (accueil 7 jours, page calendrier 19 jours en 1-3-3-3-3-3-3 avec navigation jour/mois, DnD, modals)
