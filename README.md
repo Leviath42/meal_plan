@@ -75,6 +75,8 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - ✅ **Plusieurs plats par créneau** : la contrainte d'unicité (1 repas par date + type) a été retirée
 - ✅ **Affichage du calendrier** avec 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
 - ✅ **Navigation par jour** avec boutons Précédent/Suivant/Aujourd'hui + **clic sur une date pour l'afficher en première position**
+- ✅ **Navigation par mois** (accueil et calendrier), calculée depuis la première date affichée
+- ✅ **Type de repas modifiable** dans le formulaire Modifier du modal d'actions
 - ✅ **Sélection de recettes** pour chaque créneau
 - ✅ **Type de repas par défaut : Dîner** lors de la création d'un repas planifié
 - ✅ **Repas personnalisés** (notes textuelles sans recette)
@@ -87,6 +89,8 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - ✅ **Validation TypeScript** - Correction des problèmes de typage avec FormData
 - ✅ **Mises à jour partielles** - updateMealPlan accepte les champs partiels (chaine vide = vider un champ)
 - ✅ **Fix scroll permanent** - suppression des `min-h-screen` sous la navbar (layout, profil, register)
+- ✅ **Hauteur du bandeau prise en compte** - conteneurs centrés de login et reset-password en `calc(100vh - navbar)`
+- ✅ **Fix fuseau horaire** - dates formatées/parsées en fuseau local (le clic sur une date affichait J-1)
 - ✅ **Pages compactées** - Accueil (cartes côte à côte), Profil (infos sur une ligne, question secrète fusionnée dans l'onglet), Register (formulaire en grille, modal de création d'utilisateur)
 
 ---
