@@ -61,9 +61,11 @@ export default function ProfileClient({ session }: ProfileClientProps) {
     const result = await updateUserPassword(null, formData);
     
     if (result?.success) {
-      setFormState({ success: true, message: result.message || 'Mot de passe mis à jour avec succès. Veuillez vous reconnecter.' });
+      // Reset le formulaire avant la déconnexion (qui détruit le composant)
       e.currentTarget.reset();
-      await signOut({ callbackUrl: '/login' });
+      setFormState({ success: true, message: result.message || 'Mot de passe mis à jour avec succès. Veuillez vous reconnecter.' });
+      // Ne pas await car signOut déclenche une redirection qui détruit le composant
+      signOut({ callbackUrl: '/login' });
     } else {
       setFormState(result);
     }
