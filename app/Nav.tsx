@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { signOut as clientSignOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { Session } from "next-auth";
 
-export default function Nav({ session }: { session: any }) {
+export default function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await clientSignOut({ redirect: false });
+    await signOut({ redirect: false });
     router.push('/login');
     router.refresh();
   };

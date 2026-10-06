@@ -1,6 +1,6 @@
 # Meal Plan - Roadmap & Revue Technique
 
-*Dernière mise à jour : 2026-10-06*
+*Dernière mise à jour : 2026-10-06 (Réinitialisation de mot de passe finalisée)
 
 ---
 
@@ -39,6 +39,28 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 - ✅ Changement de mot de passe avec validation
 - ✅ Message d'attente pour les GUEST
 - ✅ Déconnexion automatique après changement de mot de passe
+
+### 🔑 **Réinitialisation de Mot de Passe** *(Nouveau 2026-10-06 - Finalisé)*
+- ✅ **Flux complet** : Demande email → Question secrète → Vérification réponse → Réinitialisation
+- ✅ **Sécurité renforcée** : Messages génériques pour ne pas révéler l'existence des emails
+- ✅ **Question secrète** : Chaque utilisateur peut configurer sa propre question via le profil
+- ✅ **Vérification en 2 étapes** : Validation côté serveur avant d'autoriser la réinitialisation
+- ✅ **Réinitialisation sécurisée** : Hash du nouveau mot de passe avec Argon2
+- ✅ **Redirection automatique** : Vers la page de login après succès
+- ✅ **Page dédiée** : `/reset-password` accessible depuis la page de login
+
+**Flux de réinitialisation :**
+1. Utilisateur clique "Mot de passe oublié ?" sur `/login`
+2. Saisit son email → Récupération de la question secrète (si configurée)
+3. Répond à la question → Vérification côté serveur
+4. Saisit nouveau mot de passe (2x) → Réinitialisation + redirection vers `/login`
+
+**Fichiers impliqués :**
+- `app/reset-password/page.tsx` - Page serveur
+- `app/reset-password/ResetPasswordClient.tsx` - Composant client avec UI
+- `app/actions/auth.ts` - Server Actions (`resetPasswordWithSecurityQuestion`, `getUserSecurityQuestion`, `verifySecurityAnswer`)
+- `lib/db/schema.ts` - Schéma avec `securityQuestion` et `securityAnswerHash`
+- `lib/db/migrations/0001_add_security_question_to_users.sql` - Migration
 
 ### 🍳 **Gestion des Recettes** *(existait avant le rollback)*
 - ✅ CRUD complet des recettes
@@ -87,16 +109,10 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 ```
 
 ### 2️⃣ **Améliorations Authentification** *(Haute Priorité)*
-- ✅ Notification à l'admin lorsqu'un nouvel utilisateur s'inscrit
+- ✅ Notification à l'admin lorsqu'un nouvel utilisateur s'inscrit (badge "NOUVEAU" sur les GUEST récents)
 - ✅ Page de profil utilisateur (changer mot de passe, voir ses infos) (page /profile)
 - ✅ **Correction importante** : Empêcher complètement la connexion des GUEST (modification `lib/auth.ts` + `proxy.ts`)
-- ✅ **Mot de passe oublié / réinitialisation** (NOUVEAU 2026-10-06)
-  - ✅ Table `password_reset_tokens` avec expiration (1 heure)
-  - ✅ **Système de migrations Drizzle** automatique au démarrage (`lib/db/migrate.ts`)
-  - ✅ **Service email standalone** avec Nodemailer (SMTP) - pas de dépendance API externe
-  - ✅ Server Actions: `requestPasswordReset`, `resetPassword`
-  - ✅ Pages: `/forgot-password`, `/reset-password/[token]`
-  - ✅ Lien "Mot de passe oublié ?" sur page login
+- ✅ **Mot de passe oublié / réinitialisation** via question secrète (flux complet implémenté)
 
 ### 3️⃣ **Fonctionnalités Manquantes** *(Moyenne Priorité)*
 - [ ] **OAuth** (Google, GitHub) - *Attendre d'avoir les variables d'environnement*
@@ -379,7 +395,7 @@ toast.success('Utilisateur validé avec succès !');
 | Rationalisation code | ⏳ En attente | 🟡 Moyenne | Extraire composants |
 | Notifications utilisateur | ⏳ En attente | 🟢 Basse | Intégrer Sonner |
 | OAuth (Google/GitHub) | ⏳ En attente | 🟢 Basse | Configurer env vars |
-| Mot de passe oublié | ⏳ En attente | 🟢 Basse | Implémenter flux de réinitialisation |
+| Mot de passe oublié / Réinitialisation | ✅ Terminée | 🔴 Urgent | Flux complet avec question secrète + vérification 2 étapes |
 
 ---
 

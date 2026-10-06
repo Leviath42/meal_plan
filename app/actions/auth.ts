@@ -2,13 +2,13 @@
 
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { users, passwordResetTokens } from '@/lib/db/schema';
+import { users } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
 import Argon2 from '@node-rs/argon2';
 import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { sendPasswordResetEmail } from '@/lib/email';
+
 
 export type FormState = {
   errors?: Record<string, string[]>;
@@ -20,6 +20,12 @@ export type FormState = {
 async function hashPassword(password: string): Promise<string> {
   return await Argon2.hash(password);
 }
+
+// Hash la réponse secrète avec Argon2 (même algorithme que le mot de passe)
+async function hashSecurityAnswer(answer: string): Promise<string> {
+  return await Argon2.hash(answer);
+}
+
 
 export async function registerUser(
   prevState: FormState,
@@ -69,6 +75,7 @@ export async function registerUser(
   }
 }
 
+
 export async function updateUserRole(
   userId: string,
   newRole: 'ADMIN' | 'MEMBER' | 'GUEST',
@@ -95,6 +102,7 @@ export async function updateUserRole(
     return { errors: { form: ['Erreur lors de la mise à jour du rôle'] } };
   }
 }
+
 
 export async function deleteUser(userId: string, sessionUserId?: string): Promise<FormState> {
   const session = await auth();
@@ -129,10 +137,12 @@ export async function deleteUser(userId: string, sessionUserId?: string): Promis
   }
 }
 
+
 // Récupérer tous les utilisateurs (pour l'admin)
 export async function getAllUsers() {
   return await db.select().from(users).orderBy(users.createdAt);
 }
+
 
 // Récupérer un utilisateur par ID
 export async function getUserById(id: string) {
@@ -143,6 +153,7 @@ export async function getUserById(id: string) {
     .limit(1);
   return user;
 }
+
 
 export async function updateUserPassword(
   prevState: FormState,
@@ -203,83 +214,72 @@ export async function updateUserPassword(
   }
 }
 
-// Générer un token aléatoire sécurisé
-function generateResetToken(): string {
-  return crypto.randomUUID();
+// Mettre à jour la question secrète pour un utilisateur
+export async function updateUserSecurityQuestion(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const session = await auth();
+  
+  if (!session?.user) {
+    return { errors: { form: ['Vous devez être connecté pour mettre à jour votre question secrète'] } };
+  }
+
+  const userId = formData.get('userId') as string;
+  const securityQuestion = formData.get('securityQuestion') as string;
+  const securityAnswer = formData.get('securityAnswer') as string;
+
+  // Vérifier que l'ID correspond à l'utilisateur connecté
+  if (userId !== session.user.id) {
+    return { errors: { form: ['Vous ne pouvez modifier que votre propre question secrète'] } };
+  }
+
+  // Validation
+  if (!securityQuestion || securityQuestion.trim().length === 0) {
+    return { errors: { securityQuestion: ['La question secrète est requise'] } };
+  }
+
+  if (!securityAnswer || securityAnswer.trim().length < 3) {
+    return { errors: { securityAnswer: ['La réponse doit faire au moins 3 caractères'] } };
+  }
+
+  try {
+    // Hash de la réponse
+    const hashedAnswer = await hashSecurityAnswer(securityAnswer);
+
+    // Mettre à jour la question secrète et la réponse hashée
+    await db
+      .update(users)
+      .set({
+        securityQuestion: securityQuestion.trim(),
+        securityAnswerHash: hashedAnswer,
+        updatedAt: new Date().toISOString()
+      })
+      .where(eq(users.id, userId));
+
+    return { 
+      success: true, 
+      message: 'Question secrète mise à jour avec succès.' 
+    };
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la question secrète:', error);
+    return { errors: { form: ['Une erreur est survenue'] } };
+  }
 }
 
-// Durée de validité du token : 1 heure
-const RESET_TOKEN_EXPIRY = 60 * 60 * 1000; // 1 heure en millisecondes
-
-// Demander une réinitialisation de mot de passe
-export async function requestPasswordReset(
+// Réinitialiser le mot de passe via question secrète
+export async function resetPasswordWithSecurityQuestion(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
   const email = formData.get('email') as string;
-
-  if (!email) {
-    return { errors: { email: ['Email requis'] } };
-  }
-
-  // Trouver l'utilisateur par email
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-
-  if (!user) {
-    // Ne pas révéler que l'email existe ou non pour des raisons de sécurité
-    // Retourner un message générique
-    return { 
-      success: true, 
-      message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' 
-    };
-  }
-
-  // Supprimer les anciens tokens pour cet utilisateur
-  await db
-    .delete(passwordResetTokens)
-    .where(eq(passwordResetTokens.userId, user.id));
-
-  // Générer un nouveau token
-  const token = generateResetToken();
-  const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY).toISOString();
-
-  // Stocker le token en base de données
-  await db.insert(passwordResetTokens).values({
-    userId: user.id,
-    token,
-    expiresAt,
-  });
-
-  // Construire le lien de réinitialisation
-  const appUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
-  const resetLink = `${appUrl}/reset-password?token=${token}`;
-
-  // Envoyer l'email (en mode dev, cela affichera juste dans la console)
-  const emailSent = await sendPasswordResetEmail(email, resetLink);
-
-  // Toujours retourner un message générique pour des raisons de sécurité
-  return { 
-    success: true, 
-    message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' 
-  };
-}
-
-// Réinitialiser le mot de passe avec un token
-export async function resetPassword(
-  prevState: FormState,
-  formData: FormData
-): Promise<FormState> {
-  const token = formData.get('token') as string;
+  const securityAnswer = formData.get('securityAnswer') as string;
   const newPassword = formData.get('newPassword') as string;
   const confirmPassword = formData.get('confirmPassword') as string;
 
   // Validation
-  if (!token) {
-    return { errors: { form: ['Token manquant'] } };
+  if (!email) {
+    return { errors: { email: ['Email requis'] } };
   }
 
   if (!newPassword || newPassword.length < 6) {
@@ -290,43 +290,117 @@ export async function resetPassword(
     return { errors: { confirmPassword: ['Les mots de passe ne correspondent pas'] } };
   }
 
-  // Trouver le token valide
-  const [resetToken] = await db
+  // Trouver l'utilisateur par email
+  const [user] = await db
     .select()
-    .from(passwordResetTokens)
-    .where(eq(passwordResetTokens.token, token))
+    .from(users)
+    .where(eq(users.email, email))
     .limit(1);
 
-  if (!resetToken) {
-    return { errors: { form: ['Token de réinitialisation invalide ou expiré'] } };
+  if (!user) {
+    // Ne pas révéler que l'email existe ou non
+    return { 
+      success: true, 
+      message: 'Si cet email existe et a une question secrète configurée, le mot de passe a été réinitialisé.' 
+    };
   }
 
-  // Vérifier la date d'expiration
-  if (new Date(resetToken.expiresAt) < new Date()) {
-    // Supprimer le token expiré
+  // Vérifier que l'utilisateur a une question secrète configurée
+  // Toujours retourner un message générique pour ne pas révéler l'existence de l'email
+  if (!user.securityQuestion || !user.securityAnswerHash) {
+    return { 
+      success: true,
+      message: 'Si cet email existe et a une question secrète configurée, la réinitialisation est en cours.'
+    };
+  }
+
+  // Vérifier la réponse secrète
+  const isValidAnswer = await Argon2.verify(user.securityAnswerHash, securityAnswer);
+  
+  if (!isValidAnswer) {
+    return { errors: { securityAnswer: ['Réponse incorrecte'] } };
+  }
+
+  try {
+    // Hash du nouveau mot de passe
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Mettre à jour le mot de passe
     await db
-      .delete(passwordResetTokens)
-      .where(eq(passwordResetTokens.token, token));
-    return { errors: { form: ['Token de réinitialisation expiré'] } };
+      .update(users)
+      .set({ 
+        password: hashedPassword, 
+        updatedAt: new Date().toISOString() 
+      })
+      .where(eq(users.id, user.id));
+
+    return { 
+      success: true, 
+      message: 'Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.' 
+    };
+  } catch (error) {
+    console.error('Erreur lors de la réinitialisation du mot de passe:', error);
+    return { errors: { form: ['Une erreur est survenue'] } };
   }
+}
 
-  // Hash du nouveau mot de passe
-  const hashedPassword = await hashPassword(newPassword);
+// Récupérer la question secrète d'un utilisateur (pour l'afficher dans la page de réinitialisation)
+export async function getUserSecurityQuestion(email: string) {
+  const [user] = await db
+    .select({
+      securityQuestion: users.securityQuestion,
+    })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
 
-  // Mettre à jour le mot de passe de l'utilisateur
-  await db
-    .update(users)
-    .set({ password: hashedPassword, updatedAt: new Date().toISOString() })
-    .where(eq(users.id, resetToken.userId));
-
-  // Supprimer le token utilisé (à usage unique)
-  await db
-    .delete(passwordResetTokens)
-    .where(eq(passwordResetTokens.token, token));
+  // Toujours retourner un message générique pour ne pas révéler l'existence de l'email
+  if (!user?.securityQuestion) {
+    return { 
+      securityQuestion: null, 
+      message: 'Si cet email existe et a une question secrète, elle sera affichée.' 
+    };
+  }
 
   return { 
-    success: true, 
-    message: 'Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.' 
+    securityQuestion: user.securityQuestion,
+    hasSecurityQuestion: true
   };
 }
 
+// Vérifier la réponse secrète pour un email (utilisé dans l'étape 1 de la réinitialisation)
+export async function verifySecurityAnswer(
+  email: string,
+  securityAnswer: string
+): Promise<FormState> {
+  if (!email || !securityAnswer) {
+    return { errors: { form: ['Email et réponse requis'] } };
+  }
+
+  // Trouver l'utilisateur par email
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  // Toujours retourner un message générique pour ne pas révéler l'existence de l'email
+  if (!user?.securityQuestion || !user?.securityAnswerHash) {
+    return {
+      success: true,
+      message: 'Si cet email existe et a une question secrète configurée, vous pouvez continuer.'
+    };
+  }
+
+  // Vérifier la réponse
+  const isValidAnswer = await Argon2.verify(user.securityAnswerHash, securityAnswer);
+  
+  if (!isValidAnswer) {
+    return { errors: { securityAnswer: ['Réponse incorrecte'] } };
+  }
+
+  return {
+    success: true,
+    message: 'Réponse correcte. Vous pouvez maintenant réinitialiser votre mot de passe.'
+  };
+}
