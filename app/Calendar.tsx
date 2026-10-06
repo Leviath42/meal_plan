@@ -6,11 +6,10 @@ import { getMealPlans, addMealPlan, deleteMealPlan, MealPlanFormState, MealType 
 import { useRouter } from 'next/navigation';
 import type { JSX } from 'react';
 
-
 interface MealPlan {
   id: string;
   date: string;
-  mealType: string; // Peut être 'breakfast' | 'lunch' | 'dinner' mais vient de la DB comme string
+  mealType: string;
   recipeId: string | null;
   customNote: string | null;
   servings: number | null;
@@ -21,45 +20,43 @@ interface CalendarProps {
 }
 
 // Noms des types de repas en français
-const MEAL_TYPE_LABELS: Record<MealType, string> = {
-  breakfast: 'Petit-déjeuner',
+const MEAL_TYPE_LABELS: Record<string, string> = {
+  breakfast: 'Petit-déj',
   lunch: 'Déjeuner',
   dinner: 'Dîner',
 };
 
 // Couleurs pour chaque type de repas
-const MEAL_TYPE_COLORS: Record<MealType, string> = {
-  breakfast: 'bg-orange-100 text-orange-800 border-orange-300',
-  lunch: 'bg-blue-100 text-blue-800 border-blue-300',
-  dinner: 'bg-purple-100 text-purple-800 border-purple-300',
+const MEAL_TYPE_COLORS: Record<string, string> = {
+  breakfast: 'bg-orange-100 text-orange-800',
+  lunch: 'bg-blue-100 text-blue-800',
+  dinner: 'bg-purple-100 text-purple-800',
 };
+
+// Jours de la semaine en français
+const DAYS_OF_WEEK = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 export default function Calendar({ recipes = [] }: CalendarProps) {
   const router = useRouter();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [formState, setFormState] = useState<MealPlanFormState>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
 
-  // Récupérer les repas planifiés pour le mois en cours
+  // Récupérer les repas planifiés pour la semaine en cours (J à J+6)
   const fetchMealPlans = async () => {
     setLoading(true);
     try {
-      const startDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      ).toISOString().split('T')[0];
-      
-      const endDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
-      ).toISOString().split('T')[0];
+      // Calculer la date de fin (6 jours après la date de début)
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
 
-      const result = await getMealPlans(startDate, endDate);
+      const startStr = startDate.toISOString().split('T')[0];
+      const endStr = endDate.toISOString().split('T')[0];
+
+      const result = await getMealPlans(startStr, endStr);
       setMealPlans(result.mealPlans);
     } catch (error) {
       console.error('Erreur lors du chargement des repas:', error);
@@ -70,48 +67,64 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
 
   useEffect(() => {
     fetchMealPlans();
-  }, [currentDate]);
+  }, [startDate]);
 
-  // Gestion des mois
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  // Navigation : jour suivant
+  const goToNextDay = () => {
+    const newDate = new Date(startDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setStartDate(newDate);
   };
 
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  // Navigation : jour précédent
+  const goToPreviousDay = () => {
+    const newDate = new Date(startDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setStartDate(newDate);
+  };
+
+  // Navigation : retourner à aujourd'hui
+  const goToToday = () => {
+    setStartDate(new Date());
   };
 
   // Formatage des dates
-  const formatMonthYear = (date: Date): string => {
-    return date.toLocaleString('fr-FR', { 
-      month: 'long', 
-      year: 'numeric' 
-    });
+  const formatShortDate = (date: Date): string => {
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
-  const getDaysInMonth = (year: number, month: number): number => {
-    return new Date(year, month + 1, 0).getDate();
+  const formatFullDate = (date: Date): string => {
+    return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   };
 
-  const getFirstDayOfWeek = (year: number, month: number): number => {
-    return new Date(year, month, 1).getDay();
+  const getDateString = (date: Date): string => {
+    return date.toISOString().split('T')[0];
   };
 
   // Gérer le clic sur un jour
-  const handleDateClick = (date: string, mealType: MealType) => {
+  const handleDateClick = (dateStr: string) => {
+    setSelectedDate(dateStr);
+    setSelectedMealType(null);
+  };
+
+  // Gérer le clic sur un type de repas spécifique
+  const handleMealTypeClick = (dateStr: string, mealType: MealType) => {
     // Vérifier s'il y a déjà un repas ce jour-là pour ce type
     const existing = mealPlans.find(
-      mp => mp.date === date && mp.mealType === mealType
+      mp => mp.date === dateStr && mp.mealType === mealType
     );
 
     if (existing) {
       // Demander confirmation de suppression
-      if (window.confirm(`Supprimer le repas "${existing.customNote || recipes.find(r => r.id === existing.recipeId)?.title || 'non nommé'}" du ${formatDate(date)} (${MEAL_TYPE_LABELS[mealType]}) ?`)) {
+      const mealName = recipes.find(r => r.id === existing.recipeId)?.title || 
+                       existing.customNote || 
+                       MEAL_TYPE_LABELS[mealType];
+      if (window.confirm(`Supprimer le repas "${mealName}" du ${new Date(dateStr).toLocaleDateString('fr-FR')} (${MEAL_TYPE_LABELS[mealType]}) ?`)) {
         deleteMealPlanAction(existing.id);
       }
     } else {
-      // Ouvrir le sélecteur de recette
-      setSelectedDate(date);
+      // Ouvrir le sélecteur pour ajouter un repas
+      setSelectedDate(dateStr);
       setSelectedMealType(mealType);
     }
   };
@@ -156,74 +169,83 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
     setSelectedMealType(null);
   };
 
-  // Formatage de date
-  const formatDate = (dateStr: string): string => {
-    const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('fr-FR', { 
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short' 
-    });
-  };
-
   // Récupérer les repas pour une date
-  const getPlansForDate = (date: string): MealPlan[] => {
-    return mealPlans.filter(mp => mp.date === date);
+  const getPlansForDate = (dateStr: string): MealPlan[] => {
+    return mealPlans.filter(mp => mp.date === dateStr);
   };
 
-  // Récupérer le repas pour un type spécifique
-  const getPlanForMealType = (date: string, mealType: MealType): MealPlan | undefined => {
-    return mealPlans.find(mp => mp.date === date && mp.mealType === mealType);
+  // Compter le nombre de repas pour une date
+  const getMealCountForDate = (dateStr: string): number => {
+    return getPlansForDate(dateStr).length;
   };
 
-  // Générer le calendrier
-  const renderCalendar = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const daysInMonth = getDaysInMonth(year, month);
-    const firstDayOfWeek = getFirstDayOfWeek(year, month);
+  // Récupérer la liste des types de repas pour une date
+  const getMealTypesForDate = (dateStr: string): string[] => {
+    return getPlansForDate(dateStr).map(mp => mp.mealType);
+  };
 
+  // Générer les jours à afficher (7 jours)
+  const renderDays = () => {
     const days: JSX.Element[] = [];
+    const currentDate = new Date(startDate);
 
-    // Jours vides pour le début de la semaine
-    for (let i = 0; i < firstDayOfWeek; i++) {
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(currentDate);
+      date.setDate(currentDate.getDate() + i);
+      const dateStr = getDateString(date);
+      const isToday = dateStr === getDateString(new Date());
+      const plansCount = getMealCountForDate(dateStr);
+      const mealTypes = getMealTypesForDate(dateStr);
+
+      // Vérifier si la date est dans le passé (optionnel : désactiver)
+      const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+
       days.push(
-        <div key={`empty-${i}`} className="p-2"></div>
-      );
-    }
-
-    // Jours du mois
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = new Date(year, month, day).toISOString().split('T')[0];
-      const plansForDay = getPlansForDate(dateStr);
-
-      days.push(
-        <div key={dateStr} className="p-1 min-h-[100px]">
-          <div className="font-medium text-gray-800 mb-1">{day}</div>
+        <div key={dateStr} className="relative">
+          {/* Jour de la semaine */}
+          <div className="text-xs font-medium text-gray-500 text-center mb-1">
+            {DAYS_OF_WEEK[date.getDay()]}
+          </div>
           
-          {/* Slots pour chaque type de repas */}
-          {(['breakfast', 'lunch', 'dinner'] as MealType[]).map((mealType) => {
-            const plan = getPlanForMealType(dateStr, mealType);
-            const label = MEAL_TYPE_LABELS[mealType];
-            const colorClass = MEAL_TYPE_COLORS[mealType];
-
-            return (
-              <button
-                key={`${dateStr}-${mealType}`}
-                onClick={() => handleDateClick(dateStr, mealType)}
-                className={`w-full text-xs truncate text-left px-1.5 py-1 mb-0.5 rounded ${colorClass} ${plan ? 'opacity-100' : 'opacity-50 hover:opacity-100'}`}
-                title={plan ? `${label}: ${recipes.find(r => r.id === plan.recipeId)?.title || plan.customNote || 'Repas'}` : `Ajouter un ${label.toLowerCase()}`}
-              >
-                {plan ? (
-                  <>
-                    <span className="font-semibold">{label.split('')[0]}:</span> {recipes.find(r => r.id === plan.recipeId)?.title || plan.customNote || 'Repas'}
-                  </>
-                ) : (
-                  <span className="italic">+ {label}</span>
-                )}
-              </button>
-            );
-          })}
+          {/* Date */}
+          <div className={`text-center font-bold mb-2 ${isToday ? 'text-blue-600' : 'text-gray-800'}`}>
+            {date.getDate()}
+          </div>
+          
+          {/* Indicateur de nombre de repas */}
+          {plansCount > 0 ? (
+            <div className="flex flex-wrap gap-1 justify-center mb-2">
+              {mealPlans
+                .filter(mp => mp.date === dateStr)
+                .map(plan => (
+                  <span
+                    key={`${plan.date}-${plan.mealType}`}
+                    className={`text-xs px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]}`}
+                    title={plan.customNote || recipes.find(r => r.id === plan.recipeId)?.title || MEAL_TYPE_LABELS[plan.mealType]}
+                  >
+                    {plan.customNote || recipes.find(r => r.id === plan.recipeId)?.title || MEAL_TYPE_LABELS[plan.mealType]}
+                  </span>
+                ))}
+            </div>
+          ) : (
+            <div className="min-h-[24px] flex items-center justify-center mb-2">
+              <span className="text-xs text-gray-400">Aucun repas</span>
+            </div>
+          )}
+          
+          {/* Bouton de planification */}
+          <button
+            onClick={() => handleDateClick(dateStr)}
+            className={`w-full text-xs py-1.5 rounded border transition-colors ${
+              isPast 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+            }`}
+            disabled={isPast}
+            title={isPast ? 'Date dans le passé' : 'Ajouter un repas'}
+          >
+            + Planifier
+          </button>
         </div>
       );
     }
@@ -233,65 +255,113 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
 
   // Modal pour sélectionner une recette
   const RecipeSelectorModal = () => {
-    if (!selectedDate || !selectedMealType) return null;
+    if (!selectedDate) return null;
+
+    const dateObj = new Date(selectedDate);
+    const isPastDate = dateObj < new Date(new Date().setHours(0, 0, 0, 0));
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
           <div className="p-4 border-b">
             <h3 className="font-bold text-lg">
-              Ajouter un repas pour le {formatDate(selectedDate)}
+              Planifier un repas
             </h3>
             <p className="text-sm text-gray-600">
-              {MEAL_TYPE_LABELS[selectedMealType]}
+              {formatFullDate(new Date(selectedDate))}
             </p>
           </div>
 
           <div className="p-4">
-            {/* Option : Choisir une recette existante */}
-            <div className="mb-4">
-              <h4 className="font-medium mb-2">Recettes disponibles :</h4>
-              {recipes.length === 0 ? (
-                <p className="text-sm text-gray-500 italic">Aucune recette disponible. <Link href="/recipes/new" className="text-blue-600 hover:underline">Créer une recette</Link></p>
-              ) : (
-                <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                  {recipes.map(recipe => (
-                    <button
-                      key={recipe.id}
-                      onClick={() => addMealPlanAction(recipe.id)}
-                      className="w-full text-left p-2 border rounded hover:bg-gray-50 transition-colors"
-                    >
-                      {recipe.title}
-                    </button>
-                  ))}
+            {isPastDate ? (
+              <div className="text-center py-4">
+                <p className="text-gray-500">Impossible de planifier un repas dans le passé.</p>
+              </div>
+            ) : (
+              <>
+                {/* Sélection du type de repas */}
+                <div className="mb-4">
+                  <h4 className="font-medium mb-2">Type de repas :</h4>
+                  <div className="flex gap-2">
+                    {(Object.keys(MEAL_TYPE_LABELS) as MealType[]).map(mealType => (
+                      <button
+                        key={mealType}
+                        onClick={() => setSelectedMealType(mealType as MealType)}
+                        className={`px-3 py-1 rounded border text-sm transition-colors ${
+                          selectedMealType === mealType
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {MEAL_TYPE_LABELS[mealType]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Option : Ajouter un repas personnalisé */}
-            <div className="mb-4">
-              <h4 className="font-medium mb-2">Ou créer un repas personnalisé :</h4>
-              <input
-                type="text"
-                id="customNote"
-                placeholder="Ex: Soirée Pizza, Barbecue..."
-                className="w-full p-2 border rounded"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    addMealPlanAction(null, e.currentTarget.value);
-                  }
-                }}
-              />
-            </div>
+                {selectedMealType && (
+                  <>
+                    {/* Option : Choisir une recette existante */}
+                    <div className="mb-4">
+                      <h4 className="font-medium mb-2">Recettes disponibles :</h4>
+                      {recipes.length === 0 ? (
+                        <p className="text-sm text-gray-500 italic">
+                          Aucune recette disponible. <Link href="/recipes/new" className="text-blue-600 hover:underline">Créer une recette</Link>
+                        </p>
+                      ) : (
+                        <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                          {recipes.map(recipe => (
+                            <button
+                              key={recipe.id}
+                              onClick={() => addMealPlanAction(recipe.id, undefined)}
+                              className="w-full text-left p-2 border rounded hover:bg-gray-50 transition-colors"
+                            >
+                              {recipe.title}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={cancelSelection}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
-              >
-                Annuler
-              </button>
-            </div>
+                    {/* Option : Ajouter un repas personnalisé */}
+                    <div className="mb-4">
+                      <h4 className="font-medium mb-2">Ou créer un repas personnalisé :</h4>
+                      <input
+                        type="text"
+                        id="customNote"
+                        placeholder="Ex: Soirée Pizza, Barbecue..."
+                        className="w-full p-2 border rounded"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addMealPlanAction(null, e.currentTarget.value);
+                          }
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={cancelSelection}
+                    className="px-4 py-2 border rounded hover:bg-gray-50"
+                  >
+                    Annuler
+                  </button>
+                  {selectedMealType && !isPastDate && (
+                    <button
+                      onClick={() => {
+                        const customNoteInput = document.getElementById('customNote') as HTMLInputElement;
+                        addMealPlanAction(null, customNoteInput?.value);
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Ajouter
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -315,29 +385,30 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
     <section className="w-full max-w-4xl mx-auto mb-8">
       <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-800">Calendrier des Repas</h2>
+          <h2 className="text-lg font-bold text-gray-800">Semaine en cours</h2>
           <div className="flex gap-2">
             <button
-              onClick={goToPreviousMonth}
-              className="p-1 rounded hover:bg-gray-100"
+              onClick={goToPreviousDay}
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
               disabled={loading}
+              title="Semaine précédente"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="font-medium">{formatMonthYear(currentDate)}</span>
             <button
-              onClick={goToNextMonth}
-              className="p-1 rounded hover:bg-gray-100"
+              onClick={goToNextDay}
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
               disabled={loading}
+              title="Semaine suivante"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
             <button
-              onClick={() => setCurrentDate(new Date())}
+              onClick={goToToday}
               className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
             >
               Aujourd'hui
@@ -346,23 +417,11 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Chargement du calendrier...</div>
+          <div className="text-center py-8">Chargement...</div>
         ) : (
-          <>
-            {/* En-têtes des jours de la semaine */}
-            <div className="grid grid-cols-7 gap-1 mb-1">
-              {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(day => (
-                <div key={day} className="text-center font-medium text-xs text-gray-600 p-1">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Jours du calendrier */}
-            <div className="grid grid-cols-7 gap-1">
-              {renderCalendar()}
-            </div>
-          </>
+          <div className="grid grid-cols-7 gap-2">
+            {renderDays()}
+          </div>
         )}
 
         <div className="mt-4 flex justify-end">
