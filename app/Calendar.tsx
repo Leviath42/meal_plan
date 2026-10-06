@@ -13,6 +13,7 @@ interface MealPlan {
   recipeId: string | null;
   customNote: string | null;
   servings: number | null;
+  mealCourse?: string | null;
 }
 
 interface CalendarProps {
@@ -37,6 +38,9 @@ const MEAL_TYPE_COLORS: Record<string, string> = {
 
 // Ordre chronologique des types de repas
 const MEAL_TYPE_ORDER: string[] = ['breakfast', 'lunch', 'snack', 'dinner'];
+
+// Types de plats pour l'ordre chronologique dans un repas
+const MEAL_COURSE_ORDER: string[] = ['apéritif', 'entrée', 'plat', 'accompagnement', 'dessert', 'boisson'];
 
 // Jours de la semaine en français
 const DAYS_OF_WEEK = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -241,11 +245,28 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
 
     const classes = textSizeClasses[size];
 
-    // Trier les repas par ordre chronologique
+    // Trier les repas par ordre chronologique : d'abord par type de repas, puis par type de plat
     const sortedPlans = [...plans].sort((a, b) => {
-      const orderA = MEAL_TYPE_ORDER.indexOf(a.mealType);
-      const orderB = MEAL_TYPE_ORDER.indexOf(b.mealType);
-      return orderA - orderB;
+      // D'abord trier par type de repas (breakfast, lunch, snack, dinner)
+      const mealTypeOrderA = MEAL_TYPE_ORDER.indexOf(a.mealType);
+      const mealTypeOrderB = MEAL_TYPE_ORDER.indexOf(b.mealType);
+      
+      if (mealTypeOrderA !== mealTypeOrderB) {
+        return mealTypeOrderA - mealTypeOrderB;
+      }
+      
+      // Puis trier par type de plat (apéritif, entrée, plat, accompagnement, dessert, boisson)
+      const courseA = a.mealCourse || '';
+      const courseB = b.mealCourse || '';
+      const courseOrderA = MEAL_COURSE_ORDER.indexOf(courseA);
+      const courseOrderB = MEAL_COURSE_ORDER.indexOf(courseB);
+      
+      if (courseOrderA !== courseOrderB) {
+        return courseOrderA - courseOrderB;
+      }
+      
+      // Enfin trier par ID pour avoir un ordre déterministe
+      return a.id.localeCompare(b.id);
     });
 
     // Formater le jour + date
@@ -282,7 +303,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
               
               return (
                 <span
-                  key={`${plan.date}-${plan.mealType}`}
+                  key={plan.id}
                   className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]} ${classes.mealBadge} truncate text-center w-full`}
                   title={displayText}
                 >
@@ -303,7 +324,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
               
               return (
                 <span
-                  key={`${plan.date}-${plan.mealType}`}
+                  key={plan.id}
                   className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]} ${classes.mealBadge} truncate text-center`}
                   title={displayText}
                 >

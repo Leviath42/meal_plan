@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { mealPlans } from '@/lib/db/schema';
+import { mealPlans, recipes } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc, asc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
@@ -25,6 +25,7 @@ export async function getMealPlans(startDate?: string, endDate?: string): Promis
     recipeId: string | null;
     customNote: string | null;
     servings: number | null;
+    mealCourse: string | null;
   }[];
 }> {
   // Dates par défaut : mois en cours
@@ -43,6 +44,7 @@ export async function getMealPlans(startDate?: string, endDate?: string): Promis
       recipeId: mealPlans.recipeId,
       customNote: mealPlans.customNote,
       servings: mealPlans.servings,
+      mealCourse: mealPlans.mealCourse,
     })
     .from(mealPlans)
     .where(
@@ -60,6 +62,7 @@ export async function getMealPlans(startDate?: string, endDate?: string): Promis
     recipeId: string | null;
     customNote: string | null;
     servings: number | null;
+    mealCourse: string | null;
   }[] };
 }
 
@@ -86,12 +89,23 @@ export async function addMealPlan(
   // Autoriser plusieurs plats par créneau (ex: entrée + plat principal pour le dîner)
 
   try {
+    // Récupérer mealCourse depuis la recette si disponible
+    let mealCourseValue: string | null = null;
+    if (recipeId) {
+      const recipe = await db.select({ mealCourse: recipes.mealCourse })
+        .from(recipes)
+        .where(eq(recipes.id, recipeId))
+        .limit(1);
+      mealCourseValue = recipe[0]?.mealCourse || null;
+    }
+
     await db.insert(mealPlans).values({
       date,
       mealType,
       recipeId: recipeId || null,
       customNote: customNote || null,
       servings: servings ? parseInt(servings) : null,
+      mealCourse: mealCourseValue,
     });
 
     revalidatePath('/');
@@ -149,6 +163,16 @@ export async function updateMealPlan(
   }
 
   try {
+    // Récupérer mealCourse depuis la recette si disponible
+    let mealCourseValue: string | null = null;
+    if (recipeId) {
+      const recipe = await db.select({ mealCourse: recipes.mealCourse })
+        .from(recipes)
+        .where(eq(recipes.id, recipeId))
+        .limit(1);
+      mealCourseValue = recipe[0]?.mealCourse || null;
+    }
+
     await db
       .update(mealPlans)
       .set({
@@ -157,6 +181,7 @@ export async function updateMealPlan(
         recipeId: recipeId || null,
         customNote: customNote || null,
         servings: servings ? parseInt(servings) : null,
+        mealCourse: mealCourseValue,
       })
       .where(eq(mealPlans.id, id));
 
@@ -177,6 +202,7 @@ export async function getMealPlansByDate(date: string): Promise<{
     recipeId: string | null;
     customNote: string | null;
     servings: number | null;
+    mealCourse: string | null;
   }[];
 }> {
   const plans = await db
@@ -187,6 +213,7 @@ export async function getMealPlansByDate(date: string): Promise<{
       recipeId: mealPlans.recipeId,
       customNote: mealPlans.customNote,
       servings: mealPlans.servings,
+      mealCourse: mealPlans.mealCourse,
     })
     .from(mealPlans)
     .where(eq(mealPlans.date, date))
@@ -199,5 +226,6 @@ export async function getMealPlansByDate(date: string): Promise<{
     recipeId: string | null;
     customNote: string | null;
     servings: number | null;
+    mealCourse: string | null;
   }[] };
 }
