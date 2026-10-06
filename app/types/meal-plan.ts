@@ -32,8 +32,8 @@ export interface MealPlan {
   customNote: string | null;
   servings: number;
   mealCourse: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 // Types pour les types de repas

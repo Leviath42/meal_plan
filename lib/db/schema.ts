@@ -114,8 +114,8 @@ export const mealPlans = sqliteTable("meal_plans", {
   recipeId: text("recipe_id").references(() => recipes.id, { onDelete: "set null" }),
   
   // Timestamps pour le suivi
-  createdAt: text("created_at").default(new Date().toISOString()),
-  updatedAt: text("updated_at").default(new Date().toISOString()),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
 });
 
 
