@@ -9,21 +9,13 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
-  const [error, setError] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const errorParam = urlParams.get("error");
-      if (errorParam === 'pending') {
-        return 'Votre compte est en attente de validation par un administrateur.';
-      }
-    }
-    return null;
-  });
+  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -39,14 +31,7 @@ export default function LoginPage() {
     setPending(false);
 
     if (result?.error) {
-      // Vérifier si l'URL contient déjà error=pending (compte non validé)
-      const urlParams = new URLSearchParams(window.location.search);
-      const currentError = urlParams.get("error");
-      
-      // Ne pas écraser le message si c'est une erreur de compte non validé
-      if (currentError !== 'pending') {
-        setError("Email ou mot de passe incorrect");
-      }
+      setError("Email ou mot de passe incorrect");
     } else {
       router.push(callbackUrl);
       router.refresh();
