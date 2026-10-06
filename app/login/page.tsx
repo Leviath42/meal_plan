@@ -64,7 +64,7 @@ export default function LoginPage() {
                 placeholder="ton@email.com"
                 required
                 autoComplete="email"
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
 
@@ -79,24 +79,24 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
 
             <button
               type="submit"
               disabled={pending}
-              className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
             >
               {pending ? "Connexion en cours..." : "Se connecter"}
             </button>
           </form>
 
           <div className="mt-4 text-center text-xs sm:text-sm text-gray-600 space-y-2">
-            <Link href="/reset-password" className="block text-blue-600 hover:underline">
+            <Link href="/reset-password" className="block text-accent hover:underline">
               Mot de passe oublié ?
             </Link>
-            <Link href="/register" className="block text-blue-600 hover:underline">
+            <Link href="/register" className="block text-accent hover:underline">
               Créer un compte
             </Link>
           </div>

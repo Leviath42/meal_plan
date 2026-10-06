@@ -107,7 +107,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
       actions.push({
         label: 'Promouvoir',
         action: () => handleUpdateRole(user.id, 'ADMIN'),
-        color: 'text-blue-600 hover:text-blue-800'
+        color: 'text-accent hover:text-accent'
       });
       actions.push({
         label: 'Rétrograder',
@@ -151,7 +151,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                 setFormState(null);
                 setShowCreateModal(true);
               }}
-              className="bg-blue-600 text-white rounded px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
+              className="bg-accent text-white rounded px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors"
             >
               + Nouvel utilisateur
             </button>
@@ -186,7 +186,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   type="text"
                   placeholder="Votre nom"
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.name && (
                   <p className="text-red-500 text-xs mt-1">{formState.errors.name[0]}</p>
@@ -203,7 +203,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   type="email"
                   placeholder="votre@email.com"
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.email && (
                   <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>
@@ -221,7 +221,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   placeholder="Minimum 6 caractères"
                   minLength={6}
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.password && (
                   <p className="text-red-500 text-xs mt-1">{formState.errors.password[0]}</p>
@@ -230,7 +230,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors"
               >
                 Créer un compte
               </button>
@@ -279,7 +279,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                               {user.role}
                             </span>
                             {user.role === 'GUEST' && isNewUser(user.createdAt) && (
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium flex-shrink-0">
+                              <span className="px-2 py-0.5 bg-accent-soft text-accent rounded text-xs font-medium flex-shrink-0">
                                 NOUVEAU
                               </span>
                             )}
@@ -347,7 +347,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                     type="text"
                     placeholder="Nom de l'utilisateur"
                     required
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   />
                   {formState?.errors?.name && (
                     <p className="text-red-500 text-xs mt-1">{formState.errors.name[0]}</p>
@@ -364,7 +364,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                     type="email"
                     placeholder="email@exemple.com"
                     required
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   />
                   {formState?.errors?.email && (
                     <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>
@@ -382,7 +382,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                     placeholder="Minimum 6 caractères"
                     minLength={6}
                     required
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   />
                   {formState?.errors?.password && (
                     <p className="text-red-500 text-xs mt-1">{formState.errors.password[0]}</p>
@@ -391,7 +391,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
                 <button
                   type="submit"
-                  className="sm:col-span-3 w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="sm:col-span-3 w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors"
                 >
                   Créer l'utilisateur
                 </button>

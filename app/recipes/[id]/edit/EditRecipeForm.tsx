@@ -94,7 +94,7 @@ export default function EditRecipeForm({
               name="title"
               defaultValue={getFieldValue(state, 'title', recipe, '')}
               required
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
             {state?.errors?.title && (
               <p className="text-red-600 text-xs mt-1">{state.errors.title[0]}</p>
@@ -111,7 +111,7 @@ export default function EditRecipeForm({
               name="description"
               defaultValue={getFieldValue(state, 'description', recipe, '')}
               rows={2}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -128,7 +128,7 @@ export default function EditRecipeForm({
                 min="0"
                 defaultValue={getFieldValue(state, 'prepTime', recipe, 0)}
                 required
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
             <div>
@@ -142,7 +142,7 @@ export default function EditRecipeForm({
                 min="0"
                 defaultValue={getFieldValue(state, 'cookTime', recipe, 0)}
                 required
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function EditRecipeForm({
               min="1"
               defaultValue={getFieldValue(state, 'defaultServings', recipe, 3)}
               required
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -180,7 +180,7 @@ export default function EditRecipeForm({
               defaultValue={getFieldValue(state, 'instructions', recipe, '')}
               rows={4}
               required
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
             {state?.errors?.instructions && (
               <p className="text-red-600 text-xs mt-1">{state.errors.instructions[0]}</p>
@@ -197,7 +197,7 @@ export default function EditRecipeForm({
               name="tags"
               defaultValue={getFieldValue(state, 'tags', recipe, '')}
               placeholder="Ex: Végétarien, Rapide, Hiver"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -211,7 +211,7 @@ export default function EditRecipeForm({
               name="source"
               defaultValue={getFieldValue(state, 'source', recipe, '')}
               placeholder="Ex: https://marmiton.org/... ou 'Livre de cuisine de Mamie'"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -224,7 +224,7 @@ export default function EditRecipeForm({
               id="mealCourse"
               name="mealCourse"
               defaultValue={getFieldValue(state, 'mealCourse', recipe, '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value="">-- Sélectionner --</option>
               <option value="apéritif">Apéritif</option>
@@ -240,7 +240,7 @@ export default function EditRecipeForm({
           <div className="flex gap-3 pt-4">
             <button
               disabled={pending}
-              className="bg-blue-600 text-white rounded px-4 sm:px-6 py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-accent text-white rounded px-4 sm:px-6 py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {pending ? 'Mise à jour…' : 'Mettre à jour'}
             </button>

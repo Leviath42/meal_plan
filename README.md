@@ -59,6 +59,7 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - Design responsive mobile-first
 - Compatibilité Next.js 16
 - **Mode sombre** : bascule dans la navigation (défaut : préférence système), persistance locale, sans flash au chargement
+- **Couleur d'accent unifiée** (teal) pour boutons et liens, harmonisée pour les thèmes clair et sombre
 - Glisser-déposer (dnd-kit) pour le calendrier (en développement)
 - **Conservation des champs formulaires** en cas d'erreur de validation
 - **Menu navigation complet** avec accès au Calendrier

@@ -42,7 +42,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               placeholder="Ex: Lasagnes Maison"
               required
               defaultValue={getFieldValue(state, 'title', '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
             {state?.errors?.title && (
               <p className="text-red-600 text-xs mt-1">{state.errors.title[0]}</p>
@@ -60,7 +60,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               placeholder="Ex: La recette de Mamie"
               rows={2}
               defaultValue={getFieldValue(state, 'description', '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -77,7 +77,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
                 min="0"
                 defaultValue={getFieldValue(state, 'prepTime', 0)}
                 required
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
             <div>
@@ -91,7 +91,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
                 min="0"
                 defaultValue={getFieldValue(state, 'cookTime', 0)}
                 required
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
           </div>
@@ -108,7 +108,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               min="1"
               defaultValue={getFieldValue(state, 'defaultServings', 3)}
               required
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -130,7 +130,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               rows={4}
               required
               defaultValue={getFieldValue(state, 'instructions', '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
             {state?.errors?.instructions && (
               <p className="text-red-600 text-xs mt-1">{state.errors.instructions[0]}</p>
@@ -147,7 +147,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               name="tags"
               placeholder="Ex: Végétarien, Rapide, Hiver"
               defaultValue={getFieldValue(state, 'tags', '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -161,7 +161,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               name="source"
               placeholder="Ex: https://marmiton.org/... ou 'Livre de cuisine de Mamie'"
               defaultValue={getFieldValue(state, 'source', '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -174,7 +174,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               id="mealCourse"
               name="mealCourse"
               defaultValue={getFieldValue(state, 'mealCourse', '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value="">-- Sélectionner --</option>
               <option value="apéritif">Apéritif</option>
@@ -197,7 +197,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
           <div className="flex gap-3 pt-4">
             <button
               disabled={pending}
-              className="bg-blue-600 text-white rounded px-4 sm:px-6 py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-accent text-white rounded px-4 sm:px-6 py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {pending ? 'Création…' : 'Créer la recette'}
             </button>

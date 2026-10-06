@@ -4,8 +4,22 @@
    (bascule : app/ThemeToggle.tsx, initialisation anti-flash : app/layout.tsx) */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Couleur d'accent (boutons, liens) : une valeur par thème.
+   Teal - harmonisée pour le clair (texte blanc dessus) et le sombre. */
+@theme {
+  --color-accent: #0f766e;        /* teal-700 en mode clair */
+  --color-accent-hover: #115e59;  /* teal-800 en mode clair */
+  --color-accent-soft: #ccfbf1;   /* teal-100 en mode clair (encadrés, survols) */
+}
+
+:root.dark {
+  --color-accent: #2dd4bf;        /* teal-400 en mode sombre */
+  --color-accent-hover: #5eead4;  /* teal-300 en mode sombre */
+  --color-accent-soft: #134e4a;   /* teal-900 en mode sombre */
+}
+
 /* En mode sombre, on remappe la palette de Tailwind : les utilitaires
-   (bg-white, text-gray-800, bg-blue-600, etc.) référencent ces variables
+   (bg-white, text-gray-800, etc.) référencent ces variables
    à l'exécution, ce qui re-thème toute l'application sans modifier
    chaque composant. */
 :root.dark {

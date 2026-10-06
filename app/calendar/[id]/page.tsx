@@ -128,7 +128,7 @@ export default async function MealPlanDetailPage({ params }: { params: Promise<{
             </h2>
             
             <div className="mb-4">
-              <h3 className="text-xl font-medium text-blue-600">{recipe.title}</h3>
+              <h3 className="text-xl font-medium text-accent">{recipe.title}</h3>
               <p className="text-sm text-gray-500 mt-1">ID: {recipe.id}</p>
             </div>
 
@@ -180,7 +180,7 @@ export default async function MealPlanDetailPage({ params }: { params: Promise<{
             <div className="mt-4">
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="text-sm text-blue-600 hover:underline"
+                className="text-sm text-accent hover:underline"
               >
                 Voir la recette complète →
               </Link>
@@ -194,7 +194,7 @@ export default async function MealPlanDetailPage({ params }: { params: Promise<{
           <div className="flex flex-wrap gap-3">
             <Link
               href={`/calendar/${id}/edit`}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm"
             >
               Modifier le repas planifié
             </Link>

@@ -35,9 +35,9 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
             setError(null);
           }
         }} className="flex flex-col sm:flex-row gap-2" onSubmit={(e) => e.preventDefault()}>
-          <input name="name" value={formValues.name} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <input name="category" value={formValues.category} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <input name="defaultUnit" value={formValues.defaultUnit} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input name="name" value={formValues.name} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-accent" />
+          <input name="category" value={formValues.category} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-accent" />
+          <input name="defaultUnit" value={formValues.defaultUnit} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-accent" />
           <div className="flex gap-2 flex-shrink-0">
             <button type="submit" className="bg-green-600 text-white rounded px-3 py-1 text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap">OK</button>
             <button type="button" onClick={() => { setEditing(false); setError(null); }} className="rounded px-3 py-1 text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap">Annuler</button>
@@ -54,7 +54,7 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
         {name} <span className="text-gray-400 text-xs">({category}, {defaultUnit})</span>
       </span>
       <span className="flex gap-2 flex-shrink-0">
-        <button onClick={() => setEditing(true)} className="text-blue-600 underline text-xs sm:text-sm hover:text-blue-800 transition-colors whitespace-nowrap">Modifier</button>
+        <button onClick={() => setEditing(true)} className="text-accent underline text-xs sm:text-sm hover:text-accent transition-colors whitespace-nowrap">Modifier</button>
         <button
           disabled={pending}
           onClick={() => {

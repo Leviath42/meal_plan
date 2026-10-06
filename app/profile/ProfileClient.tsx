@@ -162,7 +162,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
               onClick={() => setActiveTab('password')}
               className={`px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === 'password' 
-                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  ? 'border-b-2 border-accent text-accent' 
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -172,7 +172,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
               onClick={() => setActiveTab('security-question')}
               className={`px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === 'security-question' 
-                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  ? 'border-b-2 border-accent text-accent' 
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -184,20 +184,20 @@ export default function ProfileClient({ session }: ProfileClientProps) {
             <form onSubmit={handlePasswordUpdate} className="space-y-4">
               <div>
                 <label htmlFor="currentPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Mot de passe actuel *</label>
-                <input id="currentPassword" name="currentPassword" type="password" placeholder="Votre mot de passe actuel" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input id="currentPassword" name="currentPassword" type="password" placeholder="Votre mot de passe actuel" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                 {formState?.errors?.currentPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.currentPassword[0]}</p>}
               </div>
               <div>
                 <label htmlFor="newPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe *</label>
-                <input id="newPassword" name="newPassword" type="password" placeholder="Minimum 6 caractères" minLength={6} required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input id="newPassword" name="newPassword" type="password" placeholder="Minimum 6 caractères" minLength={6} required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                 {formState?.errors?.newPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.newPassword[0]}</p>}
               </div>
               <div>
                 <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Confirmer le nouveau mot de passe *</label>
-                <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirmez votre nouveau mot de passe" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirmez votre nouveau mot de passe" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                 {formState?.errors?.confirmPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.confirmPassword[0]}</p>}
               </div>
-              <button type="submit" disabled={pending} className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={pending} className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50">
                 {pending ? 'Mise à jour en cours...' : 'Changer le mot de passe'}
               </button>
             </form>
@@ -205,8 +205,8 @@ export default function ProfileClient({ session }: ProfileClientProps) {
 
           {activeTab === 'security-question' && (
             <form onSubmit={handleSecurityQuestionUpdate} className="space-y-4">
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-xs text-blue-800">
+              <div className="mb-4 p-3 bg-accent-soft border border-accent-soft rounded">
+                <p className="text-xs text-accent">
                   {session.user.securityQuestion ? (
                     <>
                       Question actuelle : <span className="font-medium">{session.user.securityQuestion}</span>. Modifiez-la ci-dessous si besoin.
@@ -224,7 +224,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                   type="text" 
                   placeholder="Ex: Quel était le nom de votre premier animal de compagnie ?"
                   required 
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.securityQuestion && <p className="text-red-500 text-xs mt-1">{formState.errors.securityQuestion[0]}</p>}
               </div>
@@ -236,7 +236,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                   type="password" 
                   placeholder="Votre réponse"
                   required 
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.securityAnswer && <p className="text-red-500 text-xs mt-1">{formState.errors.securityAnswer[0]}</p>}
               </div>
@@ -248,11 +248,11 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                   type="password" 
                   placeholder="Confirmez votre réponse"
                   required 
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.confirmSecurityAnswer && <p className="text-red-500 text-xs mt-1">{formState.errors.confirmSecurityAnswer[0]}</p>}
               </div>
-              <button type="submit" disabled={pending} className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={pending} className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50">
                 {pending ? 'Mise à jour en cours...' : 'Configurer la question secrète'}
               </button>
             </form>
@@ -267,7 +267,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
         </div>
 
         <div className="mt-1">
-          <Link href="/" className="text-xs sm:text-sm text-blue-600 hover:underline">Retour à l'accueil</Link>
+          <Link href="/" className="text-xs sm:text-sm text-accent hover:underline">Retour à l'accueil</Link>
         </div>
       </div>
     </main>

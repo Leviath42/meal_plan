@@ -22,7 +22,7 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
 // Couleurs pour chaque type de repas
 const MEAL_TYPE_COLORS: Record<string, string> = {
   breakfast: 'bg-orange-100 text-orange-800',
-  lunch: 'bg-blue-100 text-blue-800',
+  lunch: 'bg-accent-soft text-accent',
   snack: 'bg-green-100 text-green-800',
   dinner: 'bg-purple-100 text-purple-800',
 };
@@ -331,7 +331,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
     return (
       <div className={`flex flex-col items-center p-2 bg-gray-50 rounded-lg ${sizeClasses[size]}`}>
         {/* Jour de la semaine + date */}
-        <div className={`font-medium text-center mb-1 ${isToday ? 'text-blue-600' : 'text-gray-800'} ${classes.date}`}>
+        <div className={`font-medium text-center mb-1 ${isToday ? 'text-accent' : 'text-gray-800'} ${classes.date}`}>
           {formatDayHeader()}
         </div>
         
@@ -346,7 +346,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
           className={`w-16 text-xs py-1.5 rounded border transition-colors ${
             isPast 
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-              : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+              : 'bg-accent text-white hover:bg-accent-hover border-accent'
           }`}
           disabled={isPast}
           title={isPast ? 'Date dans le passé' : 'Ajouter un repas'}
@@ -441,7 +441,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                 className={`w-16 text-xs py-1.5 rounded border transition-colors ${
                   dayData.isPast 
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                    : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+                    : 'bg-accent text-white hover:bg-accent-hover border-accent'
                 }`}
                 disabled={dayData.isPast}
                 title={dayData.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
@@ -560,7 +560,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                         onClick={() => setSelectedMealType(mealType as MealType)}
                         className={`px-3 py-1 rounded border text-sm transition-colors ${
                           selectedMealType === mealType
-                            ? 'bg-blue-600 text-white border-blue-600'
+                            ? 'bg-accent text-white border-accent'
                             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                         }`}
                       >
@@ -577,7 +577,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                       <h4 className="font-medium mb-2">Recettes disponibles :</h4>
                       {recipes.length === 0 ? (
                         <p className="text-sm text-gray-500 italic">
-                          Aucune recette disponible. <Link href="/recipes/new" className="text-blue-600 hover:underline">Créer une recette</Link>
+                          Aucune recette disponible. <Link href="/recipes/new" className="text-accent hover:underline">Créer une recette</Link>
                         </p>
                       ) : (
                         <div className="space-y-2 max-h-[25vh] overflow-y-auto">
@@ -644,7 +644,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                         const servings = servingsInput?.value ? parseInt(servingsInput.value) || 4 : 4;
                         addMealPlanAction(null, customNoteInput?.value, servings);
                       }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover"
                     >
                       Ajouter
                     </button>
@@ -701,7 +701,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
             </button>
             <button
               onClick={goToToday}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+              className="px-3 py-1 bg-accent text-white rounded hover:bg-accent-hover text-xs"
             >
               Aujourd'hui
             </button>
@@ -717,7 +717,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
         <div className="mt-4 flex justify-end">
           <Link
             href="/calendar"
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-accent hover:underline"
           >
             Voir le calendrier complet →
           </Link>
