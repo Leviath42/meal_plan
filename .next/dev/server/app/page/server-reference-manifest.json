@@ -1,16 +1,4 @@
 {
-  "node": {
-    "00f6c4b518af885c52e3d02753ccfac0f8ccef8fde": {
-      "workers": {
-        "app/page": {
-          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/layout.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "codeHash": null
-        }
-      },
-      "exportedName": "$$RSC_SERVER_ACTION_0",
-      "filename": "app/layout.tsx"
-    }
-  },
+  "node": {},
   "edge": {}
 }

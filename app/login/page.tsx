@@ -91,7 +91,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-4 text-center text-xs sm:text-sm text-gray-600 space-y-2">
-            <Link href="/forgot-password" className="block text-blue-600 hover:underline">
+            <Link href="/reset-password" className="block text-blue-600 hover:underline">
               Mot de passe oublié ?
             </Link>
             <Link href="/register" className="block text-blue-600 hover:underline">
