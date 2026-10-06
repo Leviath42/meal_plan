@@ -30,8 +30,14 @@ interface Recipe {
   instructions: string;
   tags: string | null;
   source: string | null;
+  mealCourse: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// Helper pour récupérer les valeurs du formulaire depuis le state
+function getFieldValue(state: any, fieldName: string, recipe: Recipe, defaultValue: string | number = '') {
+  return state?.values?.[fieldName] ?? recipe[fieldName as keyof Recipe] ?? defaultValue;
 }
 
 export default function EditRecipeForm({
@@ -86,7 +92,7 @@ export default function EditRecipeForm({
             <input
               id="title"
               name="title"
-              defaultValue={recipe.title}
+              defaultValue={getFieldValue(state, 'title', recipe, '')}
               required
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -103,7 +109,7 @@ export default function EditRecipeForm({
             <textarea
               id="description"
               name="description"
-              defaultValue={recipe.description || ''}
+              defaultValue={getFieldValue(state, 'description', recipe, '')}
               rows={2}
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -120,7 +126,7 @@ export default function EditRecipeForm({
                 name="prepTime"
                 type="number"
                 min="0"
-                defaultValue={recipe.prepTime}
+                defaultValue={getFieldValue(state, 'prepTime', recipe, 0)}
                 required
                 className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -134,7 +140,7 @@ export default function EditRecipeForm({
                 name="cookTime"
                 type="number"
                 min="0"
-                defaultValue={recipe.cookTime}
+                defaultValue={getFieldValue(state, 'cookTime', recipe, 0)}
                 required
                 className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -151,7 +157,7 @@ export default function EditRecipeForm({
               name="defaultServings"
               type="number"
               min="1"
-              defaultValue={recipe.defaultServings}
+              defaultValue={getFieldValue(state, 'defaultServings', recipe, 3)}
               required
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -160,7 +166,7 @@ export default function EditRecipeForm({
           {/* Ingrédients */}
           <IngredientsSelector
             availableIngredients={availableIngredients}
-            existingIngredients={existingIngredients}
+            existingIngredients={state?.ingredients || existingIngredients}
           />
 
           {/* Instructions */}
@@ -171,7 +177,7 @@ export default function EditRecipeForm({
             <textarea
               id="instructions"
               name="instructions"
-              defaultValue={recipe.instructions}
+              defaultValue={getFieldValue(state, 'instructions', recipe, '')}
               rows={4}
               required
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -189,7 +195,7 @@ export default function EditRecipeForm({
             <input
               id="tags"
               name="tags"
-              defaultValue={recipe.tags || ''}
+              defaultValue={getFieldValue(state, 'tags', recipe, '')}
               placeholder="Ex: Végétarien, Rapide, Hiver"
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -203,10 +209,31 @@ export default function EditRecipeForm({
             <input
               id="source"
               name="source"
-              defaultValue={recipe.source || ''}
+              defaultValue={getFieldValue(state, 'source', recipe, '')}
               placeholder="Ex: https://marmiton.org/... ou 'Livre de cuisine de Mamie'"
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* Type de plat */}
+          <div>
+            <label htmlFor="mealCourse" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              Type de plat
+            </label>
+            <select
+              id="mealCourse"
+              name="mealCourse"
+              defaultValue={getFieldValue(state, 'mealCourse', recipe, '')}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="apéritif">Apéritif</option>
+              <option value="entrée">Entrée</option>
+              <option value="plat">Plat principal</option>
+              <option value="accompagnement">Accompagnement</option>
+              <option value="dessert">Dessert</option>
+              <option value="boisson">Boisson</option>
+            </select>
           </div>
 
           {/* Bouton de soumission */}

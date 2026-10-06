@@ -22,6 +22,7 @@ export const recipeInput = z.object({
   instructions: z.string().min(1, 'Les étapes sont requises'),
   tags: z.string().optional().nullable(),
   source: z.string().optional().nullable(),
+  mealCourse: z.string().optional().nullable(),
   // ✅ Ingrédients maintenant optionnels avec valeur par défaut
   ingredients: z.array(recipeIngredientInput).default([]),
 });

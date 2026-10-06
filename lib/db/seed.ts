@@ -146,6 +146,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Viande,Pâtes,Classique',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir oignons, ail, carottes et viande. 2. Ajouter tomates pelées et concentré. 3. Alterner pâtes, sauce, béchamel, fromage. 4. Cuire 45 min à 180°C.',
     ingredients: [
       { name: 'Pâtes à lasagnes', quantity: 500, unit: 'g' },
@@ -169,6 +170,7 @@ const recipesData = [
     defaultServings: 2,
     tags: 'Italien,Végétarien,Pizza',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Étaler pâte. 2. Sauce tomate. 3. Mozzarella. 4. Basilic. 5. Cuire 15 min à 240°C.',
     ingredients: [
       { name: 'Pain de mie', quantity: 1, unit: 'pièce' },
@@ -185,6 +187,7 @@ const recipesData = [
     defaultServings: 3,
     tags: 'Italien,Rapide,Pâtes',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Cuire pâtes. 2. Mélanger œufs, crème, parmesan. 3. Faire revenir lardons. 4. Mélanger le tout.',
     ingredients: [
       { name: 'Pâtes alimentaires', quantity: 300, unit: 'g' },
@@ -202,6 +205,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Italien,Végétarien,Riz',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir oignon, ail. 2. Ajouter riz. 3. Vin blanc. 4. Bouillon petit à petit. 5. Champignons après 15 min.',
     ingredients: [
       { name: 'Riz basmati', quantity: 320, unit: 'g' },
@@ -221,6 +225,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Viande,Rôti,Classique',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Préchauffer four à 180°C. 2. Beurre + herbes sous la peau. 3. Cuire 1h30.',
     ingredients: [
       { name: 'Blanc de poulet', quantity: 4, unit: 'filet' },
@@ -237,6 +242,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Rapide,Pâtes,Enfants',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Cuire les pâtes dans l\'eau bouillante salée. 2. Pendant ce temps, couper le jambon en dés. 3. Égoutter les pâtes, ajouter la crème fraîche, le jambon et le parmesan. 4. Bien mélanger et servir chaud.',
     ingredients: [
       { name: 'Pâtes courtes', quantity: 400, unit: 'g' },
@@ -254,6 +260,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Italien,Viande,Pâtes,Classique',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir oignon, ail et carotte hachés. 2. Ajouter la viande hachée et bien la faire dorer. 3. Incorporer les tomates pelées, le concentré et le bouillon cube. 4. Laisser mijoter 30 min. 5. Cuire les pâtes séparément et mélanger avec la sauce.',
     ingredients: [
       { name: 'Pâtes alimentaires', quantity: 400, unit: 'g' },
@@ -276,6 +283,7 @@ const recipesData = [
     defaultServings: 3,
     tags: 'Rapide,Végétarien,Pâtes',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Cuire les pâtes. 2. Faire revenir échalote et champignons dans le beurre. 3. Ajouter la crème fraîche et le persil. 4. Mélanger avec les pâtes égouttées.',
     ingredients: [
       { name: 'Pâtes alimentaires', quantity: 300, unit: 'g' },
@@ -294,6 +302,7 @@ const recipesData = [
     defaultServings: 6,
     tags: 'Espagnol,Riz,Festif',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir poulet et saucisse. 2. Ajouter poivron, pois cassés, safran. 3. Incorporer le riz et le bouillon. 4. À mi-cuisson, ajouter calamars et palourdes. 5. Cuire jusqu\'à absorption complète du liquide.',
     ingredients: [
       { name: 'Riz basmati', quantity: 400, unit: 'g' },
@@ -316,6 +325,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Viande,Mijoté,Classique',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Faire dorer les morceaux de viande. 2. Ajouter oignons, carottes, ail. 3. Mouiller avec eau et vin rouge. 4. Laisser mijoter 2 heures à feu doux avec bouquet garni.',
     ingredients: [
       { name: 'Viande hachée', quantity: 800, unit: 'g' },
@@ -336,6 +346,7 @@ const recipesData = [
     defaultServings: 6,
     tags: 'Viande,Mijoté,Classique,Hiver',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir la viande (poitrine, paleron). 2. Ajouter carottes, poireaux, navets, céleri, oignons. 3. Couvrir d\'eau, ajouter bouquet garni. 4. Laisser mijoter 3 heures. 5. Servir viande et légumes avec bouillon à part.',
     ingredients: [
       { name: 'Poitrine fumée', quantity: 800, unit: 'g' },
@@ -357,6 +368,7 @@ const recipesData = [
     defaultServings: 6,
     tags: 'Viande,Haricots,Mijoté,Festif',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Faire tremper les haricots blancs 12h. 2. Cuire les haricots avec carottes, oignons, bouquet garni. 3. Faire revenir saucisses, lardons, confit de canard. 4. Mélanger le tout, couvrir de bouillon. 5. Cuire 2h au four à 160°C.',
     ingredients: [
       { name: 'Haricots blancs', quantity: 500, unit: 'g' },
@@ -378,6 +390,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Viande,Légumineuses,Rapide',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Cuire les lentilles dans l\'eau avec bouillon cube et laurier. 2. Faire griller les saucisses. 3. Égoutter les lentilles, ajouter vinaigre, huile d\'olive, échalote. 4. Servir avec les saucisses.',
     ingredients: [
       { name: 'Saucisse fumée', quantity: 4, unit: 'pièce' },
@@ -399,6 +412,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Viande,Crème,Rapide',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Faire dorer les blancs de poulet dans le beurre. 2. Réserver. 3. Faire revenir champignons et échalote. 4. Déglacer au vin blanc. 5. Ajouter crème fraîche, remettez le poulet. 6. Laisser mijoter 15 min.',
     ingredients: [
       { name: 'Blanc de poulet', quantity: 4, unit: 'filet' },
@@ -417,6 +431,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Viande,Mijoté,Classique',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir morceaux d\'agneau. 2. Ajouter oignons, ail, carottes, tomates. 3. Incorporer flageolets cuits, vin rouge, bouillon. 4. Laisser mijoter 1h30 à feu doux.',
     ingredients: [
       { name: 'Agneau', quantity: 800, unit: 'g' },
@@ -438,6 +453,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Viande,Canard,Festif',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir le magret peau côté bas à feu moyen 8 min. 2. Retirer, réserver. 3. Dans le même plat, ajouter jus d\'orange, miel, vinaigre. 4. Réduire, ajouter zeste d\'orange. 5. Servir le magret tranché avec la sauce.',
     ingredients: [
       { name: 'Magret de canard', quantity: 2, unit: 'pièce' },
@@ -455,6 +471,7 @@ const recipesData = [
     defaultServings: 3,
     tags: 'Poisson,Rapide,Méditerranéen',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Nettoyer et couper les calamars en rondelles. 2. Faire chauffer huile d\'olive, ajouter calamars. 3. Cuire 2 min à feu vif. 4. Ajouter ail haché, persil, zeste de citron. 5. Arroser de jus de citron avant de servir.',
     ingredients: [
       { name: 'Calamar', quantity: 600, unit: 'g' },
@@ -472,6 +489,7 @@ const recipesData = [
     defaultServings: 2,
     tags: 'Poisson,Fruits de mer,Rapide',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Nettoyer les palourdes sous l\'eau froide. 2. Dans une casserole, faire revenir échalote dans le beurre. 3. Ajouter vin blanc, laisser réduire 2 min. 4. Ajouter palourdes, couvrir. 5. Cuire 5 min jusqu\'à ce qu\'elles s\'ouvrent. 6. Parsemer de persil.',
     ingredients: [
       { name: 'Palourde', quantity: 1, unit: 'kg' },
@@ -489,6 +507,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Végétarien,Légumes,Classique,Été',
     source: 'Tradition',
+    mealCourse: 'accompagnement',
     instructions: '1. Couper courgettes, aubergines, poivrons, tomates en dés. 2. Faire revenir oignon, ail dans l\'huile d\'olive. 3. Ajouter les légumes par ordre de cuisson (poivron, aubergine, courgette, tomate). 4. Laisser mijoter 45 min à feu doux avec thym et laurier.',
     ingredients: [
       { name: 'Courgette', quantity: 3, unit: 'pièce' },
@@ -509,6 +528,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Soupe,Fromage,Hiver,Classique',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Émincer finement les oignons. 2. Les faire revenir dans le beurre jusqu\'à caramélisation. 3. Mouiller avec eau, ajouter bouillon cube. 4. Laisser mijoter 30 min. 5. Verser dans des bols, ajouter pain grillé et fromage râpé. 6. Passer sous le gril.',
     ingredients: [
       { name: 'Oignon', quantity: 8, unit: 'pièce' },
@@ -527,6 +547,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Gratin,Légumes,Fromage,Classique',
     source: 'Tradition',
+    mealCourse: 'accompagnement',
     instructions: '1. Éplucher et couper les pommes de terre en fines rondelles. 2. Dans un plat, alterner couches de pommes de terre, crème, lait, ail, noix de muscade. 3. Terminer par une couche de fromage râpé. 4. Cuire 1h à 180°C.',
     ingredients: [
       { name: 'Pomme de terre', quantity: 1, unit: 'kg' },
@@ -546,6 +567,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Quiche,Tarte,Classique',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Étaler la pâte à tarte dans un moule. 2. Faire revenir les lardons. 3. Battre œufs, crème, lait, sel, poivre. 4. Répartir lardons sur le fond de tarte, verser l\'appareil à quiche. 5. Cuire 40 min à 180°C.',
     ingredients: [
       { name: 'Pâte à tarte', quantity: 1, unit: 'pièce' },
@@ -564,6 +586,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Gratin,Fromage,Montagne,Hiver',
     source: 'Tradition',
+    mealCourse: 'plat',
     instructions: '1. Cuire les pommes de terre à l\'eau, les couper en rondelles. 2. Faire revenir lardons et oignons. 3. Dans un plat, alterner couches de pommes de terre, lardons, fromage à tartiflette. 4. Arroser de crème fraîche. 5. Cuire 40 min à 200°C.',
     ingredients: [
       { name: 'Pomme de terre', quantity: 1, unit: 'kg' },
@@ -582,6 +605,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Soupe,Légumes,Rapide,Hiver',
     source: 'Famille',
+    mealCourse: 'entrée',
     instructions: '1. Éplucher et couper tous les légumes en morceaux. 2. Faire revenir oignon dans l\'huile d\'olive. 3. Ajouter légumes, couvrir d\'eau, ajouter bouillon cube. 4. Laisser mijoter 25 min. 5. Ajouter pâtes courtes et cuire 8 min supplémentaires.',
     ingredients: [
       { name: 'Carotte', quantity: 3, unit: 'pièce' },
@@ -603,6 +627,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Légumes,Végétarien,Automne',
     source: 'Famille',
+    mealCourse: 'accompagnement',
     instructions: '1. Couper le potiron en morceaux, retirer les graines. 2. Cuire à l\'eau bouillante ou à la vapeur 20 min. 3. Égoutter, écraser à la fourchette. 4. Ajouter beurre, crème et cannelle. Mixer pour une texture lisse.',
     ingredients: [
       { name: 'Potiron', quantity: 1, unit: 'kg' },
@@ -619,6 +644,7 @@ const recipesData = [
     defaultServings: 6,
     tags: 'Dessert,Italien,Froid,Festif',
     source: 'Tradition',
+    mealCourse: 'dessert',
     instructions: '1. Séparer les blancs des jaunes d\'œufs. 2. Monter les blancs en neige avec le sucre. 3. Mélanger jaunes avec mascarpone. 4. Incorporer délicatement les blancs. 5. Tremper rapidement les biscuits dans le café. 6. Alterner couches de biscuits et crème. 7. Terminer par du cacao. 8. Réfrigérer 4h minimum.',
     ingredients: [
       { name: 'Biscuits cuillère', quantity: 200, unit: 'g' },
@@ -637,6 +663,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Dessert,Crème,Classique,Festif',
     source: 'Tradition',
+    mealCourse: 'dessert',
     instructions: '1. Chauffer la crème fleurette avec la gousse de vanille fendue. 2. Battre les jaunes d\'œufs avec le sucre. 3. Verser la crème chaude sur les jaunes en remuant. 4. Répartir dans des ramequins. 5. Cuire au bain-marie 40 min à 110°C. 6. Laisser refroidir, saupoudrer de sucre et caraméliser au chalumeau.',
     ingredients: [
       { name: 'Crème fleurette', quantity: 500, unit: 'ml' },
@@ -653,6 +680,7 @@ const recipesData = [
     defaultServings: 6,
     tags: 'Dessert,Tarte,Fruit,Classique',
     source: 'Famille',
+    mealCourse: 'dessert',
     instructions: '1. Étaler la pâte à tarte dans un moule. 2. Éplucher et couper les pommes en fines tranches. 3. Disposer les pommes en rosace sur la pâte. 4. Saupoudrer de sucre et de cannelle. 5. Ajouter petits morceaux de beurre. 6. Cuire 35 min à 180°C.',
     ingredients: [
       { name: 'Pâte à tarte', quantity: 1, unit: 'pièce' },
@@ -670,6 +698,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Dessert,Chocolat,Froid,Rapide',
     source: 'Tradition',
+    mealCourse: 'dessert',
     instructions: '1. Faire fondre le chocolat au bain-marie ou au micro-ondes. 2. Séparer les blancs des jaunes d\'œufs. 3. Ajouter les jaunes au chocolat fondu. 4. Monter les blancs en neige ferme avec une pincée de sel. 5. Incorporer délicatement les blancs au mélange chocolat. 6. Répartir dans des verrines et réfrigérer 2h minimum.',
     ingredients: [
       { name: 'Chocolat noir', quantity: 200, unit: 'g' },
@@ -685,6 +714,7 @@ const recipesData = [
     defaultServings: 6,
     tags: 'Dessert,Fruit,Classique',
     source: 'Tradition',
+    mealCourse: 'dessert',
     instructions: '1. Disposer les cerises dénoyautées au fond d\'un moule beurré. 2. Préparer un appareil à clafoutis avec œufs, sucre, farine, lait. 3. Verser sur les cerises. 4. Cuire 40 min à 180°C. 5. Saupoudrer de sucre glace avant de servir tiède.',
     ingredients: [
       { name: 'Cerise', quantity: 500, unit: 'g' },
@@ -703,6 +733,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Dessert,Fruit,Vin,Classique',
     source: 'Tradition',
+    mealCourse: 'dessert',
     instructions: '1. Éplucher les poires en gardant la queue. 2. Dans une casserole, porter à ébullition vin rouge, sucre, cannelle, zeste d\'orange. 3. Ajouter les poires, couvrir et laisser pocher 25 min à feu doux. 4. Servir tiède avec la sauce réduites.',
     ingredients: [
       { name: 'Poire', quantity: 4, unit: 'pièce' },
@@ -720,6 +751,7 @@ const recipesData = [
     defaultServings: 2,
     tags: 'Entrée,Fromage,Rapide,Chaud',
     source: 'Tradition',
+    mealCourse: 'entrée',
     instructions: '1. Couper la bûche de chèvre en rondelles. 2. Disposer sur un lit de salade. 3. Passer 5-10 min sous le gril ou au four à 180°C. 4. Arroser de miel avant de servir.',
     ingredients: [
       { name: 'Fromage de chèvre', quantity: 200, unit: 'g' },
@@ -737,6 +769,7 @@ const recipesData = [
     defaultServings: 4,
     tags: 'Tarte,Fromage,Quiche',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Étaler la pâte feuilletée dans un moule. 2. Piquer le fond avec une fourchette. 3. Répartir lardons et fromage râpé. 4. Verser un mélange d\'œufs, crème et lait. 5. Cuire 35 min à 180°C.',
     ingredients: [
       { name: 'Pâte feuilletée', quantity: 1, unit: 'pièce' },
@@ -755,6 +788,7 @@ const recipesData = [
     defaultServings: 3,
     tags: 'Pâtes,Poisson,Rapide',
     source: 'Méditerranée',
+    mealCourse: 'plat',
     instructions: '1. Cuire les pâtes al dente. 2. Pendant ce temps, hacher finement anchois et olives. 3. Égoutter les pâtes, mélanger avec anchois, olives, huile d\'olive et persil. 4. Bien mélanger et servir avec du parmesan.',
     ingredients: [
       { name: 'Pâtes alimentaires', quantity: 300, unit: 'g' },
@@ -773,6 +807,7 @@ const recipesData = [
     defaultServings: 2,
     tags: 'Viande,Rapide,Apéritif',
     source: 'Espagne',
+    mealCourse: 'plat',
     instructions: '1. Couper le chorizo en tranches épaisses. 2. Faire griller à la poêle ou au barbecue. 3. Éplucher et couper les pommes en quartiers. 4. Faire revenir les pommes dans une poêle avec du beurre et un peu de sucre jusqu\'à caramélisation. 5. Servir le chorizo avec les pommes.',
     ingredients: [
       { name: 'Chorizo', quantity: 200, unit: 'g' },
@@ -789,6 +824,7 @@ const recipesData = [
     defaultServings: 2,
     tags: 'Rapide,Œufs,Petit-déjeuner',
     source: 'Famille',
+    mealCourse: 'plat',
     instructions: '1. Faire revenir les champignons émincés dans le beurre. 2. Battre les œufs avec la crème, sel et poivre. 3. Ajouter les œufs aux champignons. 4. Remuer doucement jusqu\'à obtenir la consistance souhaitée. 5. Ajouter le persil haché avant de servir.',
     ingredients: [
       { name: 'Œufs', quantity: 4, unit: 'pièce' },
@@ -853,6 +889,7 @@ async function seed() {
           .values({
             title: recipeData.title,
             description: recipeData.description,
+            mealCourse: recipeData.mealCourse,
             prepTime: recipeData.prepTime,
             cookTime: recipeData.cookTime,
             defaultServings: recipeData.defaultServings,

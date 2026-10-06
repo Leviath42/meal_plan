@@ -9,15 +9,20 @@ import { redirect } from 'next/navigation';
 
 export type IngredientFormState = {
   errors?: Record<string, string[]>;
+  values?: Record<string, string>;
 } | null;
 
 export async function createIngredient(
   prevState: IngredientFormState,
   formData: FormData
 ): Promise<IngredientFormState> {
-  const parsed = ingredientInput.safeParse(Object.fromEntries(formData));
+  const rawData = Object.fromEntries(formData);
+  const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors };
+    return { 
+      errors: parsed.error.flatten().fieldErrors,
+      values: rawData
+    };
   }
 
   try {
@@ -34,9 +39,13 @@ export async function updateIngredient(
   id: string,
   formData: FormData
 ): Promise<IngredientFormState> {
-  const parsed = ingredientInput.safeParse(Object.fromEntries(formData));
+  const rawData = Object.fromEntries(formData);
+  const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors };
+    return { 
+      errors: parsed.error.flatten().fieldErrors,
+      values: rawData
+    };
   }
 
   try {

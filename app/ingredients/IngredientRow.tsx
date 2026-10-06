@@ -9,6 +9,13 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [formValues, setFormValues] = useState({ name, category, defaultUnit });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormValues(prev => ({ ...prev, [name]: value }));
+    setError(null);
+  };
 
   if (editing) {
     return (
@@ -17,14 +24,20 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
           const res = await updateIngredient(id, fd);
           if (res?.errors) {
             setError(Object.values(res.errors).flat().join(' '));
+            // Mettre à jour les valeurs avec celles du formulaire en cas d'erreur
+            setFormValues({
+              name: fd.get('name') as string,
+              category: fd.get('category') as string,
+              defaultUnit: fd.get('defaultUnit') as string
+            });
           } else {
             setEditing(false);
             setError(null);
           }
         }} className="flex flex-col sm:flex-row gap-2" onSubmit={(e) => e.preventDefault()}>
-          <input name="name" defaultValue={name} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <input name="category" defaultValue={category} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <input name="defaultUnit" defaultValue={defaultUnit} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input name="name" value={formValues.name} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input name="category" value={formValues.category} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input name="defaultUnit" value={formValues.defaultUnit} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <div className="flex gap-2 flex-shrink-0">
             <button type="submit" className="bg-green-600 text-white rounded px-3 py-1 text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap">OK</button>
             <button type="button" onClick={() => { setEditing(false); setError(null); }} className="rounded px-3 py-1 text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap">Annuler</button>

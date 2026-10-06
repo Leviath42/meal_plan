@@ -59,6 +59,8 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - Design responsive mobile-first
 - Compatibilité Next.js 16
 - Glisser-déposer (dnd-kit) pour le calendrier (en développement)
+- **Conservation des champs formulaires** en cas d'erreur de validation
+- **Menu navigation complet** avec accès au Calendrier
 
 ---
 
@@ -237,6 +239,7 @@ npm run seed -- --clear
 - 108 ingrédients classés par rayons
 - 258 associations recettes-ingrédients
 - Inclut la recette "Jambon Pâtes" et tous les classiques familiaux
+- **Champ `mealCourse`** intégré pour toutes les recettes (entrée, plat, accompagnement, dessert, boisson, apéritif)
 
 ⚠️ **Note :** Le fichier `lib/db/seed.ts` contient toutes les données de démonstration. Pensez à le maintenir à jour lorsque vous ajoutez de nouvelles fonctionnalités nécessitant des données de test.
 
@@ -245,11 +248,15 @@ npm run seed -- --clear
 ## 🎯 Prochaines Étapes
 
 ### **Priorité Immédiate** (Branche: `feature/calendrier`)
-1. **Finaliser le calendrier** (F01)
-   - Implémenter le composant calendrier avec dnd-kit
-   - Ajouter la table `meal_plans` en base de données
-   - Créer les Server Actions pour la gestion du planning
-   - Tester le glisser-déposer sur mobile et desktop
+1. **Implémenter F01 - CRUD des repas planifiés + dnd-kit**
+   - ✅ Prérequis terminés (seed, mealCourse, formulaires UX, menu navigation)
+   - [ ] Créer la table `meal_plans` dans `lib/db/schema.ts`
+   - [ ] Créer la migration Drizzle pour `meal_plans`
+   - [ ] Implémenter les Server Actions CRUD dans `app/actions/meal-plan.ts`
+   - [ ] Créer la page `/calendar` avec le composant calendrier
+   - [ ] Intégrer dnd-kit pour le glisser-déposer des recettes
+   - [ ] Implémenter la navigation semaine/mois
+   - [ ] Tester le glisser-déposer sur mobile et desktop
 
 2. **Génération de la liste de courses** (F05)
    - Agrégation des ingrédients du planning
@@ -262,7 +269,7 @@ npm run seed -- --clear
    - Intégration Home Assistant (préparation)
 
 ### **Objectif Court Terme**
-Atteindre le **MVP** : Planification des repas + Liste de courses + Partage basique
+Atteindre le **MVP** : Planification des repas (CRUD + dnd) + Liste de courses + Partage basique
 
 ### **Objectif Long Terme**
 Implémenter **100% du cahier des charges** (voir [ROADMAPV2.md](ROADMAPV2.md))
@@ -319,8 +326,11 @@ Implémenter **100% du cahier des charges** (voir [ROADMAPV2.md](ROADMAPV2.md))
 
 - ✅ **Authentification complète**
 - ✅ **Gestion utilisateurs**
-- ✅ **Gestion recettes et ingrédients**
-- 🟡 **Calendrier et planification** (en développement)
+- ✅ **Gestion recettes et ingrédients** (avec mealCourse)
+- ✅ **Conservation des champs formulaires en cas d'erreur**
+- ✅ **Menu navigation complet avec lien Calendrier**
+- ✅ **Seed de données complet** (45 recettes, 108 ingrédients)
+- 🟡 **Calendrier et planification** (CRUD + dnd-kit - en développement)
 - ⏳ **Liste de courses automatique**
 - ⏳ **Partage et intégrations**
 - ⏳ **Fonctionnalités avancées** (PWA, notifications, etc.)
