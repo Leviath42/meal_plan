@@ -12,7 +12,7 @@ interface ProfileClientProps {
       id: string;
       email: string;
       name?: string | null;
-      role: 'ADMIN' | 'MEMBER' | 'GUEST';
+      role?: 'ADMIN' | 'MEMBER' | 'GUEST';
       createdAt?: string;
       securityQuestion?: string | null;
     };

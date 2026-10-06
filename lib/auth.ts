@@ -125,11 +125,13 @@ declare module "next-auth" {
       email: string;
       name?: string | null;
       role?: "ADMIN" | "MEMBER" | "GUEST";
+      securityQuestion?: string | null;
     };
   }
   
   interface JWT {
     id: string;
     role?: "ADMIN" | "MEMBER" | "GUEST";
+    securityQuestion?: string | null;
   }
 }
