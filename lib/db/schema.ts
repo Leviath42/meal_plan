@@ -25,6 +25,9 @@ export const recipes = sqliteTable("recipes", {
   // Si la recette originale est pour 4, on met 4 ici pour que le calcul des courses soit juste.
   defaultServings: integer("default_servings").notNull().default(3),
   
+  // Type de plat pour l'ordre chronologique (apéritif, entrée, plat, accompagnement, dessert, boisson)
+  mealCourse: text("meal_course"),
+  
   // Les étapes de préparation. Peut être un long texte avec des sauts de ligne ou du JSON stringifié.
   instructions: text("instructions").notNull(),
   
@@ -102,6 +105,9 @@ export const mealPlans = sqliteTable("meal_plans", {
   // Surcharge le "defaultServings" de la recette si on a des invités ce jour-là.
   // La liste de courses utilisera ce chiffre pour recalculer les quantités.
   servings: integer("servings").default(4),
+  
+  // Type de plat pour l'ordre chronologique (hérité de la recette)
+  mealCourse: text("meal_course"),
   
   // La recette prévue. "set null" signifie que si on supprime la recette du catalogue,
   // l'événement reste dans le calendrier mais sans la recette associée.
