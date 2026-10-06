@@ -1,5 +1,6 @@
 import { Inter } from 'next/font/google';
 import { auth } from '@/lib/auth';
+import { SessionProvider } from 'next-auth/react';
 import Nav from './Nav';
 import '../styles/globals.css';
 
@@ -23,8 +24,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="fr" className="h-full">
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
-        <Nav session={session} />
-        <div className="min-h-screen">{children}</div>
+        <SessionProvider session={session}>
+          <Nav session={session} />
+          <div className="min-h-screen">{children}</div>
+        </SessionProvider>
       </body>
     </html>
   );
