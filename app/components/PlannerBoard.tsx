@@ -802,19 +802,24 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
     setStartDate(new Date());
   };
 
-  // Navigation : mois précédent (au 1er du mois, pour éviter les débordements de fin de mois)
+  // Navigation : mois précédent, calculé depuis la date affichée en premier
+  // (le jour est conservé, ramené au dernier jour du mois cible si nécessaire)
   const goToPreviousMonth = () => {
     const newDate = new Date(startDate);
+    const day = newDate.getDate();
     newDate.setDate(1);
     newDate.setMonth(newDate.getMonth() - 1);
+    newDate.setDate(Math.min(day, new Date(newDate.getFullYear(), newDate.getMonth() + 1, 0).getDate()));
     setStartDate(newDate);
   };
 
-  // Navigation : mois suivant (au 1er du mois)
+  // Navigation : mois suivant, calculé depuis la date affichée en premier
   const goToNextMonth = () => {
     const newDate = new Date(startDate);
+    const day = newDate.getDate();
     newDate.setDate(1);
     newDate.setMonth(newDate.getMonth() + 1);
+    newDate.setDate(Math.min(day, new Date(newDate.getFullYear(), newDate.getMonth() + 1, 0).getDate()));
     setStartDate(newDate);
   };
 
@@ -993,9 +998,31 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       disabled={mainDay.isPast}
       className="flex flex-col items-center p-1.5 bg-gray-50 rounded-lg w-full max-w-xs"
     >
-      {/* Jour de la semaine + date */}
-      <div className={`font-medium text-center mb-1 ${mainDay.isToday ? 'text-blue-600' : 'text-gray-800'} text-lg font-bold`}>
-        {mainDay.date.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase()} {mainDay.date.getDate()}
+      {/* Jour de la semaine + date, avec navigation par jour */}
+      <div className="flex items-center justify-center gap-1 mb-1">
+        <button
+          onClick={goToPreviousDay}
+          className="p-1 rounded hover:bg-gray-200 disabled:opacity-50"
+          disabled={loading}
+          title="Jour précédent"
+        >
+          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span className={`font-medium text-center ${mainDay.isToday ? 'text-blue-600' : 'text-gray-800'} text-lg font-bold`}>
+          {mainDay.date.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase()} {mainDay.date.getDate()}
+        </span>
+        <button
+          onClick={goToNextDay}
+          className="p-1 rounded hover:bg-gray-200 disabled:opacity-50"
+          disabled={loading}
+          title="Jour suivant"
+        >
+          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
       {/* Repas planifiés */}
@@ -1165,62 +1192,41 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
     <section className="w-full max-w-4xl mx-auto mb-3">
       <div className="bg-white rounded-lg shadow-sm p-3">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-base font-bold text-gray-800 capitalize">
-            {startDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-          </h2>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base sm:text-lg font-bold text-gray-800 capitalize">
+              {startDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+            </h2>
             {enableMonthNavigation && (
-              <>
+              <div className="flex gap-1.5">
                 <button
                   onClick={goToPreviousMonth}
-                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
+                  className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
                   disabled={loading}
                   title="Mois précédent"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M20 19l-7-7 7-7" />
                   </svg>
                 </button>
                 <button
                   onClick={goToNextMonth}
-                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
+                  className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
                   disabled={loading}
                   title="Mois suivant"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M4 5l7 7-7 7" />
                   </svg>
                 </button>
-                <div className="w-px bg-gray-200 mx-1" aria-hidden="true" />
-              </>
+              </div>
             )}
-            <button
-              onClick={goToPreviousDay}
-              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
-              disabled={loading}
-              title="Jour précédent"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={goToNextDay}
-              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
-              disabled={loading}
-              title="Jour suivant"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button
-              onClick={goToToday}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-            >
-              Aujourd'hui
-            </button>
           </div>
+          <button
+            onClick={goToToday}
+            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+          >
+            Aujourd'hui
+          </button>
         </div>
 
         {loading ? (
