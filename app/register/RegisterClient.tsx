@@ -57,7 +57,6 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   };
 
   const handleDeleteUser = async (userId: string) => {
-    // Empêcher la suppression de soi-même
     if (userId === currentUserId) {
       setFormState({ errors: { form: ['Vous ne pouvez pas supprimer votre propre compte'] } });
       return;
@@ -73,7 +72,56 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     }
   };
 
-  // Rediriger si connecté mais pas admin
+  const getRoleColor = (role: 'ADMIN' | 'MEMBER' | 'GUEST') => {
+    switch (role) {
+      case 'ADMIN':
+        return 'bg-red-100 text-red-800';
+      case 'MEMBER':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-yellow-100 text-yellow-800';
+    }
+  };
+
+  const getRoleActions = (user: User) => {
+    const actions = [];
+    
+    if (user.role === 'GUEST') {
+      actions.push({
+        label: 'Valider',
+        action: () => handleUpdateRole(user.id, 'MEMBER'),
+        color: 'text-green-600 hover:text-green-800'
+      });
+    } else if (user.role === 'MEMBER') {
+      actions.push({
+        label: 'Promouvoir',
+        action: () => handleUpdateRole(user.id, 'ADMIN'),
+        color: 'text-blue-600 hover:text-blue-800'
+      });
+      actions.push({
+        label: 'Rétrograder',
+        action: () => handleUpdateRole(user.id, 'GUEST'),
+        color: 'text-orange-600 hover:text-orange-800'
+      });
+    } else if (user.role === 'ADMIN' && user.id !== currentUserId) {
+      actions.push({
+        label: 'Rétrograder',
+        action: () => handleUpdateRole(user.id, 'MEMBER'),
+        color: 'text-orange-600 hover:text-orange-800'
+      });
+    }
+    
+    if (user.id !== currentUserId) {
+      actions.push({
+        label: 'Supprimer',
+        action: () => handleDeleteUser(user.id),
+        color: 'text-red-600 hover:text-red-800'
+      });
+    }
+    
+    return actions;
+  };
+
   if (session && session.user?.role !== 'ADMIN') {
     router.push('/');
     return null;
@@ -178,96 +226,64 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
             {initialUsers.length === 0 ? (
               <p className="text-xs sm:text-sm text-gray-500">Aucun utilisateur en attente de validation.</p>
             ) : (
-              <div className="overflow-x-auto -mx-2 px-2">
-                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
-                        Nom
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
-                        Rôle
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
-                        Créé le
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {initialUsers.map((user) => (
-                      <tr key={user.id} className={user.role === 'GUEST' ? 'bg-yellow-50' : ''}>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-900">
-                          {user.name || 'N/A'}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-900">
-                          {user.email}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-                            user.role === 'MEMBER' ? 'bg-green-100 text-green-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">
-                          {new Date(user.createdAt).toLocaleDateString('fr-FR')}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <div className="flex gap-1 flex-wrap">
-                            {user.role === 'GUEST' && (
-                              <button
-                                onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-green-600 hover:text-green-800 px-2 py-1 text-xs whitespace-nowrap"
-                              >
-                                Valider
-                              </button>
-                            )}
-                            {user.role === 'MEMBER' && (
-                              <>
-                                <button
-                                  onClick={() => handleUpdateRole(user.id, 'ADMIN')}
-                                  className="text-blue-600 hover:text-blue-800 px-2 py-1 text-xs whitespace-nowrap"
-                                >
-                                  Promouvoir
-                                </button>
-                                <button
-                                  onClick={() => handleUpdateRole(user.id, 'GUEST')}
-                                  className="text-orange-600 hover:text-orange-800 px-2 py-1 text-xs whitespace-nowrap"
-                                >
-                                  Rétrograder
-                                </button>
-                              </>
-                            )}
-                            {user.role === 'ADMIN' && user.id !== currentUserId && (
-                              <button
-                                onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-orange-600 hover:text-orange-800 px-2 py-1 text-xs whitespace-nowrap"
-                              >
-                                Rétrograder
-                              </button>
-                            )}
-                            {user.id !== currentUserId && (
-                              <button
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:text-red-800 px-2 py-1 text-xs whitespace-nowrap"
-                              >
-                                Supprimer
-                              </button>
-                            )}
+              <div className="space-y-3">
+                {/* Filtres par rôle */}
+                <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+                  <span className="text-xs font-medium text-gray-500 uppercase whitespace-nowrap py-1">Filtres :</span>
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${initialUsers.filter(u => u.role === 'GUEST').length > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-400'}`}>
+                    {initialUsers.filter(u => u.role === 'GUEST').length} en attente
+                  </span>
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${initialUsers.filter(u => u.role === 'MEMBER').length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'}`}>
+                    {initialUsers.filter(u => u.role === 'MEMBER').length} membres
+                  </span>
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${initialUsers.filter(u => u.role === 'ADMIN').length > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-400'}`}>
+                    {initialUsers.filter(u => u.role === 'ADMIN').length} admins
+                  </span>
+                </div>
+
+                {/* Liste des utilisateurs sous forme de cartes */}
+                <div className="space-y-3">
+                  {initialUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className={`bg-gray-50 rounded-lg p-3 border border-gray-200 ${user.role === 'GUEST' ? 'border-yellow-200 bg-yellow-50' : ''}`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start gap-2">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${getRoleColor(user.role)}`}>
+                              {user.role}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-gray-900 truncate text-xs sm:text-sm">
+                                {user.name || 'N/A'}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {user.email}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                Créé le : {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                              </p>
+                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                        
+                        {/* Actions - stacked on mobile, inline on desktop */}
+                        <div className="flex flex-wrap gap-1 sm:gap-2 sm:ml-4">
+                          {getRoleActions(user).map((action, index) => (
+                            <button
+                              key={index}
+                              onClick={action.action}
+                              className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded hover:bg-gray-100 transition-colors whitespace-nowrap ${action.color}`}
+                            >
+                              {action.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
