@@ -137,28 +137,28 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   }
 
   return (
-    <main className="min-h-screen px-3 sm:px-4 py-4 bg-gray-50">
+    <main className="px-3 sm:px-4 py-2 sm:py-3">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-2">
+        <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 px-2">
           {session?.user?.role === 'ADMIN' ? 'Gestion des utilisateurs' : 'Créer un compte'}
         </h1>
 
         {formState?.message && (
-          <div className={`mb-4 px-3 py-2 rounded text-xs sm:text-sm ${formState.success ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          <div className={`mb-3 px-3 py-2 rounded text-xs sm:text-sm ${formState.success ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
             {formState.message}
           </div>
         )}
 
         {formState?.errors?.form && (
-          <div className="mb-4 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded text-xs sm:text-sm">
+          <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded text-xs sm:text-sm">
             {formState.errors.form[0]}
           </div>
         )}
 
         {/* Formulaire d'inscription (pour les visiteurs et admin) */}
         {!session && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-4 max-w-2xl mx-auto">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Créer un nouveau compte</h2>
+          <div className="bg-white rounded-lg shadow-sm p-3 mb-3 max-w-2xl mx-auto">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Créer un nouveau compte</h2>
             
             <form onSubmit={handleRegister} className="space-y-3">
               <div>
@@ -229,15 +229,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
         {/* Liste des utilisateurs */}
         {session?.user?.role === 'ADMIN' && (
-          <div className="bg-white rounded-lg shadow-sm p-4 max-w-2xl mx-auto">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Utilisateurs</h2>
+          <div className="bg-white rounded-lg shadow-sm p-3 max-w-2xl mx-auto">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Utilisateurs</h2>
             
             {initialUsers.length === 0 ? (
               <p className="text-xs sm:text-sm text-gray-500">Aucun utilisateur en attente de validation.</p>
             ) : (
               <div className="space-y-3">
                 {/* Filtres par rôle */}
-                <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+                <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
                   <span className="text-xs font-medium text-gray-500 uppercase whitespace-nowrap py-1">Filtres :</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${initialUsers.filter(u => u.role === 'GUEST').length > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-400'}`}>
                     {initialUsers.filter(u => u.role === 'GUEST').length} en attente
@@ -251,11 +251,11 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                 </div>
 
                 {/* Liste des utilisateurs sous forme de cartes */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {initialUsers.map((user) => (
                     <div
                       key={user.id}
-                      className={`bg-gray-50 rounded-lg p-3 border border-gray-200 ${user.role === 'GUEST' ? 'border-yellow-200 bg-yellow-50' : ''}`}
+                      className={`bg-gray-50 rounded-lg p-2 border border-gray-200 ${user.role === 'GUEST' ? 'border-yellow-200 bg-yellow-50' : ''}`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         <div className="flex-1 min-w-0">
@@ -305,10 +305,10 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
         {/* Formulaire d'inscription pour l'admin */}
         {session?.user?.role === 'ADMIN' && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mt-3 max-w-2xl mx-auto">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Ajouter un utilisateur</h2>
-            
-            <form onSubmit={handleRegister} className="space-y-3">
+          <div className="bg-white rounded-lg shadow-sm p-3 mt-3 max-w-2xl mx-auto">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Ajouter un utilisateur</h2>
+
+            <form onSubmit={handleRegister} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Nom
@@ -363,7 +363,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="sm:col-span-3 w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Créer l'utilisateur
               </button>
