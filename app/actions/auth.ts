@@ -8,6 +8,7 @@ import Argon2 from '@node-rs/argon2';
 import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { sendPasswordResetEmail } from '@/lib/email';
 
 export type FormState = {
   errors?: Record<string, string[]>;
@@ -253,15 +254,17 @@ export async function requestPasswordReset(
     expiresAt,
   });
 
-  // TODO: Envoyer l'email avec le lien de réinitialisation
-  // Pour l'instant, on retourne le token pour afficher dans l'interface
-  // En production: envoyer email avec lien vers /reset-password?token=XXX
-  console.log(`[DEV] Token de réinitialisation pour ${email}:`, token);
-  console.log(`[DEV] Lien: /reset-password?token=${token}`);
+  // Construire le lien de réinitialisation
+  const appUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+  const resetLink = `${appUrl}/reset-password?token=${token}`;
 
+  // Envoyer l'email (en mode dev, cela affichera juste dans la console)
+  const emailSent = await sendPasswordResetEmail(email, resetLink);
+
+  // Toujours retourner un message générique pour des raisons de sécurité
   return { 
     success: true, 
-    message: 'Si cet email existe, un lien de réinitialisation a été envoyé. Vérifiez la console du serveur pour le token (mode dev).' 
+    message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' 
   };
 }
 
