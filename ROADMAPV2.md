@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V2 - Planification Complète du Cahier des Charges
 
 *Dernière mise à jour : 2026-10-06*
-*Version : 2.2*
+*Version : 2.3*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md)*
 
 ---
@@ -64,29 +64,31 @@ Application web **familiale** de planification des repas et gestion de recettes.
 *Objectif : Rendre l'application fonctionnelle pour la planification de base*
 
 #### **F01 - Planification des Repas** *(MVP - Haute Priorité)*
-- [ ] **Calendrier hebdomadaire/mensuel**
-  - [ ] Affichage calendrier (semaine/mois) avec navigation
-  - [ ] 3 types de repas : Petit-déjeuner, Déjeuner, Dîner
-  - [ ] Affichage des repas planifiés par jour
-- [ ] **Glisser-déposer des recettes**
-  - [ ] Intégration de `dnd-kit` pour le drag & drop
-  - [ ] Ajout d'une recette à un créneau (jour + type de repas)
-  - [ ] Déplacement d'un repas existant vers un autre créneau
-  - [ ] Suppression d'un repas du calendrier
-- [ ] **Navigation calendrier**
-  - [ ] Boutons Précédent/Suivant (semaine/mois)
+- [x] **Calendrier hebdomadaire/mensuel**
+  - [x] Affichage calendrier hebdomadaire avec navigation (page d'accueil : J → J+6)
+  - [x] 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
+  - [x] Affichage des repas planifiés par jour (plusieurs plats par créneau autorisés)
+  - [ ] **Refonte page `/calendar`** : même composant que l'accueil, structure 1-3-3-3-3 (J → J+12)
+  - [ ] Vue mensuelle
+- [x] **Glisser-déposer des recettes**
+  - [x] Intégration de `dnd-kit` pour le drag & drop
+  - [x] Déplacement d'un repas existant vers un autre créneau (jour et/ou type de repas)
+  - [x] Suppression d'un repas par dépôt sur la zone « Supprimer » (apparaît pendant le drag)
+  - [ ] Ajout d'une recette à un créneau vide directement par glisser-déposer (actuellement via le modal « + »)
+- [x] **Navigation calendrier**
+  - [x] Boutons Précédent/Suivant + retour à la journée en cours
   - [ ] Sélecteur de date direct
 - [ ] **Affichage des détails**
   - [ ] Voir les informations de la recette directement dans le calendrier
-  - [ ] Lien vers la fiche complète de la recette
+  - [x] Modal d'actions par repas (modifier, replanifier, supprimer)
 - [ ] **Création d'une page de paramétrage**
   - [ ] Nombres de couverts par défaut
   - [ ] Mode de planification
   - [ ] autres ?
   - [ ] **Vérifier l'ensemble des interaction utilisateur possible**
-    - [ ] Formulaires
+    - [x] Formulaires (conservation des champs, remontée des erreurs serveur dans les modals)
     - [ ] Chaque page
-  - [ ] **Revoir la mise en page de la page calendier**
+  - [ ] **Revoir la mise en page de la page calendier** *(en cours : structure 1-3-3-3-3)*
 
 **Fichiers à créer/modifier** :
 - `app/calendar/page.tsx` (page principale)
@@ -460,7 +462,7 @@ CREATE TABLE pantry_items (
 
 ## 📊 **État d'Avancement**
 
-### **Fonctionnalités Implémentées** : ~60%
+### **Fonctionnalités Implémentées** : ~75%
 - ✅ Authentification complète
 - ✅ Gestion utilisateurs
 - ✅ Gestion recettes et ingrédients (avec mealCourse)
@@ -470,10 +472,13 @@ CREATE TABLE pantry_items (
 - ✅ Seed de données complet (45 recettes, 108 ingrédients)
 - ✅ **F01 - Planification (CRUD + Drag & Drop)** - MVP fonctionnel
 - ✅ Correction des Server Actions pour compatibilité Next.js 16
+- ✅ **DnD sur la page d'accueil** - replanification entre jours + zone de suppression
+- ✅ **Suppression de la contrainte d'unicité** - plusieurs plats par créneau (date + type de repas)
+- ✅ **Corrections UX/scroll** - min-h-screen fautif supprimé (layout, profil, register), pages compactées (accueil, profil, register)
+- ✅ **Modal de création d'utilisateur** sur la page register (admin)
 
-### **Fonctionnalités à Implémenter** : ~40%
-- ✅ **F01 - Planification (MVP)** - CRUD et DnD terminés
-- ⏳ F05 - Liste de courses
+### **Fonctionnalités à Implémenter** : ~25%
+- 🟡 **F01 - Planification** : refonte page `/calendar` en cours (structure 1-3-3-3-3)
 - ⏳ F05 - Liste de courses
 - ⏳ F04 - Partage du planning
 - ⏳ F03 - Proposition de repas
@@ -488,7 +493,7 @@ CREATE TABLE pantry_items (
 ### **Répartition par Priorité**
 | Priorité | Fonctionnalités | % Complet | Temps Estimé |
 |----------|-----------------|-----------|--------------|
-| 🔴 HAUTE | F01, Auth, Recettes | 60% | 3-5 jours |
+| 🔴 HAUTE | F01, Auth, Recettes | 90% | 1-2 jours |
 | 🟡 MOYENNE | F05, F04, F03 | 0% | 6-10 jours |
 | 🟢 BASSE | F08, F09, F07, F10, F11, F12 | 0% | 8-14 jours |
 
@@ -507,22 +512,28 @@ CREATE TABLE pantry_items (
 8. ✅ **CRUD meal_plans implémenté** - Création, lecture, mise à jour, suppression
 9. ✅ **Drag & Drop fonctionnel** - dnd-kit intégré pour replanification
 10. ✅ **Timeline mis à jour** - Ajout des champs createdAt/updatedAt à meal_plans
+11. ✅ **Modal d'actions par repas** - Modifier / Replanifier / Supprimer sur la page d'accueil
+12. ✅ **Corrections updateMealPlan** - Mises à jour partielles, remontée des erreurs serveur
+13. ✅ **Suppression contrainte unicité créneau** - Plusieurs plats par repas autorisés
+14. ✅ **DnD page d'accueil** - Drag entre jours + zone de suppression contextuelle
+15. ✅ **Fix scroll permanent** - min-h-screen fautif (layout + pages profil/register)
+16. ✅ **Compactage pages** - Accueil, profil, register
+17. ✅ **Modal création utilisateur** - Bouton admin sur la page register
 
 ### **Priorité Immédiate**
-- ✅ **F01 - Calendrier** : MVP fonctionnel avec CRUD et DnD
-  - ✅ **CRUD des repas planifiés** (création, lecture, mise à jour, suppression)
-  - ✅ **Intégration dnd-kit** pour le glisser-déposer
-  - ✅ **Navigation semaine/mois**
-- 🎯 **Prochaine étape** : F05 - Génération de liste de courses
+- 🟡 **F01 - Calendrier** : refonte de la page `/calendar`
+  - Réutiliser le composant de la page d'accueil (composant partagé)
+  - Structure 1-3-3-3-3 (jour principal + 4 lignes de 3 jours, J → J+12)
+  - Conserver le DnD, la zone de suppression et les modals
+- 🎯 **Ensuite** : F05 - Génération de liste de courses
 - **Tests** : Vérifier que chaque fonctionnalité fonctionne avant de passer à la suivante
 - **Documentation** : Mettre à jour le README et la ROADMAP au fur et à mesure
 
 ### **Étape Suivante**
-**Attaquer F01 - CRUD des repas planifiés + dnd-kit**
-- ✅ Base de données prête avec recettes et ingrédients
-- ✅ mealCourse intégré partout
-- 🎯 **Prochaine étape**: Créer la table `meal_plans` et implémenter les actions CRUD
-- 📅 **Objectif**: Avoir une version fonctionnelle de planification sous 2-3 semaines
+**Refonte de la page `/calendar`**
+- ✅ Page d'accueil fonctionnelle (DnD, modals, compacte) à réutiliser comme base
+- 🎯 **Prochaine étape** : Extraire le composant calendrier partagé et l'utiliser sur `/calendar` avec 13 jours
+- 📅 **Objectif** : MVP F01 complet, puis F05
 
 ---
 

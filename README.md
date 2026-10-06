@@ -70,21 +70,31 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 
 #### 📅 Calendrier et Planification
 - ✅ **CRUD complet des repas planifiés** (Création, Lecture, Mise à jour, Suppression)
-- ✅ **Glisser-déposer fonctionnel** avec dnd-kit pour replanification
+- ✅ **Glisser-déposer sur la page d'accueil** : replanification d'un repas entre les jours (et types de repas) + **zone de suppression** apparaissant pendant le drag
+- ✅ **Modal d'actions par repas** : Modifier (recette, note, couverts) / Replanifier (date, type) / Supprimer
+- ✅ **Plusieurs plats par créneau** : la contrainte d'unicité (1 repas par date + type) a été retirée
 - ✅ **Affichage du calendrier** avec 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
-- ✅ **Navigation par semaine** avec boutons Précédent/Suivant/Aujourd'hui
+- ✅ **Navigation par jour** avec boutons Précédent/Suivant/Aujourd'hui
 - ✅ **Sélection de recettes** pour chaque créneau
 - ✅ **Repas personnalisés** (notes textuelles sans recette)
 - ✅ **Gestion des couverts** par repas planifié
 
-#### 🔧 Corrections Techniques
+#### 🔧 Corrections Techniques et UX
 - ✅ **Séparation des types Server Actions** - Résolution du problème "use server" exportant des objets
 - ✅ **Gestion des timestamps** - Ajout des champs createdAt/updatedAt à meal_plans
 - ✅ **Validation TypeScript** - Correction des problèmes de typage avec FormData
+- ✅ **Mises à jour partielles** - updateMealPlan accepte les champs partiels (chaine vide = vider un champ)
+- ✅ **Fix scroll permanent** - suppression des `min-h-screen` sous la navbar (layout, profil, register)
+- ✅ **Pages compactées** - Accueil (cartes côte à côte), Profil (infos sur une ligne, question secrète fusionnée dans l'onglet), Register (formulaire en grille, modal de création d'utilisateur)
 
 ---
 
-### 🟚 **En Développement** (Branche: `feature/calendrier`)
+### 🟚 **En Développement** (Branche: `feat--Implémentation-calendrier`)
+
+#### 📅 Page Calendrier (`/calendar`)
+- [ ] Refonte de la page : réutiliser le composant de la page d'accueil
+- [ ] Structure 1-3-3-3-3 (jour principal + 4 lignes de 3 jours, J → J+12)
+- [ ] Conserver DnD, zone de suppression et modals
 
 #### 📋 Liste de Courses
 - [ ] Agrégation automatique des ingrédients planifiés
@@ -261,16 +271,11 @@ npm run seed -- --clear
 
 ## 🎯 Prochaines Étapes
 
-### **Priorité Immédiate** (Branche: `feature/calendrier`)
-1. **Implémenter F01 - CRUD des repas planifiés + dnd-kit**
-   - ✅ Prérequis terminés (seed, mealCourse, formulaires UX, menu navigation)
-   - [ ] Créer la table `meal_plans` dans `lib/db/schema.ts`
-   - [ ] Créer la migration Drizzle pour `meal_plans`
-   - [ ] Implémenter les Server Actions CRUD dans `app/actions/meal-plan.ts`
-   - [ ] Créer la page `/calendar` avec le composant calendrier
-   - [ ] Intégrer dnd-kit pour le glisser-déposer des recettes
-   - [ ] Implémenter la navigation semaine/mois
-   - [ ] Tester le glisser-déposer sur mobile et desktop
+### **Priorité Immédiate**
+1. **Refonte de la page `/calendar`** (F01)
+   - ✅ CRUD, DnD et modals terminés sur la page d'accueil
+   - [ ] Extraire le composant calendrier partagé (actuellement dans `HomeCalendar`)
+   - [ ] L'utiliser sur `/calendar` avec 13 jours (structure 1-3-3-3-3)
 
 2. **Génération de la liste de courses** (F05)
    - Agrégation des ingrédients du planning
