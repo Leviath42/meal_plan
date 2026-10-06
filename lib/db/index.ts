@@ -8,7 +8,7 @@ const globalForDb = globalThis as unknown as {
   sqlite: Database.Database | undefined;
 };
 
-const sqlite = globalForDb.sqlite ?? new Database('sqlite.db');
+const sqlite = globalForDb.sqlite ?? new Database('data/sqlite.db');
 
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.sqlite = sqlite;
