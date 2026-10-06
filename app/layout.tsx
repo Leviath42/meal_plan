@@ -1,11 +1,8 @@
 import { Inter } from 'next/font/google';
 import { auth } from '@/lib/auth';
-import NextAuth from 'next-auth';
+import { SessionProvider } from 'next-auth';
 import Nav from './Nav';
 import '../styles/globals.css';
-
-// NextAuth v5: extraire SessionProvider
-const { SessionProvider } = NextAuth;
 
 const inter = Inter({ subsets: ['latin'] });
 
