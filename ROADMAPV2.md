@@ -78,7 +78,8 @@ Application web **familiale** de planification des repas et gestion de recettes.
 - [x] **Navigation calendrier**
   - [x] Boutons Précédent/Suivant par jour + retour à la journée en cours
   - [x] Boutons Précédent/Suivant par mois (page calendrier)
-  - [ ] Sélecteur de date direct
+  - [x] Clic sur une date affichée pour la placer en première position (accueil et calendrier)
+  - [ ] Sélecteur de date direct (saisie d'une date arbitraire)
 - [ ] **Affichage des détails**
   - [ ] Voir les informations de la recette directement dans le calendrier
   - [x] Modal d'actions par repas (modifier, replanifier, supprimer)
