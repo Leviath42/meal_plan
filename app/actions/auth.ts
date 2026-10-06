@@ -76,12 +76,7 @@ export async function updateUserRole(
   const session = await auth();
   const currentUserId = sessionUserId || session?.user?.id;
 
-  // Empêcher la rétrogradation vers GUEST
-  if (newRole === 'GUEST') {
-    return { errors: { form: ['Impossible de rétrograder un utilisateur vers GUEST'] } };
-  }
-
-  // Empêcher de rétrograder ou modifier son propre compte (sauf pour ajouter un rôle plus élevé)
+  // Empêcher de modifier son propre compte (sauf pour ajouter un rôle plus élevé)
   if (userId === currentUserId && newRole !== 'ADMIN') {
     return { errors: { form: ['Vous ne pouvez pas modifier votre propre rôle'] } };
   }
