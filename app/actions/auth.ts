@@ -203,12 +203,12 @@ export async function updateUserPassword(
 }
 
 // Générer un token aléatoire sécurisé
-export function generateResetToken(): string {
+function generateResetToken(): string {
   return crypto.randomUUID();
 }
 
 // Durée de validité du token : 1 heure
-export const RESET_TOKEN_EXPIRY = 60 * 60 * 1000; // 1 heure en millisecondes
+const RESET_TOKEN_EXPIRY = 60 * 60 * 1000; // 1 heure en millisecondes
 
 // Demander une réinitialisation de mot de passe
 export async function requestPasswordReset(
