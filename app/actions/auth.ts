@@ -8,6 +8,7 @@ import Argon2 from '@node-rs/argon2';
 import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { signOut } from '@/lib/auth';
 
 export type FormState = {
   errors?: Record<string, string[]>;
@@ -141,4 +142,64 @@ export async function getUserById(id: string) {
     .where(eq(users.id, id))
     .limit(1);
   return user;
+}
+
+export async function updateUserPassword(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const session = await auth();
+  
+  if (!session?.user) {
+    return { errors: { form: ['Vous devez être connecté pour changer votre mot de passe'] } };
+  }
+
+  const userId = formData.get('userId') as string;
+  const currentPassword = formData.get('currentPassword') as string;
+  const newPassword = formData.get('newPassword') as string;
+
+  // Vérifier que l'ID correspond à l'utilisateur connecté
+  if (userId !== session.user.id) {
+    return { errors: { form: ['Vous ne pouvez changer que votre propre mot de passe'] } };
+  }
+
+  // Récupérer l'utilisateur actuel
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) {
+    return { errors: { form: ['Utilisateur non trouvé'] } };
+  }
+
+  // Vérifier le mot de passe actuel
+  const isValidPassword = await Argon2.verify(user.password, currentPassword);
+  
+  if (!isValidPassword) {
+    return { errors: { currentPassword: ['Mot de passe actuel incorrect'] } };
+  }
+
+  try {
+    // Hash du nouveau mot de passe
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Mettre à jour le mot de passe
+    await db
+      .update(users)
+      .set({ password: hashedPassword, updatedAt: new Date().toISOString() })
+      .where(eq(users.id, userId));
+
+    // Déconnecter l'utilisateur après changement de mot de passe pour sécurité
+    await signOut();
+
+    return { 
+      success: true, 
+      message: 'Mot de passe mis à jour avec succès. Veuillez vous reconnecter.' 
+    };
+  } catch (error) {
+    console.error('Erreur lors du changement de mot de passe:', error);
+    return { errors: { form: ['Une erreur est survenue lors du changement de mot de passe'] } };
+  }
 }
