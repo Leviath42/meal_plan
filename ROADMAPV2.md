@@ -82,7 +82,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [ ] Sélecteur de date direct (saisie d'une date arbitraire)
 - [ ] **Affichage des détails**
   - [ ] Voir les informations de la recette directement dans le calendrier
-  - [x] Modal d'actions par repas (modifier, replanifier, supprimer)
+  - [x] Modal d'actions par repas (modifier — type de repas, recette, note, couverts —, replanifier, supprimer)
 - [ ] **Création d'une page de paramétrage**
   - [ ] Nombres de couverts par défaut
   - [ ] Mode de planification

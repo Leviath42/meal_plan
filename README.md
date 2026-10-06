@@ -71,7 +71,7 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 #### 📅 Calendrier et Planification
 - ✅ **CRUD complet des repas planifiés** (Création, Lecture, Mise à jour, Suppression)
 - ✅ **Glisser-déposer sur la page d'accueil** : replanification d'un repas entre les jours (et types de repas) + **zone de suppression** apparaissant pendant le drag
-- ✅ **Modal d'actions par repas** : Modifier (recette, note, couverts) / Replanifier (date, type) / Supprimer
+- ✅ **Modal d'actions par repas** : Modifier (type de repas, recette, note, couverts) / Replanifier (date, type) / Supprimer
 - ✅ **Plusieurs plats par créneau** : la contrainte d'unicité (1 repas par date + type) a été retirée
 - ✅ **Affichage du calendrier** avec 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
 - ✅ **Navigation par jour** avec boutons Précédent/Suivant/Aujourd'hui + **clic sur une date pour l'afficher en première position**
