@@ -61,14 +61,14 @@ export default function ProfileClient({ session }: ProfileClientProps) {
     const result = await updateUserPassword(null, formData);
     
     if (result?.success) {
-      // Capturer la référence du formulaire avant toute opération asynchrone
-      const formElement = e.currentTarget;
+      // Ne pas reset le formulaire car signOut va rediriger immédiatement vers login
+      // Le formulaire sera détruit de toute façon
       setFormState({ success: true, message: result.message || 'Mot de passe mis à jour avec succès. Veuillez vous reconnecter.' });
-      // Reset le formulaire avant la déconnexion
-      formElement.reset();
       // Ne pas await car signOut déclenche une redirection qui détruit le composant
       signOut({ callbackUrl: '/login' });
     } else {
+      // Reset uniquement en cas d'erreur pour permettre une nouvelle tentative
+      e.currentTarget.reset();
       setFormState(result);
     }
     
