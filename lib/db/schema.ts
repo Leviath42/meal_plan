@@ -101,7 +101,7 @@ export const mealPlans = sqliteTable("meal_plans", {
   
   // Surcharge le "defaultServings" de la recette si on a des invités ce jour-là.
   // La liste de courses utilisera ce chiffre pour recalculer les quantités.
-  servings: integer("servings"),
+  servings: integer("servings").default(4),
   
   // La recette prévue. "set null" signifie que si on supprime la recette du catalogue,
   // l'événement reste dans le calendrier mais sans la recette associée.

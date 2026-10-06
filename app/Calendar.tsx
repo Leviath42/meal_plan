@@ -148,7 +148,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
     }
   };
 
-  const addMealPlanAction = async (recipeId: string | null, customNote?: string) => {
+  const addMealPlanAction = async (recipeId: string | null, customNote?: string, servings: number = 4) => {
     if (!selectedDate || !selectedMealType) return;
 
     const formData = new FormData();
@@ -156,6 +156,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
     formData.append('mealType', selectedMealType);
     if (recipeId) formData.append('recipeId', recipeId);
     if (customNote) formData.append('customNote', customNote);
+    formData.append('servings', servings.toString());
     
     const result = await addMealPlan(null, formData);
     if (result?.success) {
@@ -571,7 +572,11 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                           {recipes.map(recipe => (
                             <button
                               key={recipe.id}
-                              onClick={() => addMealPlanAction(recipe.id, undefined)}
+                              onClick={() => {
+                                const servingsInput = document.getElementById('servingsInput') as HTMLInputElement;
+                                const servings = servingsInput?.value ? parseInt(servingsInput.value) || 4 : 4;
+                                addMealPlanAction(recipe.id, undefined, servings);
+                              }}
                               className="w-full text-left p-2 border rounded hover:bg-gray-50 transition-colors"
                             >
                               {recipe.title}
@@ -591,10 +596,23 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                         className="w-full p-2 border rounded"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
-                            addMealPlanAction(null, e.currentTarget.value);
+                            const servingsInput = document.getElementById('servingsInput') as HTMLInputElement;
+                            const servings = servingsInput?.value ? parseInt(servingsInput.value) || 4 : 4;
+                            addMealPlanAction(null, e.currentTarget.value, servings);
                           }
                         }}
                       />
+                      <div className="mt-2">
+                        <label className="text-sm text-gray-700 mr-2">Couverts:</label>
+                        <input
+                          type="number"
+                          id="servingsInput"
+                          defaultValue="4"
+                          min="1"
+                          max="20"
+                          className="w-16 p-1 border rounded text-sm"
+                        />
+                      </div>
                     </div>
                   </>
                 )}
@@ -610,7 +628,9 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                     <button
                       onClick={() => {
                         const customNoteInput = document.getElementById('customNote') as HTMLInputElement;
-                        addMealPlanAction(null, customNoteInput?.value);
+                        const servingsInput = document.getElementById('servingsInput') as HTMLInputElement;
+                        const servings = servingsInput?.value ? parseInt(servingsInput.value) || 4 : 4;
+                        addMealPlanAction(null, customNoteInput?.value, servings);
                       }}
                       className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
