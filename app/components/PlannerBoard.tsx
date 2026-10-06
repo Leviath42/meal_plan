@@ -19,10 +19,12 @@ import type { MealPlan, MealType, Recipe } from '@/app/types/meal-plan';
 
 interface PlannerBoardProps {
   recipes: Recipe[];
-  // Nombre de jours affichés à partir de la date de départ (7 pour l'accueil, 13 pour le calendrier)
+  // Nombre de jours affichés à partir de la date de départ (7 pour l'accueil, 19 pour le calendrier)
   daysCount?: number;
   // Contenu optionnel affiché sous la grille (ex: lien vers le calendrier complet)
   footer?: ReactNode;
+  // Afficher la navigation par mois en plus de la navigation par jour (page calendrier)
+  enableMonthNavigation?: boolean;
 }
 
 // Données d'un jour affiché dans la grille
@@ -732,8 +734,8 @@ function MealPlanActionsModal({
 }
 
 // Composant principal : calendrier de planification réutilisable
-// (page d'accueil : 7 jours en 1-3-3 ; page calendrier : 13 jours en 1-3-3-3-3)
-export default function PlannerBoard({ recipes = [], daysCount = 7, footer }: PlannerBoardProps) {
+// (page d'accueil : 7 jours en 1-3-3 ; page calendrier : 19 jours en 1-3-3-3-3-3-3)
+export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false }: PlannerBoardProps) {
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -798,6 +800,22 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer }: Pl
   // Navigation : retourner à aujourd'hui
   const goToToday = () => {
     setStartDate(new Date());
+  };
+
+  // Navigation : mois précédent (au 1er du mois, pour éviter les débordements de fin de mois)
+  const goToPreviousMonth = () => {
+    const newDate = new Date(startDate);
+    newDate.setDate(1);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setStartDate(newDate);
+  };
+
+  // Navigation : mois suivant (au 1er du mois)
+  const goToNextMonth = () => {
+    const newDate = new Date(startDate);
+    newDate.setDate(1);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setStartDate(newDate);
   };
 
   // Formatage des dates
@@ -1151,6 +1169,31 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer }: Pl
             {startDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
           </h2>
           <div className="flex gap-2">
+            {enableMonthNavigation && (
+              <>
+                <button
+                  onClick={goToPreviousMonth}
+                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
+                  disabled={loading}
+                  title="Mois précédent"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M20 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={goToNextMonth}
+                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
+                  disabled={loading}
+                  title="Mois suivant"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M4 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <div className="w-px bg-gray-200 mx-1" aria-hidden="true" />
+              </>
+            )}
             <button
               onClick={goToPreviousDay}
               className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
