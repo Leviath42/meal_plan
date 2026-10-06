@@ -220,6 +220,28 @@ meal_plan/
 
 ---
 
+## 🌱 Seed de la Base de Données
+
+Le projet inclut un script de seed pour pré-remplir la base de données avec des recettes et ingrédients de démonstration.
+
+```bash
+# Exécuter le seed pour peupler la base avec ~45 recettes et ~108 ingrédients
+npm run seed
+
+# Vider la base avant un nouveau seed
+npm run seed -- --clear
+```
+
+**Contenu du seed :**
+- 45 recettes variées (pâtes, viandes, poissons, desserts, légumes)
+- 108 ingrédients classés par rayons
+- 258 associations recettes-ingrédients
+- Inclut la recette "Jambon Pâtes" et tous les classiques familiaux
+
+⚠️ **Note :** Le fichier `lib/db/seed.ts` contient toutes les données de démonstration. Pensez à le maintenir à jour lorsque vous ajoutez de nouvelles fonctionnalités nécessitant des données de test.
+
+---
+
 ## 🎯 Prochaines Étapes
 
 ### **Priorité Immédiate** (Branche: `feature/calendrier`)
