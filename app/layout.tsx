@@ -1,6 +1,5 @@
 import { Inter } from 'next/font/google';
-import { auth } from '@/lib/auth';
-import { SessionProvider } from 'next-auth/react';
+import { auth, SessionProvider } from '@/lib/auth';
 import Nav from './Nav';
 import '../styles/globals.css';
 
