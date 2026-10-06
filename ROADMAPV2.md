@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V2 - Planification Complète du Cahier des Charges
 
 *Dernière mise à jour : 2026-10-06*
-*Version : 2.1*
+*Version : 2.2*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md)*
 
 ---
@@ -33,12 +33,15 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | ID | Fonctionnalité | Statut | Détails |
 |----|----------------|--------|---------|
 | **F06** | **Authentification & Autorisations** | ✅ **COMPLET** | NextAuth v5, Argon2, sessions JWT, rôles GUEST/MEMBER/ADMIN, bloquage connexion GUEST |
-| **F02** | **Gestion des Recettes** | ✅ **COMPLET** | CRUD complet, association recettes/ingrédients, quantités, unités |
+| **F02** | **Gestion des Recettes** | ✅ **COMPLET** | CRUD complet, association recettes/ingrédients, quantités, unités, **mealCourse** |
 | **F02** | **Gestion des Ingrédients** | ✅ **COMPLET** | CRUD complet, catégories (rayons), unités par défaut |
 | - | **Réinitialisation mot de passe** | ✅ **COMPLET** | Flux complet avec question secrète, vérification 2 étapes |
 | - | **Page Profil** | ✅ **COMPLET** | Affichage infos, changement mot de passe, déconnexion automatique |
 | - | **Interface Admin** | ✅ **COMPLET** | Liste utilisateurs, validation GUEST→MEMBER, promotion/démotion, suppression |
 | - | **Design Responsive** | ✅ **COMPLET** | Mobile-first, Next.js 16 compatible, conteneurs cohérents |
+| - | **Seed de données** | ✅ **COMPLET** | 45 recettes, 108 ingrédients, 258 associations |
+| - | **Menu Navigation** | ✅ **COMPLET** | Calendrier ajouté au menu (desktop + mobile) |
+| - | **UX Formulaires** | ✅ **COMPLET** | Conservation des champs en cas d'erreur de validation |
 
 ### 📌 **Stack Technique Actuelle**
 
@@ -75,6 +78,14 @@ Application web **familiale** de planification des repas et gestion de recettes.
 - [ ] **Affichage des détails**
   - [ ] Voir les informations de la recette directement dans le calendrier
   - [ ] Lien vers la fiche complète de la recette
+- [ ] **Création d'une page de paramétrage**
+  - [ ] Nombres de couverts par défaut
+  - [ ] Mode de planification
+  - [ ] autres ?
+  - [ ] **Vérifier l'ensemble des interaction utilisateur possible**
+    - [ ] Formulaires
+    - [ ] Chaque page
+  - [ ] **Revoir la mise en page de la page calendier**
 
 **Fichiers à créer/modifier** :
 - `app/calendar/page.tsx` (page principale)
@@ -448,13 +459,16 @@ CREATE TABLE pantry_items (
 
 ## 📊 **État d'Avancement**
 
-### **Fonctionnalités Implémentées** : ~40%
+### **Fonctionnalités Implémentées** : ~50%
 - ✅ Authentification complète
 - ✅ Gestion utilisateurs
-- ✅ Gestion recettes et ingrédients
+- ✅ Gestion recettes et ingrédients (avec mealCourse)
 - ✅ Design responsive
+- ✅ Conservation des champs formulaires en cas d'erreur
+- ✅ Menu navigation complet avec lien Calendrier
+- ✅ Seed de données complet (45 recettes, 108 ingrédients)
 
-### **Fonctionnalités à Implémenter** : ~60%
+### **Fonctionnalités à Implémenter** : ~50%
 - ⏳ F01 - Planification (MVP)
 - ⏳ F05 - Liste de courses
 - ⏳ F04 - Partage du planning
@@ -482,22 +496,33 @@ CREATE TABLE pantry_items (
 1. ✅ Lire et analyser le cahier des charges
 2. ✅ Créer ce document ROADMAPV2.md
 3. ✅ **Seed de données complété** - 45 recettes et 108 ingrédients disponibles
-4. [ ] **Commencer l'implémentation de F01**
-   - [ ] Créer la table `meal_plans`
-   - [ ] Créer la page `/calendar`
-   - [ ] Implémenter le composant calendrier avec dnd-kit
-   - [ ] Ajouter les Server Actions pour la gestion du planning
+4. ✅ **Corrections UX formulaires** - Conservation des champs en cas d'erreur
+5. ✅ **Menu navigation mis à jour** - Lien Calendrier ajouté
+6. ✅ **mealCourse intégré** - Dans seed, validator, formulaires, schéma DB
+7. [ ] **Commencer l'implémentation de F01**
+   - [ ] Créer la table `meal_plans` dans schema.ts
+   - [ ] Créer la migration Drizzle pour `meal_plans`
+   - [ ] Créer `app/calendar/page.tsx`
+   - [ ] Créer `app/calendar/CalendarClient.tsx` avec dnd-kit
+   - [ ] Créer `app/calendar/CalendarWeekView.tsx`
+   - [ ] Créer `app/calendar/CalendarDayView.tsx`
+   - [ ] Créer `app/calendar/CalendarEvent.tsx`
+   - [ ] Créer `app/actions/meal-plan.ts` (CRUD meal_plans)
 
 ### **Priorité Immédiate**
 - **F01 - Calendrier** : C'est la fonctionnalité centrale du MVP
+  - ⏳ **CRUD des repas planifiés** (création, lecture, mise à jour, suppression)
+  - ⏳ **Intégration dnd-kit** pour le glisser-déposer
+  - ⏳ **Navigation semaine/mois**
 - **Tests** : Vérifier que chaque fonctionnalité fonctionne avant de passer à la suivante
 - **Documentation** : Mettre à jour le README et la ROADMAP au fur et à mesure
 
 ### **Étape Suivante**
-**Implémenter F01 - Planification des Repas** (MVP du calendrier)
+**Attaquer F01 - CRUD des repas planifiés + dnd-kit**
 - ✅ Base de données prête avec recettes et ingrédients
-- 🎯 Prochaine étape: Créer la table `meal_plans` et l'interface calendrier
-- 📅 Objectif: Avoir une version fonctionnelle de planification sous 2-3 semaines
+- ✅ mealCourse intégré partout
+- 🎯 **Prochaine étape**: Créer la table `meal_plans` et implémenter les actions CRUD
+- 📅 **Objectif**: Avoir une version fonctionnelle de planification sous 2-3 semaines
 
 ---
 

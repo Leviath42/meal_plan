@@ -9,19 +9,27 @@ import { eq } from 'drizzle-orm';
 
 export type RecipeFormState = {
   errors?: Record<string, string[]>;
+  values?: Record<string, string | number>;
+  ingredients?: any[];
 } | null;
 
 export async function createRecipe(
   prevState: RecipeFormState,
   formData: FormData
 ): Promise<RecipeFormState> {
+  const rawData = Object.fromEntries(formData);
+  const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
   const parsed = recipeInput.safeParse({
-    ...Object.fromEntries(formData),
-    ingredients: JSON.parse(String(formData.get('ingredients') ?? '[]')),
+    ...rawData,
+    ingredients: ingredients,
   });
 
   if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors };
+    return { 
+      errors: parsed.error.flatten().fieldErrors,
+      values: rawData,
+      ingredients: ingredients
+    };
   }
 
   const { ingredients: items, ...recipeData } = parsed.data;
@@ -47,14 +55,20 @@ export async function updateRecipe(
   formData: FormData
 ): Promise<RecipeFormState> {
   const id = String(formData.get('id'));
+  const rawData = Object.fromEntries(formData);
+  const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
   
   const parsed = recipeInput.safeParse({
-    ...Object.fromEntries(formData),
-    ingredients: JSON.parse(String(formData.get('ingredients') ?? '[]')),
+    ...rawData,
+    ingredients: ingredients,
   });
 
   if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors };
+    return { 
+      errors: parsed.error.flatten().fieldErrors,
+      values: rawData,
+      ingredients: ingredients
+    };
   }
 
   const { ingredients: items, ...recipeData } = parsed.data;

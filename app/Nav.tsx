@@ -28,6 +28,9 @@ export default function Nav({ session }: { session: Session | null }) {
           <div className="hidden md:flex gap-3 lg:gap-4 items-center">
             {session ? (
               <>
+                <Link href="/calendar" className={`text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap ${pathname.startsWith('/calendar') ? 'font-medium text-blue-600' : ''}`}>
+                  Calendrier
+                </Link>
                 <Link href="/recipes" className={`text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap ${pathname.startsWith('/recipes') ? 'font-medium text-blue-600' : ''}`}>
                   Recettes
                 </Link>
@@ -68,6 +71,9 @@ export default function Nav({ session }: { session: Session | null }) {
         {isMobileMenuOpen && session && (
           <div className="md:hidden bg-white border-t border-gray-100 px-3 sm:px-4 pb-3">
             <div className="flex flex-col gap-2">
+              <Link href="/calendar" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors py-2 ${pathname.startsWith('/calendar') ? 'font-medium text-blue-600' : ''}`}>
+                Calendrier
+              </Link>
               <Link href="/recipes" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors py-2 ${pathname.startsWith('/recipes') ? 'font-medium text-blue-600' : ''}`}>
                 Recettes
               </Link>
