@@ -32,6 +32,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     success?: boolean;
     message?: string;
   } | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,6 +46,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     if (result?.success) {
       // Reset le formulaire avant le refresh
       formElement.reset();
+      setShowCreateModal(false);
       router.refresh();
     }
   };
@@ -139,9 +141,22 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   return (
     <main className="px-3 sm:px-4 py-2 sm:py-3">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 px-2">
-          {session?.user?.role === 'ADMIN' ? 'Gestion des utilisateurs' : 'Créer un compte'}
-        </h1>
+        <div className="flex items-center justify-between mb-3 px-2">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-800">
+            {session?.user?.role === 'ADMIN' ? 'Gestion des utilisateurs' : 'Créer un compte'}
+          </h1>
+          {session?.user?.role === 'ADMIN' && (
+            <button
+              onClick={() => {
+                setFormState(null);
+                setShowCreateModal(true);
+              }}
+              className="bg-blue-600 text-white rounded px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              + Nouvel utilisateur
+            </button>
+          )}
+        </div>
 
         {formState?.message && (
           <div className={`mb-3 px-3 py-2 rounded text-xs sm:text-sm ${formState.success ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
@@ -303,71 +318,85 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
           </div>
         )}
 
-        {/* Formulaire d'inscription pour l'admin */}
-        {session?.user?.role === 'ADMIN' && (
-          <div className="bg-white rounded-lg shadow-sm p-3 mt-3 max-w-2xl mx-auto">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Ajouter un utilisateur</h2>
-
-            <form onSubmit={handleRegister} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Nom
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Nom de l'utilisateur"
-                  required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {formState?.errors?.name && (
-                  <p className="text-red-500 text-xs mt-1">{formState.errors.name[0]}</p>
-                )}
+        {/* Modal de création d'utilisateur (admin) */}
+        {showCreateModal && session?.user?.role === 'ADMIN' && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="font-bold text-lg">Ajouter un utilisateur</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
+                  aria-label="Fermer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
 
-              <div>
-                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="email@exemple.com"
-                  required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {formState?.errors?.email && (
-                  <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>
-                )}
-              </div>
+              <form onSubmit={handleRegister} className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+                <div>
+                  <label htmlFor="admin-name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                    Nom
+                  </label>
+                  <input
+                    id="admin-name"
+                    name="name"
+                    type="text"
+                    placeholder="Nom de l'utilisateur"
+                    required
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {formState?.errors?.name && (
+                    <p className="text-red-500 text-xs mt-1">{formState.errors.name[0]}</p>
+                  )}
+                </div>
 
-              <div>
-                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Mot de passe
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Minimum 6 caractères"
-                  minLength={6}
-                  required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {formState?.errors?.password && (
-                  <p className="text-red-500 text-xs mt-1">{formState.errors.password[0]}</p>
-                )}
-              </div>
+                <div>
+                  <label htmlFor="admin-email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    id="admin-email"
+                    name="email"
+                    type="email"
+                    placeholder="email@exemple.com"
+                    required
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {formState?.errors?.email && (
+                    <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>
+                  )}
+                </div>
 
-              <button
-                type="submit"
-                className="sm:col-span-3 w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Créer l'utilisateur
-              </button>
-            </form>
+                <div>
+                  <label htmlFor="admin-password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                    Mot de passe
+                  </label>
+                  <input
+                    id="admin-password"
+                    name="password"
+                    type="password"
+                    placeholder="Minimum 6 caractères"
+                    minLength={6}
+                    required
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {formState?.errors?.password && (
+                    <p className="text-red-500 text-xs mt-1">{formState.errors.password[0]}</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="sm:col-span-3 w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Créer l'utilisateur
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>
