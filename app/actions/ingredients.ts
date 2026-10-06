@@ -12,11 +12,22 @@ export type IngredientFormState = {
   values?: Record<string, string>;
 } | null;
 
+// Helper pour convertir FormData en Record<string, string>
+function formDataToRecord(formData: FormData): Record<string, string> {
+  const record: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === 'string') {
+      record[key] = value;
+    }
+  }
+  return record;
+}
+
 export async function createIngredient(
   prevState: IngredientFormState,
   formData: FormData
 ): Promise<IngredientFormState> {
-  const rawData = Object.fromEntries(formData);
+  const rawData = formDataToRecord(formData);
   const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
     return { 
@@ -39,7 +50,7 @@ export async function updateIngredient(
   id: string,
   formData: FormData
 ): Promise<IngredientFormState> {
-  const rawData = Object.fromEntries(formData);
+  const rawData = formDataToRecord(formData);
   const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
     return { 

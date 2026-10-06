@@ -1,12 +1,11 @@
 'use client';
 
 import { DndContext, DragEndEvent, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragStartEvent, DragOverlay } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useState } from 'react';
 import CalendarClient from './CalendarClient';
-import { MealPlan } from '@/app/actions/meal-plan';
-import type { Recipe } from './CalendarClient';
+import type { MealPlan, Recipe } from '@/app/types/meal-plan';
 
 // Composant pour afficher le repas pendant le drag
 const DragOverlayComponent = ({ item }: { item: { mealPlan: MealPlan } | null }) => {
@@ -48,7 +47,7 @@ export default function DndCalendarWrapper({ recipes }: DndCalendarWrapperProps)
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
-      coordinates: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
@@ -72,7 +71,6 @@ export default function DndCalendarWrapper({ recipes }: DndCalendarWrapperProps)
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
-      sortingStrategy={rectSortingStrategy}
     >
       <CalendarClient recipes={recipes} />
       

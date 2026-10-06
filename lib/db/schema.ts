@@ -112,6 +112,10 @@ export const mealPlans = sqliteTable("meal_plans", {
   // La recette prévue. "set null" signifie que si on supprime la recette du catalogue,
   // l'événement reste dans le calendrier mais sans la recette associée.
   recipeId: text("recipe_id").references(() => recipes.id, { onDelete: "set null" }),
+  
+  // Timestamps pour le suivi
+  createdAt: text("created_at").default(new Date().toISOString()),
+  updatedAt: text("updated_at").default(new Date().toISOString()),
 });
 
 

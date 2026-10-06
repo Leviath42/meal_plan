@@ -2,19 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getMealPlans, addMealPlan, deleteMealPlan, MealPlanFormState, MealType } from './actions/meal-plan';
+import { getMealPlans, addMealPlan, deleteMealPlanFromForm } from './actions/meal-plan';
 import { useRouter } from 'next/navigation';
 import type { JSX } from 'react';
-
-interface MealPlan {
-  id: string;
-  date: string;
-  mealType: string;
-  recipeId: string | null;
-  customNote: string | null;
-  servings: number | null;
-  mealCourse?: string | null;
-}
+import type { MealPlan, MealPlanFormResult, MealType } from '@/app/types/meal-plan';
 
 interface CalendarProps {
   recipes?: Array<{ id: string; title: string }>;
@@ -50,7 +41,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [formState, setFormState] = useState<MealPlanFormState>(null);
+  const [formState, setFormState] = useState<MealPlanFormResult | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
 
@@ -142,7 +133,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
     const formData = new FormData();
     formData.append('id', id);
     
-    const result = await deleteMealPlan(null, formData);
+    const result = await deleteMealPlanFromForm(null, formData);
     if (result?.success) {
       setFormState({ success: true, message: result.message });
       fetchMealPlans();

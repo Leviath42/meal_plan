@@ -13,11 +13,27 @@ export type RecipeFormState = {
   ingredients?: any[];
 } | null;
 
+// Helper pour convertir FormData en Record<string, string | number>
+function formDataToRecord(formData: FormData): Record<string, string | number> {
+  const record: Record<string, string | number> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === 'string') {
+      // Essayer de parser en number si possible
+      if (!isNaN(Number(value))) {
+        record[key] = Number(value);
+      } else {
+        record[key] = value;
+      }
+    }
+  }
+  return record;
+}
+
 export async function createRecipe(
   prevState: RecipeFormState,
   formData: FormData
 ): Promise<RecipeFormState> {
-  const rawData = Object.fromEntries(formData);
+  const rawData = formDataToRecord(formData);
   const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
   const parsed = recipeInput.safeParse({
     ...rawData,
@@ -55,7 +71,7 @@ export async function updateRecipe(
   formData: FormData
 ): Promise<RecipeFormState> {
   const id = String(formData.get('id'));
-  const rawData = Object.fromEntries(formData);
+  const rawData = formDataToRecord(formData);
   const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
   
   const parsed = recipeInput.safeParse({

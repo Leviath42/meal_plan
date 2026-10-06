@@ -7,19 +7,11 @@ import {
   addMealPlan,
   deleteMealPlanFromForm,
   replanMealPlan,
-  getAllMealPlans,
-  MealPlan
+  getAllMealPlans
 } from '@/app/actions/meal-plan';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-
-type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner';
-
-interface Recipe {
-  id: string;
-  title: string;
-  mealCourse?: string | null;
-}
+import type { MealPlan, MealType, Recipe } from '@/app/types/meal-plan';
 
 interface CalendarClientProps {
   recipes: Recipe[];
