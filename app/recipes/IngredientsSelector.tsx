@@ -87,38 +87,38 @@ export default function IngredientsSelector({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <input
         type="hidden"
         name="ingredients"
         value={JSON.stringify(ingredients)}
       />
 
-      <div className="border rounded-lg p-4 bg-gray-50">
-        <h3 className="font-semibold text-gray-800 mb-3">Ajouter un ingrédient</h3>
+      <div className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
+        <h3 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2">Ajouter un ingrédient</h3>
 
         {availableIngredients.length === 0 ? (
-          <div className="text-center py-4 text-gray-500">
-            <p>Aucun ingrédient disponible.</p>
-            <p className="text-sm mt-1">
+          <div className="text-center py-3">
+            <p className="text-xs sm:text-sm text-gray-500">Aucun ingrédient disponible.</p>
+            <p className="text-xs mt-1">
               <a href="/ingredients" className="text-blue-600 hover:underline">
                 Ajoutez des ingrédients d'abord
               </a>
             </p>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-400 mt-1">
               Vous pouvez créer une recette sans ingrédients et les ajouter plus tard.
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs">
                 {error}
               </div>
             )}
             
             <div>
-              <label htmlFor="ingredient" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="ingredient" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Ingrédient
               </label>
               <select
@@ -128,7 +128,7 @@ export default function IngredientsSelector({
                   setSelectedIngredientId(e.target.value);
                   setError(null);
                 }}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Sélectionnez un ingrédient...</option>
                 {availableIngredients.map((ingredient) => (
@@ -139,9 +139,9 @@ export default function IngredientsSelector({
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="quantity" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Quantité
                 </label>
                 <input
@@ -154,11 +154,11 @@ export default function IngredientsSelector({
                     setQuantity(e.target.value);
                     setError(null);
                   }}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="unit" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Unité
                 </label>
                 <input
@@ -169,13 +169,13 @@ export default function IngredientsSelector({
                     setUnit(e.target.value);
                     setError(null);
                   }}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="note" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Note (optionnel)
               </label>
               <input
@@ -183,7 +183,7 @@ export default function IngredientsSelector({
                 type="text"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ex: coupé en dés, fondu..."
               />
             </div>
@@ -192,26 +192,26 @@ export default function IngredientsSelector({
               type="button"
               onClick={addIngredient}
               disabled={!selectedIngredientId || !quantity || parseFloat(quantity) <= 0 || (!unit && !selectedIngredient?.defaultUnit)}
-              className="w-full bg-green-600 text-white rounded py-2 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-green-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              + Ajouter l&apos;ingrédient
+              + Ajouter l'ingrédient
             </button>
           </div>
         )}
       </div>
 
       {ingredients.length > 0 && (
-        <div className="border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-800 mb-3">
+        <div className="border border-gray-200 rounded-lg p-3 sm:p-4">
+          <h3 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2">
             Ingrédients ({ingredients.length})
           </h3>
-          <ul className="divide-y">
+          <ul className="divide-y divide-gray-200">
             {ingredients.map((ing, index) => (
-              <li key={index} className="py-3">
-                <div className="flex justify-between items-center">
+              <li key={index} className="py-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <div>
-                    <p className="font-medium">{getIngredientName(ing.ingredientId)}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm font-medium">{getIngredientName(ing.ingredientId)}</p>
+                    <p className="text-xs text-gray-500">
                       {ing.quantity} {ing.unit}
                       {ing.note && ` - ${ing.note}`}
                     </p>
@@ -219,7 +219,7 @@ export default function IngredientsSelector({
                   <button
                     type="button"
                     onClick={() => removeIngredient(index)}
-                    className="text-red-600 hover:text-red-800 text-sm underline"
+                    className="text-red-600 hover:text-red-800 text-xs underline whitespace-nowrap"
                   >
                     Supprimer
                   </button>

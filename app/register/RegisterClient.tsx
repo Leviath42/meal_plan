@@ -57,7 +57,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   };
 
   const handleDeleteUser = async (userId: string) => {
-    // Empêcher la suppression de soi-même (déjà géré dans deleteUser, mais on vérifie aussi ici pour l'UX)
+    // Empêcher la suppression de soi-même
     if (userId === currentUserId) {
       setFormState({ errors: { form: ['Vous ne pouvez pas supprimer votre propre compte'] } });
       return;
@@ -80,32 +80,32 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   }
 
   return (
-    <main className="min-h-screen p-4 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+    <main className="min-h-screen px-3 sm:px-4 py-4 bg-gray-50">
+      <div className="max-w-full mx-auto">
+        <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-2">
           {session?.user?.role === 'ADMIN' ? 'Gestion des utilisateurs' : 'Créer un compte'}
         </h1>
 
         {formState?.message && (
-          <div className={`mb-6 p-4 rounded ${formState.success ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          <div className={`mb-4 px-3 py-2 rounded text-xs sm:text-sm ${formState.success ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
             {formState.message}
           </div>
         )}
 
         {formState?.errors?.form && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+          <div className="mb-4 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded text-xs sm:text-sm">
             {formState.errors.form[0]}
           </div>
         )}
 
         {/* Formulaire d'inscription (pour les visiteurs et admin) */}
         {!session && (
-          <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Créer un nouveau compte</h2>
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Créer un nouveau compte</h2>
             
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-3">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Nom
                 </label>
                 <input
@@ -114,15 +114,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   type="text"
                   placeholder="Votre nom"
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.name && (
-                  <p className="text-red-500 text-sm mt-1">{formState.errors.name[0]}</p>
+                  <p className="text-red-500 text-xs mt-1">{formState.errors.name[0]}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
                 <input
@@ -131,15 +131,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   type="email"
                   placeholder="votre@email.com"
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.email && (
-                  <p className="text-red-500 text-sm mt-1">{formState.errors.email[0]}</p>
+                  <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Mot de passe
                 </label>
                 <input
@@ -149,22 +149,22 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   placeholder="Minimum 6 caractères"
                   minLength={6}
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.password && (
-                  <p className="text-red-500 text-sm mt-1">{formState.errors.password[0]}</p>
+                  <p className="text-red-500 text-xs mt-1">{formState.errors.password[0]}</p>
                 )}
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white rounded py-2 font-medium hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Créer un compte
               </button>
             </form>
 
-            <p className="mt-4 text-sm text-gray-600">
+            <p className="mt-3 text-xs text-gray-500">
               Votre compte sera validé par un administrateur avant de pouvoir vous connecter.
             </p>
           </div>
@@ -172,29 +172,29 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
         {/* Liste des utilisateurs à valider (pour l'admin) */}
         {session?.user?.role === 'ADMIN' && (
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Utilisateurs à valider</h2>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Utilisateurs à valider</h2>
             
             {initialUsers.length === 0 ? (
-              <p className="text-gray-600">Aucun utilisateur en attente de validation.</p>
+              <p className="text-xs sm:text-sm text-gray-500">Aucun utilisateur en attente de validation.</p>
             ) : (
-              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="overflow-x-auto -mx-2 px-2">
+                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
                         Nom
                       </th>
-                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
                         Rôle
                       </th>
-                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
                         Créé le
                       </th>
-                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -202,13 +202,13 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   <tbody className="bg-white divide-y divide-gray-200">
                     {initialUsers.map((user) => (
                       <tr key={user.id} className={user.role === 'GUEST' ? 'bg-yellow-50' : ''}>
-                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-900">
                           {user.name || 'N/A'}
                         </td>
-                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-900">
                           {user.email}
                         </td>
-                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
                             user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
                             user.role === 'MEMBER' ? 'bg-green-100 text-green-800' :
@@ -217,15 +217,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.role}
                           </span>
                         </td>
-                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">
                           {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                         </td>
-                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm font-medium">
-                          <div className="flex gap-1 sm:gap-2 flex-wrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="flex gap-1 flex-wrap">
                             {user.role === 'GUEST' && (
                               <button
                                 onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-green-600 hover:text-green-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
+                                className="text-green-600 hover:text-green-800 px-2 py-1 text-xs whitespace-nowrap"
                               >
                                 Valider
                               </button>
@@ -234,13 +234,13 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                               <>
                                 <button
                                   onClick={() => handleUpdateRole(user.id, 'ADMIN')}
-                                  className="text-blue-600 hover:text-blue-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
+                                  className="text-blue-600 hover:text-blue-800 px-2 py-1 text-xs whitespace-nowrap"
                                 >
                                   Promouvoir
                                 </button>
                                 <button
                                   onClick={() => handleUpdateRole(user.id, 'GUEST')}
-                                  className="text-orange-600 hover:text-orange-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
+                                  className="text-orange-600 hover:text-orange-800 px-2 py-1 text-xs whitespace-nowrap"
                                 >
                                   Rétrograder
                                 </button>
@@ -249,7 +249,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.role === 'ADMIN' && user.id !== currentUserId && (
                               <button
                                 onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-orange-600 hover:text-orange-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
+                                className="text-orange-600 hover:text-orange-800 px-2 py-1 text-xs whitespace-nowrap"
                               >
                                 Rétrograder
                               </button>
@@ -257,7 +257,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.id !== currentUserId && (
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:text-red-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
+                                className="text-red-600 hover:text-red-800 px-2 py-1 text-xs whitespace-nowrap"
                               >
                                 Supprimer
                               </button>
@@ -275,12 +275,12 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
         {/* Formulaire d'inscription pour l'admin */}
         {session?.user?.role === 'ADMIN' && (
-          <div className="bg-white rounded-lg shadow-md p-8 mt-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Ajouter un utilisateur</h2>
+          <div className="bg-white rounded-lg shadow-sm p-4 mt-3">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Ajouter un utilisateur</h2>
             
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-3">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Nom
                 </label>
                 <input
@@ -289,15 +289,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   type="text"
                   placeholder="Nom de l'utilisateur"
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.name && (
-                  <p className="text-red-500 text-sm mt-1">{formState.errors.name[0]}</p>
+                  <p className="text-red-500 text-xs mt-1">{formState.errors.name[0]}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
                 <input
@@ -306,15 +306,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   type="email"
                   placeholder="email@exemple.com"
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.email && (
-                  <p className="text-red-500 text-sm mt-1">{formState.errors.email[0]}</p>
+                  <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Mot de passe
                 </label>
                 <input
@@ -324,16 +324,16 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   placeholder="Minimum 6 caractères"
                   minLength={6}
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.password && (
-                  <p className="text-red-500 text-sm mt-1">{formState.errors.password[0]}</p>
+                  <p className="text-red-500 text-xs mt-1">{formState.errors.password[0]}</p>
                 )}
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white rounded py-2 font-medium hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Créer l'utilisateur
               </button>

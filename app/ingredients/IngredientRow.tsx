@@ -21,23 +21,27 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
             setEditing(false);
             setError(null);
           }
-        }} className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-          <input name="name" defaultValue={name} className="border rounded px-3 py-2 flex-1" />
-          <input name="category" defaultValue={category} className="border rounded px-3 py-2 w-36" />
-          <input name="defaultUnit" defaultValue={defaultUnit} className="border rounded px-3 py-2 w-24" />
-          <button type="submit" className="bg-green-600 text-white rounded px-3">OK</button>
-          <button type="button" onClick={() => { setEditing(false); setError(null); }} className="rounded px-3">Annuler</button>
+        }} className="flex flex-col sm:flex-row gap-2" onSubmit={(e) => e.preventDefault()}>
+          <input name="name" defaultValue={name} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input name="category" defaultValue={category} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input name="defaultUnit" defaultValue={defaultUnit} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <div className="flex gap-2 flex-shrink-0">
+            <button type="submit" className="bg-green-600 text-white rounded px-3 py-1 text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap">OK</button>
+            <button type="button" onClick={() => { setEditing(false); setError(null); }} className="rounded px-3 py-1 text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap">Annuler</button>
+          </div>
         </form>
-        {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+        {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
       </li>
     );
   }
 
   return (
-    <li className="flex items-center justify-between py-2">
-      <span>{name} <span className="text-gray-400 text-sm">({category}, {defaultUnit})</span></span>
-      <span className="flex gap-2">
-        <button onClick={() => setEditing(true)} className="text-blue-600 underline">Modifier</button>
+    <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-2 gap-2">
+      <span className="text-xs sm:text-sm">
+        {name} <span className="text-gray-400 text-xs">({category}, {defaultUnit})</span>
+      </span>
+      <span className="flex gap-2 flex-shrink-0">
+        <button onClick={() => setEditing(true)} className="text-blue-600 underline text-xs sm:text-sm hover:text-blue-800 transition-colors whitespace-nowrap">Modifier</button>
         <button
           disabled={pending}
           onClick={() => {
@@ -48,7 +52,7 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
               });
             }
           }}
-          className="text-red-600 underline"
+          className="text-red-600 underline text-xs sm:text-sm hover:text-red-800 transition-colors whitespace-nowrap"
         >
           Supprimer
         </button>
