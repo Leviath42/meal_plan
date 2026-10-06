@@ -33,8 +33,8 @@ export default function LoginPage() {
     if (result?.error) {
       setError("Email ou mot de passe incorrect");
     } else {
-      router.push(callbackUrl);
-      router.refresh();
+      // Redirection complète pour s'assurer que le middleware voit la nouvelle session
+      window.location.href = callbackUrl;
     }
   };
 
@@ -63,6 +63,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="ton@email.com"
                 required
+                autoComplete="email"
                 className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -77,6 +78,7 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
                 className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
