@@ -232,12 +232,20 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                               </button>
                             )}
                             {user.role === 'MEMBER' && (
-                              <button
-                                onClick={() => handleUpdateRole(user.id, 'ADMIN')}
-                                className="text-blue-600 hover:text-blue-800"
-                              >
-                                Promouvoir
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => handleUpdateRole(user.id, 'ADMIN')}
+                                  className="text-blue-600 hover:text-blue-800"
+                                >
+                                  Promouvoir
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateRole(user.id, 'GUEST')}
+                                  className="text-orange-600 hover:text-orange-800"
+                                >
+                                  Rétrograder
+                                </button>
+                              </>
                             )}
                             {user.role === 'ADMIN' && user.id !== currentUserId && (
                               <button
