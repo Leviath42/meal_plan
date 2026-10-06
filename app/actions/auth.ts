@@ -8,7 +8,6 @@ import Argon2 from '@node-rs/argon2';
 import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { signOut } from '@/lib/auth';
 
 export type FormState = {
   errors?: Record<string, string[]>;
@@ -191,8 +190,7 @@ export async function updateUserPassword(
       .set({ password: hashedPassword, updatedAt: new Date().toISOString() })
       .where(eq(users.id, userId));
 
-    // Déconnecter l'utilisateur après changement de mot de passe pour sécurité
-    await signOut();
+    // Note: La déconnexion sera gérée côté client pour éviter les problèmes avec Server Actions
 
     return { 
       success: true, 
