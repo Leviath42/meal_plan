@@ -1,231 +1,342 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { mealPlans, recipes } from '@/lib/db/schema';
-import { eq, and, gte, lte, desc, asc } from 'drizzle-orm';
+import { mealPlans } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
+
+// Schéma de validation pour les repas planifiés
+export const mealPlanInput = z.object({
+  date: z.string().min(1, 'La date est requise'),
+  mealType: z.string().min(1, 'Le type de repas est requis'),
+  recipeId: z.string().uuid().optional().nullable(),
+  customNote: z.string().optional().nullable(),
+  servings: z.coerce.number().int().min(1).default(4),
+  mealCourse: z.string().optional().nullable(),
+});
 
 export type MealPlanFormState = {
   errors?: Record<string, string[]>;
-  success?: boolean;
-  message?: string;
+  values?: Record<string, string | number>;
 } | null;
 
-// Types pour les repas
-const MEAL_TYPES = ['breakfast', 'lunch', 'snack', 'dinner'] as const;
-export type MealType = typeof MEAL_TYPES[number];
-
-// Récupérer tous les repas planifiés pour une période
-// Par défaut, récupère le mois en cours
-export async function getMealPlans(startDate?: string, endDate?: string): Promise<{
-  mealPlans: {
-    id: string;
-    date: string;
-    mealType: string;
-    recipeId: string | null;
-    customNote: string | null;
-    servings: number | null;
-    mealCourse: string | null;
-  }[];
-}> {
-  // Dates par défaut : mois en cours
-  const now = new Date();
-  const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-
-  const start = startDate || defaultStart;
-  const end = endDate || defaultEnd;
-
-  const plans = await db
-    .select({
-      id: mealPlans.id,
-      date: mealPlans.date,
-      mealType: mealPlans.mealType,
-      recipeId: mealPlans.recipeId,
-      customNote: mealPlans.customNote,
-      servings: mealPlans.servings,
-      mealCourse: mealPlans.mealCourse,
-    })
-    .from(mealPlans)
-    .where(
-      and(
-        gte(mealPlans.date, start),
-        lte(mealPlans.date, end)
-      )
-    )
-    .orderBy(asc(mealPlans.date), asc(mealPlans.mealType));
-
-  return { mealPlans: plans as {
-    id: string;
-    date: string;
-    mealType: MealType;
-    recipeId: string | null;
-    customNote: string | null;
-    servings: number | null;
-    mealCourse: string | null;
-  }[] };
+// Types pour les données de repas planifié
+export interface MealPlan {
+  id: string;
+  date: string;
+  mealType: string;
+  recipeId: string | null;
+  customNote: string | null;
+  servings: number;
+  mealCourse: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Ajouter un repas au calendrier
-export async function addMealPlan(
+// Créer un nouveau repas planifié
+export async function createMealPlan(
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
-  const date = formData.get('date') as string;
-  const mealType = formData.get('mealType') as MealType;
-  const recipeId = formData.get('recipeId') as string | null;
-  const customNote = formData.get('customNote') as string | null;
-  const servings = formData.get('servings') as string | null;
-
-  // Validation
-  if (!date) {
-    return { errors: { date: ['La date est requise'] } };
+  const rawData = Object.fromEntries(formData);
+  
+  const parsed = mealPlanInput.safeParse(rawData);
+  
+  if (!parsed.success) {
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+      values: rawData
+    };
   }
 
-  if (!MEAL_TYPES.includes(mealType as MealType)) {
-    return { errors: { mealType: ['Type de repas invalide'] } };
-  }
-
-  // Autoriser plusieurs plats par créneau (ex: entrée + plat principal pour le dîner)
+  const data = parsed.data;
 
   try {
-    // Récupérer mealCourse depuis la recette si disponible
-    let mealCourseValue: string | null = null;
-    if (recipeId) {
-      const recipe = await db.select({ mealCourse: recipes.mealCourse })
-        .from(recipes)
-        .where(eq(recipes.id, recipeId))
-        .limit(1);
-      mealCourseValue = recipe[0]?.mealCourse || null;
-    }
+    const [mealPlan] = await db
+      .insert(mealPlans)
+      .values(data)
+      .returning();
 
-    await db.insert(mealPlans).values({
-      date,
-      mealType,
-      recipeId: recipeId || null,
-      customNote: customNote || null,
-      servings: servings ? parseInt(servings) : null,
-      mealCourse: mealCourseValue,
-    });
-
-    revalidatePath('/');
-    return { success: true, message: 'Repas ajouté au calendrier' };
+    revalidatePath('/calendar');
+    return { errors: undefined, values: undefined };
   } catch (error) {
-    console.error('Erreur lors de l\'ajout du repas:', error);
-    return { errors: { form: ['Une erreur est survenue'] } };
+    console.error('Erreur lors de la création du repas planifié:', error);
+    return {
+      errors: { general: ['Une erreur est survenue lors de la création'] },
+      values: rawData
+    };
   }
 }
 
-// Supprimer un repas du calendrier
-export async function deleteMealPlan(
-  prevState: MealPlanFormState,
-  formData: FormData
-): Promise<MealPlanFormState> {
-  const id = formData.get('id') as string;
-
-  if (!id) {
-    return { errors: { id: ['ID requis'] } };
-  }
-
-  try {
-    await db.delete(mealPlans).where(eq(mealPlans.id, id));
-
-    revalidatePath('/');
-    return { success: true, message: 'Repas supprimé du calendrier' };
-  } catch (error) {
-    console.error('Erreur lors de la suppression du repas:', error);
-    return { errors: { form: ['Une erreur est survenue'] } };
-  }
-}
-
-// Mettre à jour un repas existant
+// Mettre à jour un repas planifié
 export async function updateMealPlan(
+  id: string,
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
-  const id = formData.get('id') as string;
-  const date = formData.get('date') as string;
-  const mealType = formData.get('mealType') as MealType;
-  const recipeId = formData.get('recipeId') as string | null;
-  const customNote = formData.get('customNote') as string | null;
-  const servings = formData.get('servings') as string | null;
-
-  if (!id) {
-    return { errors: { id: ['ID requis'] } };
+  const rawData = Object.fromEntries(formData);
+  
+  const parsed = mealPlanInput.safeParse(rawData);
+  
+  if (!parsed.success) {
+    return {
+      errors: parsed.error.flatten().fieldErrors,
+      values: rawData
+    };
   }
 
-  if (!date) {
-    return { errors: { date: ['La date est requise'] } };
-  }
-
-  if (!MEAL_TYPES.includes(mealType as MealType)) {
-    return { errors: { mealType: ['Type de repas invalide'] } };
-  }
+  const data = parsed.data;
 
   try {
-    // Récupérer mealCourse depuis la recette si disponible
-    let mealCourseValue: string | null = null;
-    if (recipeId) {
-      const recipe = await db.select({ mealCourse: recipes.mealCourse })
-        .from(recipes)
-        .where(eq(recipes.id, recipeId))
-        .limit(1);
-      mealCourseValue = recipe[0]?.mealCourse || null;
+    await db
+      .update(mealPlans)
+      .set({ ...data, updatedAt: new Date().toISOString() })
+      .where(eq(mealPlans.id, id));
+
+    revalidatePath('/calendar');
+    return { errors: undefined, values: undefined };
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du repas planifié:', error);
+    return {
+      errors: { general: ['Une erreur est survenue lors de la mise à jour'] },
+      values: rawData
+    };
+  }
+}
+
+// Supprimer un repas planifié
+export async function deleteMealPlan(id: string): Promise<{ error?: string }> {
+  try {
+    await db
+      .delete(mealPlans)
+      .where(eq(mealPlans.id, id));
+
+    revalidatePath('/calendar');
+    return {};
+  } catch (error) {
+    console.error('Erreur lors de la suppression du repas planifié:', error);
+    return { error: 'Impossible de supprimer ce repas planifié' };
+  }
+}
+
+// Replanifier un repas (déplacer via drag & drop)
+export async function replanMealPlan(
+  mealPlanId: string,
+  newDate: string,
+  newMealType: string
+): Promise<{ error?: string }> {
+  try {
+    // Vérifier qu'il n'y a pas déjà un repas à ce créneau
+    const existing = await db
+      .select()
+      .from(mealPlans)
+      .where(
+        eq(mealPlans.date, newDate) && 
+        eq(mealPlans.mealType, newMealType)
+      )
+      .limit(1);
+
+    if (existing.length > 0 && existing[0].id !== mealPlanId) {
+      return { error: 'Un repas existe déjà à ce créneau' };
     }
 
     await db
       .update(mealPlans)
       .set({
-        date,
-        mealType,
-        recipeId: recipeId || null,
-        customNote: customNote || null,
-        servings: servings ? parseInt(servings) : null,
-        mealCourse: mealCourseValue,
+        date: newDate,
+        mealType: newMealType,
+        updatedAt: new Date().toISOString()
       })
-      .where(eq(mealPlans.id, id));
+      .where(eq(mealPlans.id, mealPlanId));
 
-    revalidatePath('/');
-    return { success: true, message: 'Repas mis à jour' };
+    revalidatePath('/calendar');
+    return {};
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du repas:', error);
-    return { errors: { form: ['Une erreur est survenue'] } };
+    console.error('Erreur lors de la replanification:', error);
+    return { error: 'Impossible de replanifier ce repas' };
   }
 }
 
-// Récupérer les repas pour une date spécifique
-export async function getMealPlansByDate(date: string): Promise<{
-  mealPlans: {
-    id: string;
-    date: string;
-    mealType: string;
-    recipeId: string | null;
-    customNote: string | null;
-    servings: number | null;
-    mealCourse: string | null;
-  }[];
-}> {
-  const plans = await db
-    .select({
-      id: mealPlans.id,
-      date: mealPlans.date,
-      mealType: mealPlans.mealType,
-      recipeId: mealPlans.recipeId,
-      customNote: mealPlans.customNote,
-      servings: mealPlans.servings,
-      mealCourse: mealPlans.mealCourse,
-    })
-    .from(mealPlans)
-    .where(eq(mealPlans.date, date))
-    .orderBy(asc(mealPlans.mealType));
+// Récupérer tous les repas planifiés pour une période
+export async function getMealPlansByDateRange(
+  startDate: string,
+  endDate: string
+): Promise<MealPlan[]> {
+  try {
+    const mealPlansList = await db
+      .select()
+      .from(mealPlans)
+      .where(
+        eq(mealPlans.date, startDate) || 
+        (mealPlans.date >= startDate && mealPlans.date <= endDate)
+      )
+      .orderBy(mealPlans.date);
 
-  return { mealPlans: plans as {
-    id: string;
-    date: string;
-    mealType: MealType;
-    recipeId: string | null;
-    customNote: string | null;
-    servings: number | null;
-    mealCourse: string | null;
-  }[] };
+    return mealPlansList as MealPlan[];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des repas planifiés:', error);
+    return [];
+  }
+}
+
+// Récupérer tous les repas planifiés pour une période (version compatible avec le composant existant)
+export async function getMealPlans(
+  startDate: string,
+  endDate: string
+): Promise<{ mealPlans: MealPlan[] }> {
+  try {
+    const mealPlansList = await db
+      .select()
+      .from(mealPlans)
+      .where(
+        eq(mealPlans.date, startDate) || 
+        (mealPlans.date >= startDate && mealPlans.date <= endDate)
+      )
+      .orderBy(mealPlans.date);
+
+    return { mealPlans: mealPlansList as MealPlan[] };
+  } catch (error) {
+    console.error('Erreur lors de la récupération des repas planifiés:', error);
+    return { mealPlans: [] };
+  }
+}
+
+// Récupérer tous les repas planifiés
+export async function getAllMealPlans(): Promise<MealPlan[]> {
+  try {
+    const mealPlansList = await db
+      .select()
+      .from(mealPlans)
+      .orderBy(mealPlans.date);
+
+    return mealPlansList as MealPlan[];
+  } catch (error) {
+    console.error('Erreur lors de la récupération de tous les repas planifiés:', error);
+    return [];
+  }
+}
+
+// Récupérer un repas planifié par ID
+export async function getMealPlanById(id: string): Promise<MealPlan | null> {
+  try {
+    const [mealPlan] = await db
+      .select()
+      .from(mealPlans)
+      .where(eq(mealPlans.id, id))
+      .limit(1);
+
+    return mealPlan as MealPlan | null;
+  } catch (error) {
+    console.error('Erreur lors de la récupération du repas planifié:', error);
+    return null;
+  }
+}
+
+// Types pour la compatibilité avec le composant existant
+export type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner';
+
+export interface MealPlanFormResult {
+  success: boolean;
+  message: string;
+  mealPlan?: MealPlan;
+  errors?: Record<string, string[]>;
+}
+
+// Fonction compatible avec le composant existant (addMealPlan)
+export async function addMealPlan(
+  prevState: any,
+  formData: FormData
+): Promise<MealPlanFormResult> {
+  try {
+    const rawData = Object.fromEntries(formData);
+    
+    // Validation basique
+    if (!rawData.date || !rawData.mealType) {
+      return {
+        success: false,
+        message: 'La date et le type de repas sont requis',
+        errors: {
+          date: !rawData.date ? ['La date est requise'] : [],
+          mealType: !rawData.mealType ? ['Le type de repas est requis'] : []
+        }
+      };
+    }
+
+    const mealPlanData = {
+      date: rawData.date as string,
+      mealType: rawData.mealType as string,
+      recipeId: rawData.recipeId as string | null || null,
+      customNote: rawData.customNote as string | null || null,
+      servings: rawData.servings ? parseInt(rawData.servings as string) || 4 : 4,
+      mealCourse: rawData.mealCourse as string | null || null,
+    };
+
+    const [mealPlan] = await db
+      .insert(mealPlans)
+      .values(mealPlanData)
+      .returning();
+
+    revalidatePath('/calendar');
+    
+    return {
+      success: true,
+      message: 'Repas planifié ajouté avec succès',
+      mealPlan: mealPlan as MealPlan
+    };
+  } catch (error: any) {
+    console.error('Erreur lors de l\'ajout du repas planifié:', error);
+    
+    // Vérifier si c'est une erreur de contrainte unique (même date + même mealType)
+    if (error.message?.includes('UNIQUE constraint failed')) {
+      return {
+        success: false,
+        message: 'Un repas existe déjà à ce créneau',
+        errors: { general: ['Un repas existe déjà à ce créneau'] }
+      };
+    }
+    
+    return {
+      success: false,
+      message: 'Une erreur est survenue lors de l\'ajout',
+      errors: { general: ['Une erreur est survenue'] }
+    };
+  }
+}
+
+// Fonction compatible avec le composant existant (deleteMealPlan avec formData)
+export async function deleteMealPlanFromForm(
+  prevState: any,
+  formData: FormData
+): Promise<MealPlanFormResult> {
+  try {
+    const id = formData.get('id') as string;
+    
+    if (!id) {
+      return {
+        success: false,
+        message: 'ID manquant',
+        errors: { id: ['L\'ID est requis'] }
+      };
+    }
+
+    await db
+      .delete(mealPlans)
+      .where(eq(mealPlans.id, id));
+
+    revalidatePath('/calendar');
+    
+    return {
+      success: true,
+      message: 'Repas planifié supprimé avec succès'
+    };
+  } catch (error) {
+    console.error('Erreur lors de la suppression du repas planifié:', error);
+    return {
+      success: false,
+      message: 'Impossible de supprimer ce repas planifié',
+      errors: { general: ['Impossible de supprimer ce repas planifié'] }
+    };
+  }
 }
