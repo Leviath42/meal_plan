@@ -178,23 +178,23 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
             {initialUsers.length === 0 ? (
               <p className="text-gray-600">Aucun utilisateur en attente de validation.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Nom
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Rôle
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Créé le
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -202,13 +202,13 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   <tbody className="bg-white divide-y divide-gray-200">
                     {initialUsers.map((user) => (
                       <tr key={user.id} className={user.role === 'GUEST' ? 'bg-yellow-50' : ''}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm text-gray-900">
                           {user.name || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm text-gray-900">
                           {user.email}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
                             user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
                             user.role === 'MEMBER' ? 'bg-green-100 text-green-800' :
@@ -217,15 +217,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm text-gray-500">
                           {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex gap-2 flex-wrap">
+                        <td className="px-4 py-3 sm:px-6 whitespace-nowrap text-sm font-medium">
+                          <div className="flex gap-1 sm:gap-2 flex-wrap">
                             {user.role === 'GUEST' && (
                               <button
                                 onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-green-600 hover:text-green-800 px-2 py-1 whitespace-nowrap"
+                                className="text-green-600 hover:text-green-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
                               >
                                 Valider
                               </button>
@@ -234,13 +234,13 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                               <>
                                 <button
                                   onClick={() => handleUpdateRole(user.id, 'ADMIN')}
-                                  className="text-blue-600 hover:text-blue-800 px-2 py-1 whitespace-nowrap"
+                                  className="text-blue-600 hover:text-blue-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
                                 >
                                   Promouvoir
                                 </button>
                                 <button
                                   onClick={() => handleUpdateRole(user.id, 'GUEST')}
-                                  className="text-orange-600 hover:text-orange-800 px-2 py-1 whitespace-nowrap"
+                                  className="text-orange-600 hover:text-orange-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
                                 >
                                   Rétrograder
                                 </button>
@@ -249,7 +249,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.role === 'ADMIN' && user.id !== currentUserId && (
                               <button
                                 onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-orange-600 hover:text-orange-800 px-2 py-1 whitespace-nowrap"
+                                className="text-orange-600 hover:text-orange-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
                               >
                                 Rétrograder
                               </button>
@@ -257,7 +257,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             {user.id !== currentUserId && (
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:text-red-800 px-2 py-1 whitespace-nowrap"
+                                className="text-red-600 hover:text-red-800 px-1 py-1 sm:px-2 whitespace-nowrap text-xs sm:text-sm"
                               >
                                 Supprimer
                               </button>
