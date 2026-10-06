@@ -138,7 +138,7 @@ export default function ResetPasswordClient({
   // Étape 1 : Demander l'email
   if (step === '1' && !currentQuestion) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-3 bg-gray-50">
+      <main className="min-h-[calc(100vh-3rem)] sm:min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-3 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8">
             <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Réinitialiser le mot de passe</h1>
@@ -191,7 +191,7 @@ export default function ResetPasswordClient({
   // Étape 2 : Répondre à la question secrète et définir un nouveau mot de passe
   if (step === '2' || (step === '1' && currentQuestion)) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-3 bg-gray-50">
+      <main className="min-h-[calc(100vh-3rem)] sm:min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-3 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8">
             <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Réinitialiser le mot de passe</h1>
@@ -285,7 +285,7 @@ export default function ResetPasswordClient({
 
   // Cas par défaut : demander l'email
   return (
-    <main className="min-h-screen flex items-center justify-center p-3 bg-gray-50">
+    <main className="min-h-[calc(100vh-3rem)] sm:min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-3 bg-gray-50">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8">
           <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Réinitialiser le mot de passe</h1>
