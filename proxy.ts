@@ -10,6 +10,8 @@ export default auth((req) => {
     '/login',
     '/logout',
     '/register',
+    '/forgot-password',
+    '/reset-password',
     '/_next/static',
     '/_next/image',
     '/favicon.ico'
