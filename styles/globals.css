@@ -1,1 +1,58 @@
 @import "tailwindcss";
+
+/* Mode sombre piloté par la classe .dark sur <html>
+   (bascule : app/ThemeToggle.tsx, initialisation anti-flash : app/layout.tsx) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* En mode sombre, on remappe la palette de Tailwind : les utilitaires
+   (bg-white, text-gray-800, bg-blue-600, etc.) référencent ces variables
+   à l'exécution, ce qui re-thème toute l'application sans modifier
+   chaque composant. */
+:root.dark {
+  color-scheme: dark;
+
+  /* Surfaces et texte : échelle de gris inversée */
+  --color-white: #1f2937;    /* cartes ; aussi le texte des boutons colorés */
+  --color-gray-50: #111827;  /* fond de page */
+  --color-gray-100: #374151; /* survols, chips désactivés */
+  --color-gray-200: #4b5563; /* bordures */
+  --color-gray-300: #6b7280; /* bordures de champs */
+  --color-gray-400: #9ca3af; /* placeholders */
+  --color-gray-500: #9ca3af; /* labels */
+  --color-gray-600: #d1d5db; /* texte secondaire */
+  --color-gray-700: #e5e7eb; /* texte des labels */
+  --color-gray-800: #f3f4f6; /* titres */
+  --color-gray-900: #f9fafb; /* titres forts */
+
+  /* Accents : fonds pastel -> teintes sombres, textes -> teintes claires,
+     boutons -> teintes médium (le texte "blanc" devient sombre, cf. white) */
+  --color-blue-50: #172554;
+  --color-blue-100: #1e3a8a;
+  --color-blue-300: #93c5fd;
+  --color-blue-600: #3b82f6;
+  --color-blue-700: #60a5fa;
+  --color-blue-800: #93c5fd;
+  --color-green-50: #14532d;
+  --color-green-100: #166534;
+  --color-green-600: #4ade80;
+  --color-green-700: #4ade80;
+  --color-green-800: #86efac;
+  --color-purple-100: #581c87;
+  --color-purple-800: #c4b5fd;
+  --color-orange-100: #7c2d12;
+  --color-orange-800: #fdba74;
+  --color-red-50: #450a0a;
+  --color-red-100: #7f1d1d;
+  --color-red-500: #f87171;
+  --color-red-600: #f87171;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fca5a5;
+  --color-yellow-50: #422006;
+  --color-yellow-100: #713f12;
+  --color-yellow-800: #fde047;
+}
+
+/* Texte par défaut en mode sombre (le body n'a pas de classe text-*) */
+:root.dark body {
+  color: #f3f4f6;
+}
