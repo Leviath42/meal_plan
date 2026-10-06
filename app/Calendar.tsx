@@ -23,6 +23,7 @@ interface CalendarProps {
 const MEAL_TYPE_LABELS: Record<string, string> = {
   breakfast: 'Petit-déj',
   lunch: 'Déjeuner',
+  snack: 'Goûter',
   dinner: 'Dîner',
 };
 
@@ -30,8 +31,12 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
 const MEAL_TYPE_COLORS: Record<string, string> = {
   breakfast: 'bg-orange-100 text-orange-800',
   lunch: 'bg-blue-100 text-blue-800',
+  snack: 'bg-green-100 text-green-800',
   dinner: 'bg-purple-100 text-purple-800',
 };
+
+// Ordre chronologique des types de repas
+const MEAL_TYPE_ORDER: string[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 
 // Jours de la semaine en français
 const DAYS_OF_WEEK = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -184,73 +189,326 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
     return getPlansForDate(dateStr).map(mp => mp.mealType);
   };
 
-  // Générer les jours à afficher (7 jours)
-  const renderDays = () => {
-    const days: JSX.Element[] = [];
-    const currentDate = new Date(startDate);
+  // Composant DayCard pour le layout vertical
+  const DayCard = ({ 
+    day, 
+    dateStr, 
+    isToday, 
+    isPast, 
+    plans, 
+    recipes, 
+    onDateClick,
+    size = 'medium',
+    isMainDay = false
+  }: {
+    day: Date;
+    dateStr: string;
+    isToday: boolean;
+    isPast: boolean;
+    plans: MealPlan[];
+    recipes: Array<{ id: string; title: string }>;
+    onDateClick: (dateStr: string) => void;
+    size: 'large' | 'medium' | 'small';
+    isMainDay: boolean;
+  }) => {
+    const sizeClasses = {
+      large: 'w-full max-w-xs',
+      medium: 'w-[92px] min-w-[92px]',
+      small: 'w-[79px] min-w-[79px]'
+    };
+    
+    const textSizeClasses = {
+      large: {
+        dayName: 'text-sm',
+        date: 'text-xl font-bold',
+        mealBadge: 'text-sm',
+        noMeal: 'text-sm'
+      },
+      medium: {
+        dayName: 'text-xs',
+        date: 'text-sm font-bold',
+        mealBadge: 'text-xs',
+        noMeal: 'text-xs'
+      },
+      small: {
+        dayName: 'text-xs',
+        date: 'text-sm font-bold',
+        mealBadge: 'text-xs',
+        noMeal: 'text-xs'
+      }
+    };
 
-    for (let i = 0; i < 7; i++) {
+    const classes = textSizeClasses[size];
+
+    // Trier les repas par ordre chronologique
+    const sortedPlans = [...plans].sort((a, b) => {
+      const orderA = MEAL_TYPE_ORDER.indexOf(a.mealType);
+      const orderB = MEAL_TYPE_ORDER.indexOf(b.mealType);
+      return orderA - orderB;
+    });
+
+    // Formater le jour + date
+    const formatDayHeader = () => {
+      if (isMainDay) {
+        // Format "MARDI 6" avec majuscules
+        const dayName = day.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase();
+        return `${dayName} ${day.getDate()}`;
+      } else {
+        // Format "MER. 7" avec majuscules et un seul point
+        const dayName = day.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
+        return `${dayName}. ${day.getDate()}`;
+      }
+    };
+
+    // Afficher les repas groupés par type pour les jours non principaux
+    const renderMeals = () => {
+      if (sortedPlans.length === 0) {
+        return (
+          <div className="flex items-center justify-center h-4">
+            <span className={`text-gray-400 ${classes.noMeal}`}>Aucun repas</span>
+          </div>
+        );
+      }
+      
+      if (isMainDay) {
+        // Pour le jour principal, affichage classique avec retour à la ligne
+        return (
+          <div className="flex flex-col gap-1 w-full">
+            {sortedPlans.map(plan => {
+              const displayText = plan.customNote || 
+                recipes.find(r => r.id === plan.recipeId)?.title || 
+                MEAL_TYPE_LABELS[plan.mealType];
+              
+              return (
+                <span
+                  key={`${plan.date}-${plan.mealType}`}
+                  className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]} ${classes.mealBadge} truncate text-center w-full`}
+                  title={displayText}
+                >
+                  {displayText}
+                </span>
+              );
+            })}
+          </div>
+        );
+      } else {
+        // Pour J+1 à J+6, afficher uniquement les types de repas qui ont un repas planifié
+        return (
+          <div className="flex flex-col gap-0.5 w-full">
+            {sortedPlans.map(plan => {
+              const displayText = plan.customNote || 
+                recipes.find(r => r.id === plan.recipeId)?.title || 
+                MEAL_TYPE_LABELS[plan.mealType];
+              
+              return (
+                <span
+                  key={`${plan.date}-${plan.mealType}`}
+                  className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]} ${classes.mealBadge} truncate text-center`}
+                  title={displayText}
+                >
+                  {displayText}
+                </span>
+              );
+            })}
+          </div>
+        );
+      }
+    };
+
+    return (
+      <div className={`flex flex-col items-center p-2 bg-gray-50 rounded-lg ${sizeClasses[size]}`}>
+        {/* Jour de la semaine + date */}
+        <div className={`font-medium text-center mb-1 ${isToday ? 'text-blue-600' : 'text-gray-800'} ${classes.date}`}>
+          {formatDayHeader()}
+        </div>
+        
+        {/* Repas planifiés */}
+        <div className="w-full mb-1 min-h-[20px]">
+          {renderMeals()}
+        </div>
+        
+        {/* Bouton de planification */}
+        <button
+          onClick={() => onDateClick(dateStr)}
+          className={`w-16 text-xs py-1.5 rounded border transition-colors ${
+            isPast 
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+              : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+          }`}
+          disabled={isPast}
+          title={isPast ? 'Date dans le passé' : 'Ajouter un repas'}
+        >
+          +
+        </button>
+      </div>
+    );
+  };
+
+  // Générer les jours à afficher (7 jours) - Layout 1-3-3 avec alignement par type
+  const renderDays = () => {
+    const currentDate = new Date(startDate);
+    
+    // Générer les 7 jours
+    const daysData = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(currentDate);
       date.setDate(currentDate.getDate() + i);
       const dateStr = getDateString(date);
-      const isToday = dateStr === getDateString(new Date());
-      const plansCount = getMealCountForDate(dateStr);
-      const mealTypes = getMealTypesForDate(dateStr);
+      return {
+        date,
+        dateStr,
+        isToday: dateStr === getDateString(new Date()),
+        isPast: date < new Date(new Date().setHours(0, 0, 0, 0)),
+        plans: mealPlans.filter(mp => mp.date === dateStr)
+      };
+    });
 
-      // Vérifier si la date est dans le passé (optionnel : désactiver)
-      const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+    // Helper pour formater le jour court avec majuscules
+    const formatShortDay = (date: Date) => {
+      return date.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
+    };
 
-      days.push(
-        <div key={dateStr} className="relative">
-          {/* Jour de la semaine */}
-          <div className="text-xs font-medium text-gray-500 text-center mb-1">
-            {DAYS_OF_WEEK[date.getDay()]}
-          </div>
-          
-          {/* Date */}
-          <div className={`text-center font-bold mb-2 ${isToday ? 'text-blue-600' : 'text-gray-800'}`}>
-            {date.getDate()}
-          </div>
-          
-          {/* Indicateur de nombre de repas */}
-          {plansCount > 0 ? (
-            <div className="flex flex-wrap gap-1 justify-center mb-2">
-              {mealPlans
-                .filter(mp => mp.date === dateStr)
-                .map(plan => (
+    // Helper pour obtenir le texte d'affichage d'un repas
+    const getDisplayText = (plan: MealPlan) => {
+      return plan.customNote || 
+        recipes.find(r => r.id === plan.recipeId)?.title || 
+        MEAL_TYPE_LABELS[plan.mealType];
+    };
+
+    // Composant pour une ligne de jours (J+1-J+3 ou J+4-J+6) avec alignement par type de repas
+    const MealTypeRow = ({ 
+      days, 
+      mealType, 
+      onDateClick 
+    }: { 
+      days: typeof daysData;
+      mealType: string;
+      onDateClick: (dateStr: string) => void;
+    }) => {
+      // Vérifier si au moins un jour a ce type de repas
+      const hasMealInAnyDay = days.some(day => 
+        day.plans.some(p => p.mealType === mealType)
+      );
+      
+      if (!hasMealInAnyDay) return null;
+
+      return (
+        <div className="flex gap-3 justify-center">
+          {days.map(dayData => {
+            const planForType = dayData.plans.find(p => p.mealType === mealType);
+            const displayText = planForType ? getDisplayText(planForType) : '';
+            
+            return (
+              <div key={`${dayData.dateStr}-${mealType}`} className="w-[92px] flex justify-center">
+                {displayText && (
                   <span
-                    key={`${plan.date}-${plan.mealType}`}
-                    className={`text-xs px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]}`}
-                    title={plan.customNote || recipes.find(r => r.id === plan.recipeId)?.title || MEAL_TYPE_LABELS[plan.mealType]}
+                    className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[mealType]} text-xs truncate text-center max-w-[88px]`}
+                    title={displayText}
                   >
-                    {plan.customNote || recipes.find(r => r.id === plan.recipeId)?.title || MEAL_TYPE_LABELS[plan.mealType]}
+                    {displayText}
                   </span>
-                ))}
-            </div>
-          ) : (
-            <div className="min-h-[24px] flex items-center justify-center mb-2">
-              <span className="text-xs text-gray-400">Aucun repas</span>
-            </div>
-          )}
-          
-          {/* Bouton de planification */}
-          <button
-            onClick={() => handleDateClick(dateStr)}
-            className={`w-full text-xs py-1.5 rounded border transition-colors ${
-              isPast 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
-            }`}
-            disabled={isPast}
-            title={isPast ? 'Date dans le passé' : 'Ajouter un repas'}
-          >
-            + Planifier
-          </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       );
-    }
+    };
 
-    return days;
+    // Composant pour les boutons + alignés
+    const PlusButtonRow = ({ days, onDateClick }: { 
+      days: typeof daysData;
+      onDateClick: (dateStr: string) => void;
+    }) => {
+      return (
+        <div className="flex gap-3 justify-center">
+          {days.map(dayData => (
+            <div key={`plus-${dayData.dateStr}`} className="w-[92px] flex justify-center">
+              <button
+                onClick={() => onDateClick(dayData.dateStr)}
+                className={`w-16 text-xs py-1.5 rounded border transition-colors ${
+                  dayData.isPast 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+                }`}
+                disabled={dayData.isPast}
+                title={dayData.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
+              >
+                +
+              </button>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Ligne 1 : J (aujourd'hui ou date de départ) */}
+        <div className="flex justify-center">
+          <DayCard 
+            day={daysData[0].date} 
+            dateStr={daysData[0].dateStr} 
+            isToday={daysData[0].isToday} 
+            isPast={daysData[0].isPast} 
+            plans={daysData[0].plans} 
+            recipes={recipes} 
+            onDateClick={handleDateClick}
+            size="large"
+            isMainDay={true}
+          />
+        </div>
+        
+        {/* Ligne 2 : J+1, J+2, J+3 */}
+        <div className="flex flex-col gap-0.5">
+          {/* En-têtes des jours */}
+          <div className="flex gap-3 justify-center mb-1">
+            {daysData.slice(1, 4).map(dayData => (
+              <div key={`header-${dayData.dateStr}`} className="w-[92px] text-center text-sm">
+                {formatShortDay(dayData.date)}. {dayData.date.getDate()}
+              </div>
+            ))}
+          </div>
+          
+          {/* Lignes par type de repas (seulement ceux qui ont des repas) */}
+          {MEAL_TYPE_ORDER.map(mealType => (
+            <MealTypeRow 
+              key={mealType} 
+              days={daysData.slice(1, 4)} 
+              mealType={mealType} 
+              onDateClick={handleDateClick}
+            />
+          ))}
+          
+          {/* Boutons + */}
+          <PlusButtonRow days={daysData.slice(1, 4)} onDateClick={handleDateClick} />
+        </div>
+        
+        {/* Ligne 3 : J+4, J+5, J+6 */}
+        <div className="flex flex-col gap-0.5">
+          {/* En-têtes des jours */}
+          <div className="flex gap-3 justify-center mb-1">
+            {daysData.slice(4, 7).map(dayData => (
+              <div key={`header-${dayData.dateStr}`} className="w-[92px] text-center text-sm">
+                {formatShortDay(dayData.date)}. {dayData.date.getDate()}
+              </div>
+            ))}
+          </div>
+          
+          {/* Lignes par type de repas (seulement ceux qui ont des repas) */}
+          {MEAL_TYPE_ORDER.map(mealType => (
+            <MealTypeRow 
+              key={mealType} 
+              days={daysData.slice(4, 7)} 
+              mealType={mealType} 
+              onDateClick={handleDateClick}
+            />
+          ))}
+          
+          {/* Boutons + */}
+          <PlusButtonRow days={daysData.slice(4, 7)} onDateClick={handleDateClick} />
+        </div>
+      </div>
+    );
   };
 
   // Modal pour sélectionner une recette
@@ -262,7 +520,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+        <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[70vh] overflow-y-auto">
           <div className="p-4 border-b">
             <h3 className="font-bold text-lg">
               Planifier un repas
@@ -309,7 +567,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
                           Aucune recette disponible. <Link href="/recipes/new" className="text-blue-600 hover:underline">Créer une recette</Link>
                         </p>
                       ) : (
-                        <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                        <div className="space-y-2 max-h-[25vh] overflow-y-auto">
                           {recipes.map(recipe => (
                             <button
                               key={recipe.id}
@@ -384,8 +642,10 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
   return (
     <section className="w-full max-w-4xl mx-auto mb-8">
       <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-800">Semaine en cours</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-base font-bold text-gray-800 capitalize">
+            {startDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+          </h2>
           <div className="flex gap-2">
             <button
               onClick={goToPreviousDay}
@@ -419,9 +679,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
         {loading ? (
           <div className="text-center py-8">Chargement...</div>
         ) : (
-          <div className="grid grid-cols-7 gap-2">
-            {renderDays()}
-          </div>
+          renderDays()
         )}
 
         <div className="mt-4 flex justify-end">

@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V2 - Planification Complète du Cahier des Charges
 
 *Dernière mise à jour : 2026-10-06*
-*Version : 2.0*
+*Version : 2.1*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md)*
 
 ---
@@ -481,7 +481,8 @@ CREATE TABLE pantry_items (
 ### **Pour la branche `feature/calendrier`** (en cours)
 1. ✅ Lire et analyser le cahier des charges
 2. ✅ Créer ce document ROADMAPV2.md
-3. [ ] **Commencer l'implémentation de F01**
+3. ✅ **Seed de données complété** - 45 recettes et 108 ingrédients disponibles
+4. [ ] **Commencer l'implémentation de F01**
    - [ ] Créer la table `meal_plans`
    - [ ] Créer la page `/calendar`
    - [ ] Implémenter le composant calendrier avec dnd-kit
@@ -491,6 +492,12 @@ CREATE TABLE pantry_items (
 - **F01 - Calendrier** : C'est la fonctionnalité centrale du MVP
 - **Tests** : Vérifier que chaque fonctionnalité fonctionne avant de passer à la suivante
 - **Documentation** : Mettre à jour le README et la ROADMAP au fur et à mesure
+
+### **Étape Suivante**
+**Implémenter F01 - Planification des Repas** (MVP du calendrier)
+- ✅ Base de données prête avec recettes et ingrédients
+- 🎯 Prochaine étape: Créer la table `meal_plans` et l'interface calendrier
+- 📅 Objectif: Avoir une version fonctionnelle de planification sous 2-3 semaines
 
 ---
 
@@ -510,6 +517,19 @@ Pour toute question sur la planification :
 1. Consulter ce document
 2. Vérifier le [cahier des charges](meal_plan_requirements.md)
 3. Regarder les commits récents pour voir les exemples d'implémentation
+
+---
+
+## 🎨 **Améliorations UI/UX à Prévoir**
+
+### **Mise en page et design** *(Basse Priorité - À revoir plus tard)*
+- [ ] **Réglage fin de la taille des formulaires** : Certains formulaires (ex: planification repas) ont des barres de scroll non désirées
+- [ ] Optimisation de l'espace dans les modals
+- [ ] Uniformisation des tailles de composants
+- [ ] Responsive design pour les très petits écrans
+- [ ] Accessibilité (contrastes, navigation clavier)
+
+*À traiter après la livraison du MVP (F01-F05-F04)*
 
 ---
 
