@@ -10,7 +10,6 @@ export default auth((req) => {
     '/login',
     '/logout',
     '/register',
-    '/waiting-validation',
     '/_next/static',
     '/_next/image',
     '/favicon.ico'
@@ -18,12 +17,6 @@ export default auth((req) => {
   
   // Si authentifié
   if (req.auth) {
-    // Si l'utilisateur est GUEST et n'est pas sur la page waiting-validation, rediriger
-    if (req.auth.user?.role === 'GUEST' && !url.startsWith('/waiting-validation')) {
-      return NextResponse.redirect(
-        new URL('/waiting-validation', req.url)
-      );
-    }
     return;
   }
   

@@ -75,6 +75,7 @@ meal_plan/
 ├── profile/             # Page de profil utilisateur
 │   ├── page.tsx
 │   └── ProfileClient.tsx
+├── waiting-validation/ # **SUPPRIMÉ** (GUEST ne peuvent plus se connecter)
 └── ROADMAP.md
 ```
 
