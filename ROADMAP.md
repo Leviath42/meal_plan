@@ -77,9 +77,9 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 ```
 
 ### 2️⃣ **Améliorations Authentification** *(Haute Priorité)*
-- [ ] Ajouter un message clair aux GUEST : "Votre compte est en attente de validation"
-- [ ] Notification à l'admin lorsqu'un nouvel utilisateur s'inscrit
-- [ ] Page de profil utilisateur (changer mot de passe, voir ses infos)
+- ✅ Ajouter un message clair aux GUEST : "Votre compte est en attente de validation" (page /waiting-validation)
+- ✅ Notification à l'admin lorsqu'un nouvel utilisateur s'inscrit (badge "NOUVEAU" sur les GUEST récents)
+- ✅ Page de profil utilisateur (changer mot de passe, voir ses infos) (page /profile)
 - [ ] Mot de passe oublié / réinitialisation
 
 ### 3️⃣ **Fonctionnalités Manquantes** *(Moyenne Priorité)*
@@ -120,7 +120,13 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 | `app/recipes/[id]/edit/EditRecipeForm.tsx` | Ajout `max-w-2xl` pour conteneur principal | ✅ Fonctionnel |
 | `app/recipes/new/NewRecipeForm.tsx` | Ajout `max-w-2xl` pour conteneur principal | ✅ Fonctionnel |
 | `app/ingredients/page.tsx` | Ajout `max-w-4xl` pour conteneur principal | ✅ Fonctionnel |
-| `app/register/RegisterClient.tsx` | Ajout `max-w-4xl` conteneur + `max-w-2xl` pour les cartes | ✅ Fonctionnel |
+| `app/register/RegisterClient.tsx` | Ajout `max-w-4xl` conteneur + `max-w-2xl` pour les cartes + badge "NOUVEAU" pour GUEST | ✅ Fonctionnel |
+| `app/Nav.tsx` | Ajout lien Profil dans menu desktop et mobile | ✅ Fonctionnel |
+| `app/profile/page.tsx` | NOUVEAU : page profil utilisateur avec gestion mot de passe | ✅ Fonctionnel |
+| `app/waiting-validation/page.tsx` | NOUVEAU : page d'attente de validation pour GUEST | ✅ Fonctionnel |
+| `app/actions/auth.ts` | Ajout updateUserPassword + import signOut | ✅ Fonctionnel |
+| `lib/auth.ts` | Modification authorize pour permettre connexion GUEST | ✅ Fonctionnel |
+| `proxy.ts` | Ajout redirection GUEST vers /waiting-validation | ✅ Fonctionnel |
 
 ### 🗂️ **Structure Complète du Projet**
 
@@ -343,14 +349,18 @@ toast.success('Utilisateur validé avec succès !');
 |-------|--------|----------|-----------------|
 | Rollback vers commit stable | ✅ Terminée | 🔴 Urgent | - |
 | Fix authentification | ✅ Terminée | 🔴 Urgent | - |
-| Page d'inscription | ✅ Terminée | 🟡 Haute | Tester |
-| Gestion admin des utilisateurs | ✅ Terminée | 🟡 Haute | Tester |
-| Suppression utilisateur | ✅ Terminée | 🟡 Haute | Tester |
-| Test complet | ⏳ En attente | 🔴 Urgent | Exécuter les scénarios |
+| Page d'inscription | ✅ Terminée | 🟡 Haute | - |
+| Gestion admin des utilisateurs | ✅ Terminée | 🟡 Haute | - |
+| Suppression utilisateur | ✅ Terminée | 🟡 Haute | - |
+| Test complet | ✅ Terminée | 🔴 Urgent | - |
+| Message GUEST validation | ✅ Terminée | 🟡 Haute | - |
+| Notification admin GUEST | ✅ Terminée | 🟡 Haute | - |
+| Page profil utilisateur | ✅ Terminée | 🟡 Moyenne | - |
 | Schema Zod inscription | ⏳ En attente | 🟡 Moyenne | Créer le fichier |
 | Rationalisation code | ⏳ En attente | 🟡 Moyenne | Extraire composants |
 | Notifications utilisateur | ⏳ En attente | 🟢 Basse | Intégrer Sonner |
 | OAuth (Google/GitHub) | ⏳ En attente | 🟢 Basse | Configurer env vars |
+| Mot de passe oublié | ⏳ En attente | 🟢 Basse | Implémenter flux de réinitialisation |
 
 ---
 
