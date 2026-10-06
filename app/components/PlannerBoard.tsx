@@ -177,7 +177,7 @@ function MealPlanCreationModal({
   recipes: Recipe[];
   onCreate: (data: { date: string; mealType: MealType; recipeId?: string | null; customNote?: string | null; servings: number }) => Promise<void>;
 }) {
-  const [mealType, setMealType] = useState<MealType | ''>('');
+  const [mealType, setMealType] = useState<MealType | ''>('dinner');
   const [recipeId, setRecipeId] = useState<string | ''>('');
   const [customNote, setCustomNote] = useState<string>('');
   const [servings, setServings] = useState<number>(4);
@@ -187,8 +187,8 @@ function MealPlanCreationModal({
   // Réinitialiser les états quand le modal s'ouvre ou se ferme
   useEffect(() => {
     if (!isOpen) {
-      // Réinitialiser tous les champs quand on ferme
-      setMealType('');
+      // Réinitialiser tous les champs quand on ferme (type par défaut : Dîner)
+      setMealType('dinner');
       setRecipeId('');
       setCustomNote('');
       setServings(4);
@@ -224,7 +224,7 @@ function MealPlanCreationModal({
       });
 
       // Réinitialiser le formulaire
-      setMealType('');
+      setMealType('dinner');
       setRecipeId('');
       setCustomNote('');
       setServings(4);
@@ -236,7 +236,7 @@ function MealPlanCreationModal({
   };
 
   const handleCancel = () => {
-    setMealType('');
+    setMealType('dinner');
     setRecipeId('');
     setCustomNote('');
     setServings(4);
@@ -279,7 +279,6 @@ function MealPlanCreationModal({
                   onChange={(e) => setMealType(e.target.value as MealType | '')}
                   className="w-full p-2 border rounded"
                 >
-                  <option value="">-- Sélectionnez un type --</option>
                   {(Object.keys(MEAL_TYPE_LABELS) as MealType[]).map(type => (
                     <option key={type} value={type}>
                       {MEAL_TYPE_LABELS[type]}

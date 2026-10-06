@@ -76,6 +76,7 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - ✅ **Affichage du calendrier** avec 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
 - ✅ **Navigation par jour** avec boutons Précédent/Suivant/Aujourd'hui + **clic sur une date pour l'afficher en première position**
 - ✅ **Sélection de recettes** pour chaque créneau
+- ✅ **Type de repas par défaut : Dîner** lors de la création d'un repas planifié
 - ✅ **Repas personnalisés** (notes textuelles sans recette)
 - ✅ **Gestion des couverts** par repas planifié
 - ✅ **Page `/calendar` refondue** : composant partagé `PlannerBoard`, 19 jours (J → J+18) en structure 1-3-3-3-3-3-3, navigation par jour **et par mois**, avec DnD, zone de suppression et modals — identique à la page d'accueil
