@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V2 - Planification Complète du Cahier des Charges
 
 *Dernière mise à jour : 2026-10-06*
-*Version : 2.3*
+*Version : 2.4*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md)*
 
 ---
@@ -69,12 +69,11 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [x] 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
   - [x] Affichage des repas planifiés par jour (plusieurs plats par créneau autorisés)
   - [x] **Refonte page `/calendar`** : composant partagé `PlannerBoard`, structure 1-3-3-3-3-3-3 (J → J+18), navigation par jour et par mois
-  - [ ] Vue mensuelle
 - [x] **Glisser-déposer des recettes**
   - [x] Intégration de `dnd-kit` pour le drag & drop
   - [x] Déplacement d'un repas existant vers un autre créneau (jour et/ou type de repas)
   - [x] Suppression d'un repas par dépôt sur la zone « Supprimer » (apparaît pendant le drag)
-  - [ ] Ajout d'une recette à un créneau vide directement par glisser-déposer (actuellement via le modal « + »)
+
 - [x] **Navigation calendrier**
   - [x] Boutons Précédent/Suivant par jour + retour à la journée en cours
   - [x] Boutons Précédent/Suivant par mois (accueil et calendrier)
@@ -91,7 +90,8 @@ Application web **familiale** de planification des repas et gestion de recettes.
     - [ ] Formulaires
     - [ ] Chaque page
   - [x] **Revoir la mise en page de la page calendier** (structure 1-3-3-3-3 via `PlannerBoard`)
-
+  - [ ] Ajout d'une recette à un créneau vide directement par glisser-déposer (actuellement via le modal « + »)
+  
 **Fichiers à créer/modifier** :
 - `app/calendar/page.tsx` (page principale)
 - `app/calendar/CalendarClient.tsx` (composant client avec dnd-kit)
@@ -521,6 +521,11 @@ CREATE TABLE pantry_items (
 15. ✅ **Fix scroll permanent** - min-h-screen fautif (layout + pages profil/register)
 16. ✅ **Compactage pages** - Accueil, profil, register
 17. ✅ **Modal création utilisateur** - Bouton admin sur la page register
+18. ✅ **Navigation par clic** - Clic sur une date pour la placer en première position (accueil et calendrier)
+19. ✅ **Fix fuseau horaire** - Dates formatées/parsées en local (le clic sur une date affichait J-1 et filtrait les repas de la veille)
+20. ✅ **Chevrons repensés** - Jour autour de la 1re date, mois à côté du titre du mois (changement de mois relatif à la 1re date, jour conservé)
+21. ✅ **Type de repas** - Modifiable dans le formulaire Modifier du modal, défaut « Dîner » à la création
+22. ✅ **Hauteur du bandeau** - Conteneurs centrés de login et reset-password corrigés (calc(100vh - navbar), plus aucun min-h-screen)
 
 ### **Priorité Immédiate**
 - ✅ **F01 - Calendrier** : refonte de la page `/calendar` terminée (composant partagé `PlannerBoard`, 19 jours en 1-3-3-3-3-3-3, navigation par jour et par mois)
