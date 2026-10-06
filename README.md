@@ -28,6 +28,7 @@ http://localhost:3000
 - Liste des utilisateurs avec filtrage par rôle
 - Validation, promotion, rétrogradation et suppression
 - Création directe d'utilisateurs par les admins
+- Page de profil utilisateur avec changement de mot de passe
 
 ### ✅ Gestion des Recettes
 - CRUD complet des recettes
@@ -71,6 +72,9 @@ meal_plan/
 ├── proxy.ts             # Middleware proxy
 ├── package.json
 ├── README.md
+├── profile/             # Page de profil utilisateur
+│   ├── page.tsx
+│   └── ProfileClient.tsx
 └── ROADMAP.md
 ```
 

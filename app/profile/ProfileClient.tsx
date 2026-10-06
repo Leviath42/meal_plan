@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
+import { updateUserPassword } from '@/app/actions/auth';
 
 interface ProfileClientProps {
   session: {
@@ -57,19 +58,14 @@ export default function ProfileClient({ session }: ProfileClientProps) {
 
     formData.append('userId', session.user.id);
     
-    const result = await fetch('/actions/auth/update-password', {
-      method: 'POST',
-      body: formData,
-    });
-
-    const data = await result.json();
+    const result = await updateUserPassword(null, formData);
     
-    if (result.ok) {
-      setFormState({ success: true, message: 'Mot de passe mis à jour avec succès. Veuillez vous reconnecter.' });
+    if (result?.success) {
+      setFormState({ success: true, message: result.message || 'Mot de passe mis à jour avec succès. Veuillez vous reconnecter.' });
       e.currentTarget.reset();
       await signOut({ callbackUrl: '/login' });
     } else {
-      setFormState({ errors: { form: [data.error || 'Une erreur est survenue'] } });
+      setFormState(result);
     }
     
     setPending(false);
