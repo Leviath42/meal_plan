@@ -67,8 +67,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
       // Ne pas await car signOut déclenche une redirection qui détruit le composant
       signOut({ callbackUrl: '/login' });
     } else {
-      // Reset uniquement en cas d'erreur pour permettre une nouvelle tentative
-      e.currentTarget.reset();
+      // Ne pas reset le formulaire pour permettre à l'utilisateur de voir ses erreurs et corriger
       setFormState(result);
     }
     
