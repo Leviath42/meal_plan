@@ -36,6 +36,21 @@ interface DayData {
   plans: MealPlan[];
 }
 
+// Formater une Date en YYYY-MM-DD selon le fuseau local.
+// toISOString() formaterait en UTC : minuit local (UTC+2) deviendrait la veille.
+function toLocalDateStr(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Parser une date YYYY-MM-DD en Date locale (minuit local, sans décalage UTC)
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 // Noms des types de repas en français
 const MEAL_TYPE_LABELS: Record<string, string> = {
   breakfast: 'Petit-déj',
@@ -187,7 +202,7 @@ function MealPlanCreationModal({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const minDate = new Date(today);
-  const dateObj = new Date(date);
+  const dateObj = parseLocalDate(date);
   const isPastDate = dateObj < minDate;
 
   const handleSubmit = async () => {
@@ -235,7 +250,7 @@ function MealPlanCreationModal({
         <div className="p-4 border-b">
           <h3 className="font-bold text-lg">Créer un repas planifié</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {new Date(date).toLocaleDateString('fr-FR', {
+            {parseLocalDate(date).toLocaleDateString('fr-FR', {
               weekday: 'long', day: 'numeric', month: 'long'
             })}
           </p>
@@ -488,7 +503,7 @@ function MealPlanActionsModal({
         <div className="p-4 border-b">
           <h3 className="font-bold text-lg">Actions pour ce repas</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {new Date(mealPlan.date).toLocaleDateString('fr-FR', {
+            {parseLocalDate(mealPlan.date).toLocaleDateString('fr-FR', {
               weekday: 'long', day: 'numeric', month: 'long'
             })} - {MEAL_TYPE_LABELS[mealPlan.mealType]}
           </p>
@@ -608,7 +623,7 @@ function MealPlanActionsModal({
                       type="date"
                       value={newDate}
                       onChange={(e) => setNewDate(e.target.value)}
-                      min={minDate.toISOString().split('T')[0]}
+                      min={toLocalDateStr(minDate)}
                       className="w-full p-2 border rounded"
                     />
                   </div>
@@ -754,8 +769,8 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
   // Clic vs drag : le drag démarre après 6px de mouvement, le clic ouvre toujours le modal
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-  // Formater une date en YYYY-MM-DD
-  const formatDate = (date: Date): string => date.toISOString().split('T')[0];
+  // Formater une date en YYYY-MM-DD (fuseau local)
+  const formatDate = (date: Date): string => toLocalDateStr(date);
 
   // Charger les repas planifiés pour la période affichée (J à J+daysCount-1)
   const fetchMealPlans = useCallback(async () => {
@@ -804,8 +819,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
 
   // Navigation : afficher une date en première position (clic sur un en-tête de date)
   const goToDate = (dateStr: string) => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    setStartDate(new Date(year, month - 1, day));
+    setStartDate(parseLocalDate(dateStr));
   };
 
   // Navigation : mois précédent, calculé depuis la date affichée en premier
