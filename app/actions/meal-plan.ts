@@ -42,9 +42,10 @@ export async function createMealPlan(
   const data = parsed.data;
 
   try {
+    const now = new Date().toISOString();
     const [mealPlan] = await db
       .insert(mealPlans)
-      .values(data)
+      .values({ ...data, createdAt: now, updatedAt: now })
       .returning();
 
     revalidatePath('/calendar');
@@ -254,6 +255,7 @@ export async function addMealPlan(
       };
     }
 
+    const now = new Date().toISOString();
     const mealPlanData = {
       date: rawData.date as string,
       mealType: rawData.mealType as string,
@@ -261,6 +263,8 @@ export async function addMealPlan(
       customNote: rawData.customNote as string | null || null,
       servings: rawData.servings ? parseInt(rawData.servings as string) || 4 : 4,
       mealCourse: rawData.mealCourse as string | null || null,
+      createdAt: now,
+      updatedAt: now,
     };
 
     const [mealPlan] = await db
