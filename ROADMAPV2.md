@@ -68,7 +68,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [x] Affichage calendrier hebdomadaire avec navigation (page d'accueil : J → J+6)
   - [x] 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
   - [x] Affichage des repas planifiés par jour (plusieurs plats par créneau autorisés)
-  - [x] **Refonte page `/calendar`** : composant partagé `PlannerBoard`, structure 1-3-3-3-3 (J → J+12)
+  - [x] **Refonte page `/calendar`** : composant partagé `PlannerBoard`, structure 1-3-3-3-3-3-3 (J → J+18), navigation par jour et par mois
   - [ ] Vue mensuelle
 - [x] **Glisser-déposer des recettes**
   - [x] Intégration de `dnd-kit` pour le drag & drop
@@ -76,7 +76,8 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [x] Suppression d'un repas par dépôt sur la zone « Supprimer » (apparaît pendant le drag)
   - [ ] Ajout d'une recette à un créneau vide directement par glisser-déposer (actuellement via le modal « + »)
 - [x] **Navigation calendrier**
-  - [x] Boutons Précédent/Suivant + retour à la journée en cours
+  - [x] Boutons Précédent/Suivant par jour + retour à la journée en cours
+  - [x] Boutons Précédent/Suivant par mois (page calendrier)
   - [ ] Sélecteur de date direct
 - [ ] **Affichage des détails**
   - [ ] Voir les informations de la recette directement dans le calendrier
@@ -478,7 +479,7 @@ CREATE TABLE pantry_items (
 - ✅ **Modal de création d'utilisateur** sur la page register (admin)
 
 ### **Fonctionnalités à Implémenter** : ~25%
-- ✅ **F01 - Planification** : MVP complet (accueil 7 jours, page calendrier 13 jours en 1-3-3-3-3, DnD, modals)
+- ✅ **F01 - Planification** : MVP complet (accueil 7 jours, page calendrier 19 jours en 1-3-3-3-3-3-3 avec navigation jour/mois, DnD, modals)
 - ⏳ F05 - Liste de courses
 - ⏳ F04 - Partage du planning
 - ⏳ F03 - Proposition de repas
@@ -521,19 +522,16 @@ CREATE TABLE pantry_items (
 17. ✅ **Modal création utilisateur** - Bouton admin sur la page register
 
 ### **Priorité Immédiate**
-- 🟡 **F01 - Calendrier** : refonte de la page `/calendar`
-  - Réutiliser le composant de la page d'accueil (composant partagé)
-  - Structure 1-3-3-3-3 (jour principal + 4 lignes de 3 jours, J → J+12)
-  - Conserver le DnD, la zone de suppression et les modals
-- 🎯 **Ensuite** : F05 - Génération de liste de courses
+- ✅ **F01 - Calendrier** : refonte de la page `/calendar` terminée (composant partagé `PlannerBoard`, 19 jours en 1-3-3-3-3-3-3, navigation par jour et par mois)
+- 🎯 **Prochaine étape** : F05 - Génération de liste de courses
 - **Tests** : Vérifier que chaque fonctionnalité fonctionne avant de passer à la suivante
 - **Documentation** : Mettre à jour le README et la ROADMAP au fur et à mesure
 
 ### **Étape Suivante**
-**Refonte de la page `/calendar`**
-- ✅ Page d'accueil fonctionnelle (DnD, modals, compacte) à réutiliser comme base
-- 🎯 **Prochaine étape** : Extraire le composant calendrier partagé et l'utiliser sur `/calendar` avec 13 jours
-- 📅 **Objectif** : MVP F01 complet, puis F05
+**F05 - Génération de liste de courses**
+- ✅ F01 terminé : `PlannerBoard` partagé entre l'accueil (7 jours) et le calendrier (19 jours, navigation jour/mois)
+- 🎯 **Prochaine étape** : Agrégation des ingrédients planifiés, fusion des doublons, cases à cocher
+- 📅 **Objectif** : Livrer F05 puis F04 (partage du planning)
 
 ---
 

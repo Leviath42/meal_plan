@@ -78,7 +78,7 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - ✅ **Sélection de recettes** pour chaque créneau
 - ✅ **Repas personnalisés** (notes textuelles sans recette)
 - ✅ **Gestion des couverts** par repas planifié
-- ✅ **Page `/calendar` refondue** : composant partagé `PlannerBoard`, 13 jours (J → J+12) en structure 1-3-3-3-3, avec DnD, zone de suppression et modals — identique à la page d'accueil
+- ✅ **Page `/calendar` refondue** : composant partagé `PlannerBoard`, 19 jours (J → J+18) en structure 1-3-3-3-3-3-3, navigation par jour **et par mois**, avec DnD, zone de suppression et modals — identique à la page d'accueil
 
 #### 🔧 Corrections Techniques et UX
 - ✅ **Séparation des types Server Actions** - Résolution du problème "use server" exportant des objets
