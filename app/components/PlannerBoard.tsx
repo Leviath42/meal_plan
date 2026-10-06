@@ -466,6 +466,7 @@ function MealPlanActionsModal({
         recipeId: newRecipeId,
         customNote: newCustomNote || null,
         servings: newServings,
+        mealType: newMealType || mealPlan.mealType,
       };
 
       const errorMsg = await onUpdate(mealPlan.id, updates);
@@ -544,12 +545,13 @@ function MealPlanActionsModal({
                     setNewRecipeId(mealPlan.recipeId);
                     setNewCustomNote(mealPlan.customNote ?? '');
                     setNewServings(mealPlan.servings ?? 4);
+                    setNewMealType(mealPlan.mealType as MealType);
                     setAction('edit');
                   }}
                   className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
                 >
                   <span className="font-medium text-blue-600">Modifier</span>
-                  <p className="text-sm text-gray-500">Changer la recette, la note ou le nombre de couverts</p>
+                  <p className="text-sm text-gray-500">Changer le type, la recette, la note ou le nombre de couverts</p>
                 </button>
 
                 <button
@@ -672,6 +674,23 @@ function MealPlanActionsModal({
               {/* Formulaire d'édition */}
               {action === 'edit' && (
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type de repas *
+                    </label>
+                    <select
+                      value={newMealType || mealPlan?.mealType}
+                      onChange={(e) => setNewMealType(e.target.value as MealType)}
+                      className="w-full p-2 border rounded"
+                    >
+                      {mealTypeOptions.map(type => (
+                        <option key={type} value={type}>
+                          {MEAL_TYPE_LABELS[type]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Recette (optionnel)
