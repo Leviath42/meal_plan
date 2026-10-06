@@ -129,7 +129,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
   return (
     <main className="min-h-screen px-3 sm:px-4 py-4 bg-gray-50">
-      <div className="max-w-full mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-2">
           {session?.user?.role === 'ADMIN' ? 'Gestion des utilisateurs' : 'Créer un compte'}
         </h1>
@@ -148,7 +148,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
         {/* Formulaire d'inscription (pour les visiteurs et admin) */}
         {!session && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-4 max-w-2xl mx-auto">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Créer un nouveau compte</h2>
             
             <form onSubmit={handleRegister} className="space-y-3">
@@ -218,10 +218,10 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
           </div>
         )}
 
-        {/* Liste des utilisateurs à valider (pour l'admin) */}
+        {/* Liste des utilisateurs */}
         {session?.user?.role === 'ADMIN' && (
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Utilisateurs à valider</h2>
+          <div className="bg-white rounded-lg shadow-sm p-4 max-w-2xl mx-auto">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Utilisateurs</h2>
             
             {initialUsers.length === 0 ? (
               <p className="text-xs sm:text-sm text-gray-500">Aucun utilisateur en attente de validation.</p>
@@ -291,7 +291,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
         {/* Formulaire d'inscription pour l'admin */}
         {session?.user?.role === 'ADMIN' && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mt-3">
+          <div className="bg-white rounded-lg shadow-sm p-4 mt-3 max-w-2xl mx-auto">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Ajouter un utilisateur</h2>
             
             <form onSubmit={handleRegister} className="space-y-3">

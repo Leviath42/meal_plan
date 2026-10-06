@@ -1,6 +1,6 @@
 # Meal Plan - Roadmap & Revue Technique
 
-*Dernière mise à jour : 2026-10-04*
+*Dernière mise à jour : 2026-10-06*
 
 ---
 
@@ -44,9 +44,21 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 - ✅ Catégories (rayons supermarché)
 - ✅ Unités par défaut
 
+### 🎨 **Responsive Design & UI**
+- ✅ **Design responsive mobile-first**
+- ✅ Largeur maximale cohérente sur desktop (`max-w-2xl`, `max-w-4xl`, `max-w-6xl`)
+- ✅ Contraintes de largeur sur tous les conteneurs principaux
+- ✅ Compatibilité Next.js 16 (conteneurs flexibles et fluides)
+- ✅ Correction viewport pour Next.js 16 (export séparé de `metadata` et `viewport`)
+
 ---
 
 ## 🚀 **Prochaines Étapes (Priorité)**
+
+### 0️⃣ **Fixes Techniques** *(Terminé 2026-10-06)*
+- ✅ Correction du viewport pour Next.js 16 (export séparé)
+- ✅ Fix du responsive design desktop (largeurs maximales)
+- ✅ Uniformisation des conteneurs sur toutes les pages
 
 ### 1️⃣ **Test et Validation** *(Urgent)*
 - [ ] Tester l'inscription d'un nouvel utilisateur
@@ -101,6 +113,14 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 |---------|---------------|--------|
 | `lib/auth.ts` | Ajout vérification rôle GUEST (bloque la connexion) | ✅ Fonctionnel |
 | `proxy.ts` | Ajout `/register` aux routes publiques | ✅ Fonctionnel |
+| `app/layout.tsx` | Séparation de `metadata` et `viewport` pour Next.js 16 | ✅ Fonctionnel |
+| `app/page.tsx` | Ajout `max-w-2xl sm:max-w-4xl mx-auto` pour conteneur responsive | ✅ Fonctionnel |
+| `app/recipes/page.tsx` | Ajout `max-w-4xl` conteneur + `max-w-2xl` pour la liste | ✅ Fonctionnel |
+| `app/recipes/[id]/page.tsx` | Ajout `max-w-4xl` pour conteneur principal | ✅ Fonctionnel |
+| `app/recipes/[id]/edit/EditRecipeForm.tsx` | Ajout `max-w-2xl` pour conteneur principal | ✅ Fonctionnel |
+| `app/recipes/new/NewRecipeForm.tsx` | Ajout `max-w-2xl` pour conteneur principal | ✅ Fonctionnel |
+| `app/ingredients/page.tsx` | Ajout `max-w-4xl` pour conteneur principal | ✅ Fonctionnel |
+| `app/register/RegisterClient.tsx` | Ajout `max-w-4xl` conteneur + `max-w-2xl` pour les cartes | ✅ Fonctionnel |
 
 ### 🗂️ **Structure Complète du Projet**
 
@@ -339,7 +359,9 @@ toast.success('Utilisateur validé avec succès !');
 | Commit | Message | Modifications |
 |--------|---------|---------------|
 | 4b4a317 | Fix: Add AUTH_SECRET for NextAuth v5 JWT signing | Configuration auth de base |
-| 3f7132b | feat + fix: Add user registration, admin management, fix module resolution | **Dernier commit** |
+| 3f7132b | feat + fix: Add user registration, admin management, fix module resolution | Système utilisateurs complet |
+| 7639127 | Fin de la première journée :) | Base du projet |
+| HEAD | **Dernières corrections** | Fix responsive desktop + viewport Next.js 16 |
 
 ---
 
