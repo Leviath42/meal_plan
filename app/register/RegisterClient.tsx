@@ -49,7 +49,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   };
 
   const handleUpdateRole = async (userId: string, newRole: 'ADMIN' | 'MEMBER' | 'GUEST') => {
-    const result = await updateUserRole(userId, newRole);
+    const result = await updateUserRole(userId, newRole, currentUserId);
     setFormState(result);
     
     if (result?.success) {
@@ -58,7 +58,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   };
 
   const handleDeleteUser = async (userId: string) => {
-    // Empêcher la suppression de soi-même
+    // Empêcher la suppression de soi-même (déjà géré dans deleteUser, mais on vérifie aussi ici pour l'UX)
     if (userId === currentUserId) {
       setFormState({ errors: { form: ['Vous ne pouvez pas supprimer votre propre compte'] } });
       return;
@@ -222,38 +222,40 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                           {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {user.role === 'GUEST' && (
-                            <>
+                          <div className="flex gap-2">
+                            {user.role === 'GUEST' && (
                               <button
                                 onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                                className="text-green-600 hover:text-green-800 mr-3"
+                                className="text-green-600 hover:text-green-800"
                               >
                                 Valider
                               </button>
+                            )}
+                            {user.role === 'MEMBER' && (
+                              <button
+                                onClick={() => handleUpdateRole(user.id, 'ADMIN')}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                Promouvoir
+                              </button>
+                            )}
+                            {user.role === 'ADMIN' && user.id !== currentUserId && (
+                              <button
+                                onClick={() => handleUpdateRole(user.id, 'MEMBER')}
+                                className="text-orange-600 hover:text-orange-800"
+                              >
+                                Rétrograder
+                              </button>
+                            )}
+                            {user.id !== currentUserId && (
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
                                 className="text-red-600 hover:text-red-800"
                               >
                                 Supprimer
                               </button>
-                            </>
-                          )}
-                          {user.role === 'MEMBER' && (
-                            <button
-                              onClick={() => handleUpdateRole(user.id, 'ADMIN')}
-                              className="text-blue-600 hover:text-blue-800 mr-3"
-                            >
-                              Promouvoir Admin
-                            </button>
-                          )}
-                          {user.role === 'ADMIN' && user.email !== session.user?.email && (
-                            <button
-                              onClick={() => handleUpdateRole(user.id, 'MEMBER')}
-                              className="text-orange-600 hover:text-orange-800"
-                            >
-                              Rétrograder
-                            </button>
-                          )}
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
