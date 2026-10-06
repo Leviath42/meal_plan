@@ -25,7 +25,7 @@ Planifier les repas de la famille sur un calendrier, gérer un livre de recettes
 |---|---|
 |**Admin**|Lecture + écriture + gestion des comptes et jetons API|
 |**Membre**|Lecture + écriture (recettes, planning, liste de courses)|
-|**Invité**|Lecture seule (planning partagé, mode kiosque)|
+|**Invité**|Pas d'accès, attente validation admin
 
 ## 2. Fonctionnalités
 
@@ -106,7 +106,7 @@ Solution à définir
     
 - **Protections Web :** Rate-limiting sur les tentatives de connexion (`express-rate-limit` / middleware Next.js) et validation stricte des entrées utilisateurs via Zod.
     
-- **Sécurité des jetons externes :** Les accès Kiosque, ICS et API HA utilisent des jetons cryptographiques révocables isolés du compte utilisateur principal.
+- **Sécurité des jetons externes :** Les accès ICS et API HA utilisent des jetons cryptographiques révocables isolés du compte utilisateur principal.
     
 - **Headers HTTP Sécurisés :** En-têtes HSTS, X-Frame-Options (autorisé uniquement pour Ingress HA si configuré) et Content-Security-Policy (CSP).
 
