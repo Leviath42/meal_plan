@@ -87,14 +87,16 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 ```
 
 ### 2️⃣ **Améliorations Authentification** *(Haute Priorité)*
-- ✅ Notification à l'admin lorsqu'un nouvel utilisateur s'inscrit (badge "NOUVEAU" sur les GUEST récents)
+- ✅ Notification à l'admin lorsqu'un nouvel utilisateur s'inscrit
 - ✅ Page de profil utilisateur (changer mot de passe, voir ses infos) (page /profile)
 - ✅ **Correction importante** : Empêcher complètement la connexion des GUEST (modification `lib/auth.ts` + `proxy.ts`)
 - ✅ **Mot de passe oublié / réinitialisation** (NOUVEAU 2026-10-06)
-  - Table `password_reset_tokens` avec expiration (1 heure)
-  - Server Actions: `requestPasswordReset`, `resetPassword`
-  - Pages: `/forgot-password`, `/reset-password/[token]`
-  - Lien "Mot de passe oublié ?" sur page login
+  - ✅ Table `password_reset_tokens` avec expiration (1 heure)
+  - ✅ **Système de migrations Drizzle** automatique au démarrage (`lib/db/migrate.ts`)
+  - ✅ **Service email standalone** avec Nodemailer (SMTP) - pas de dépendance API externe
+  - ✅ Server Actions: `requestPasswordReset`, `resetPassword`
+  - ✅ Pages: `/forgot-password`, `/reset-password/[token]`
+  - ✅ Lien "Mot de passe oublié ?" sur page login
 
 ### 3️⃣ **Fonctionnalités Manquantes** *(Moyenne Priorité)*
 - [ ] **OAuth** (Google, GitHub) - *Attendre d'avoir les variables d'environnement*
