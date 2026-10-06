@@ -61,16 +61,30 @@ docker run -p 3000:3000 -v ./data:/app/data meal-plan
 - Glisser-déposer (dnd-kit) pour le calendrier (en développement)
 - **Conservation des champs formulaires** en cas d'erreur de validation
 - **Menu navigation complet** avec accès au Calendrier
+- ✅ **Correction des Server Actions** - Séparation des types et fonctions async pour compatibilité Next.js 16
+- ✅ **CRUD complet des repas planifiés** avec drag & drop fonctionnel
+
+---
+
+### ✅ **Récemment Implémenté** (Calendrier MVP)
+
+#### 📅 Calendrier et Planification
+- ✅ **CRUD complet des repas planifiés** (Création, Lecture, Mise à jour, Suppression)
+- ✅ **Glisser-déposer fonctionnel** avec dnd-kit pour replanification
+- ✅ **Affichage du calendrier** avec 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
+- ✅ **Navigation par semaine** avec boutons Précédent/Suivant/Aujourd'hui
+- ✅ **Sélection de recettes** pour chaque créneau
+- ✅ **Repas personnalisés** (notes textuelles sans recette)
+- ✅ **Gestion des couverts** par repas planifié
+
+#### 🔧 Corrections Techniques
+- ✅ **Séparation des types Server Actions** - Résolution du problème "use server" exportant des objets
+- ✅ **Gestion des timestamps** - Ajout des champs createdAt/updatedAt à meal_plans
+- ✅ **Validation TypeScript** - Correction des problèmes de typage avec FormData
 
 ---
 
 ### 🟚 **En Développement** (Branche: `feature/calendrier`)
-
-#### 📅 Calendrier et Planification
-- [ ] Calendrier hebdomadaire/mensuel
-- [ ] Glisser-déposer des recettes vers les créneaux
-- [ ] 3 types de repas : Petit-déjeuner, Déjeuner, Dîner
-- [ ] Navigation par semaine/mois
 
 #### 📋 Liste de Courses
 - [ ] Agrégation automatique des ingrédients planifiés

@@ -4,35 +4,23 @@ import { db } from '@/lib/db';
 import { mealPlans } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { eq, and, gte, lte, or } from 'drizzle-orm';
+import {
+  mealPlanInput,
+  type MealPlanFormState,
+  type MealPlan,
+  type MealPlanFormResult
+} from '@/app/types/meal-plan';
 
-// Schéma de validation pour les repas planifiés
-export const mealPlanInput = z.object({
-  date: z.string().min(1, 'La date est requise'),
-  mealType: z.string().min(1, 'Le type de repas est requis'),
-  recipeId: z.string().uuid().optional().nullable(),
-  customNote: z.string().optional().nullable(),
-  servings: z.coerce.number().int().min(1).default(4),
-  mealCourse: z.string().optional().nullable(),
-});
-
-export type MealPlanFormState = {
-  errors?: Record<string, string[]>;
-  values?: Record<string, string | number>;
-} | null;
-
-// Types pour les données de repas planifié
-export interface MealPlan {
-  id: string;
-  date: string;
-  mealType: string;
-  recipeId: string | null;
-  customNote: string | null;
-  servings: number;
-  mealCourse: string | null;
-  createdAt: string;
-  updatedAt: string;
+// Helper pour convertir FormData en Record<string, string>
+function formDataToRecord(formData: FormData): Record<string, string> {
+  const record: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === 'string') {
+      record[key] = value;
+    }
+  }
+  return record;
 }
 
 // Créer un nouveau repas planifié
@@ -40,7 +28,7 @@ export async function createMealPlan(
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
-  const rawData = Object.fromEntries(formData);
+  const rawData = formDataToRecord(formData);
   
   const parsed = mealPlanInput.safeParse(rawData);
   
@@ -76,7 +64,7 @@ export async function updateMealPlan(
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
-  const rawData = Object.fromEntries(formData);
+  const rawData = formDataToRecord(formData);
   
   const parsed = mealPlanInput.safeParse(rawData);
   
@@ -133,8 +121,10 @@ export async function replanMealPlan(
       .select()
       .from(mealPlans)
       .where(
-        eq(mealPlans.date, newDate) && 
-        eq(mealPlans.mealType, newMealType)
+        and(
+          eq(mealPlans.date, newDate),
+          eq(mealPlans.mealType, newMealType)
+        )
       )
       .limit(1);
 
@@ -169,8 +159,13 @@ export async function getMealPlansByDateRange(
       .select()
       .from(mealPlans)
       .where(
-        eq(mealPlans.date, startDate) || 
-        (mealPlans.date >= startDate && mealPlans.date <= endDate)
+        or(
+          eq(mealPlans.date, startDate),
+          and(
+            gte(mealPlans.date, startDate),
+            lte(mealPlans.date, endDate)
+          )
+        )
       )
       .orderBy(mealPlans.date);
 
@@ -191,8 +186,13 @@ export async function getMealPlans(
       .select()
       .from(mealPlans)
       .where(
-        eq(mealPlans.date, startDate) || 
-        (mealPlans.date >= startDate && mealPlans.date <= endDate)
+        or(
+          eq(mealPlans.date, startDate),
+          and(
+            gte(mealPlans.date, startDate),
+            lte(mealPlans.date, endDate)
+          )
+        )
       )
       .orderBy(mealPlans.date);
 
@@ -234,23 +234,13 @@ export async function getMealPlanById(id: string): Promise<MealPlan | null> {
   }
 }
 
-// Types pour la compatibilité avec le composant existant
-export type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner';
-
-export interface MealPlanFormResult {
-  success: boolean;
-  message: string;
-  mealPlan?: MealPlan;
-  errors?: Record<string, string[]>;
-}
-
 // Fonction compatible avec le composant existant (addMealPlan)
 export async function addMealPlan(
   prevState: any,
   formData: FormData
 ): Promise<MealPlanFormResult> {
   try {
-    const rawData = Object.fromEntries(formData);
+    const rawData = formDataToRecord(formData);
     
     // Validation basique
     if (!rawData.date || !rawData.mealType) {

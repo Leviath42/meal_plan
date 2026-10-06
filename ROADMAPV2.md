@@ -35,6 +35,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | **F06** | **Authentification & Autorisations** | ✅ **COMPLET** | NextAuth v5, Argon2, sessions JWT, rôles GUEST/MEMBER/ADMIN, bloquage connexion GUEST |
 | **F02** | **Gestion des Recettes** | ✅ **COMPLET** | CRUD complet, association recettes/ingrédients, quantités, unités, **mealCourse** |
 | **F02** | **Gestion des Ingrédients** | ✅ **COMPLET** | CRUD complet, catégories (rayons), unités par défaut |
+| **F01** | **Planification des Repas** | ✅ **COMPLET** | CRUD repas planifiés, drag & drop, 4 types de repas, navigation semaine |
 | - | **Réinitialisation mot de passe** | ✅ **COMPLET** | Flux complet avec question secrète, vérification 2 étapes |
 | - | **Page Profil** | ✅ **COMPLET** | Affichage infos, changement mot de passe, déconnexion automatique |
 | - | **Interface Admin** | ✅ **COMPLET** | Liste utilisateurs, validation GUEST→MEMBER, promotion/démotion, suppression |
@@ -459,7 +460,7 @@ CREATE TABLE pantry_items (
 
 ## 📊 **État d'Avancement**
 
-### **Fonctionnalités Implémentées** : ~50%
+### **Fonctionnalités Implémentées** : ~60%
 - ✅ Authentification complète
 - ✅ Gestion utilisateurs
 - ✅ Gestion recettes et ingrédients (avec mealCourse)
@@ -467,9 +468,12 @@ CREATE TABLE pantry_items (
 - ✅ Conservation des champs formulaires en cas d'erreur
 - ✅ Menu navigation complet avec lien Calendrier
 - ✅ Seed de données complet (45 recettes, 108 ingrédients)
+- ✅ **F01 - Planification (CRUD + Drag & Drop)** - MVP fonctionnel
+- ✅ Correction des Server Actions pour compatibilité Next.js 16
 
-### **Fonctionnalités à Implémenter** : ~50%
-- ⏳ F01 - Planification (MVP)
+### **Fonctionnalités à Implémenter** : ~40%
+- ✅ **F01 - Planification (MVP)** - CRUD et DnD terminés
+- ⏳ F05 - Liste de courses
 - ⏳ F05 - Liste de courses
 - ⏳ F04 - Partage du planning
 - ⏳ F03 - Proposition de repas
@@ -499,21 +503,17 @@ CREATE TABLE pantry_items (
 4. ✅ **Corrections UX formulaires** - Conservation des champs en cas d'erreur
 5. ✅ **Menu navigation mis à jour** - Lien Calendrier ajouté
 6. ✅ **mealCourse intégré** - Dans seed, validator, formulaires, schéma DB
-7. [ ] **Commencer l'implémentation de F01**
-   - [ ] Créer la table `meal_plans` dans schema.ts
-   - [ ] Créer la migration Drizzle pour `meal_plans`
-   - [ ] Créer `app/calendar/page.tsx`
-   - [ ] Créer `app/calendar/CalendarClient.tsx` avec dnd-kit
-   - [ ] Créer `app/calendar/CalendarWeekView.tsx`
-   - [ ] Créer `app/calendar/CalendarDayView.tsx`
-   - [ ] Créer `app/calendar/CalendarEvent.tsx`
-   - [ ] Créer `app/actions/meal-plan.ts` (CRUD meal_plans)
+7. ✅ **Correction Server Actions** - Séparation types/fonctions pour Next.js 16
+8. ✅ **CRUD meal_plans implémenté** - Création, lecture, mise à jour, suppression
+9. ✅ **Drag & Drop fonctionnel** - dnd-kit intégré pour replanification
+10. ✅ **Timeline mis à jour** - Ajout des champs createdAt/updatedAt à meal_plans
 
 ### **Priorité Immédiate**
-- **F01 - Calendrier** : C'est la fonctionnalité centrale du MVP
-  - ⏳ **CRUD des repas planifiés** (création, lecture, mise à jour, suppression)
-  - ⏳ **Intégration dnd-kit** pour le glisser-déposer
-  - ⏳ **Navigation semaine/mois**
+- ✅ **F01 - Calendrier** : MVP fonctionnel avec CRUD et DnD
+  - ✅ **CRUD des repas planifiés** (création, lecture, mise à jour, suppression)
+  - ✅ **Intégration dnd-kit** pour le glisser-déposer
+  - ✅ **Navigation semaine/mois**
+- 🎯 **Prochaine étape** : F05 - Génération de liste de courses
 - **Tests** : Vérifier que chaque fonctionnalité fonctionne avant de passer à la suivante
 - **Documentation** : Mettre à jour le README et la ROADMAP au fur et à mesure
 
