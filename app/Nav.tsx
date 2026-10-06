@@ -38,6 +38,9 @@ export default function Nav({ session }: { session: any }) {
                     Utilisateurs
                   </Link>
                 )}
+                <Link href="/profile" className={`text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap ${pathname.startsWith('/profile') ? 'font-medium text-blue-600' : ''}`}>
+                  Profil
+                </Link>
                 <span className="text-gray-300 hidden lg:inline">|</span>
                 <button onClick={handleSignOut} className="text-xs sm:text-sm text-gray-600 hover:text-red-600 transition-colors whitespace-nowrap">
                   Déconnexion
@@ -75,6 +78,9 @@ export default function Nav({ session }: { session: any }) {
                   Gérer les utilisateurs
                 </Link>
               )}
+              <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors py-2 ${pathname.startsWith('/profile') ? 'font-medium text-blue-600' : ''}`}>
+                Profil
+              </Link>
               <div className="border-t border-gray-200 pt-2 mt-1">
                 <button onClick={handleSignOut} className="w-full text-left text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors py-2">
                   Déconnexion

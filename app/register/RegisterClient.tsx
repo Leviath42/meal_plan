@@ -83,6 +83,13 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     }
   };
 
+  const isNewUser = (createdAt: string): boolean => {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    // Considérer comme "nouveau" si créé dans les dernières 24 heures
+    return (now.getTime() - createdDate.getTime()) < 24 * 60 * 60 * 1000;
+  };
+
   const getRoleActions = (user: User) => {
     const actions = [];
     
@@ -254,6 +261,11 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                             <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${getRoleColor(user.role)}`}>
                               {user.role}
                             </span>
+                            {user.role === 'GUEST' && isNewUser(user.createdAt) && (
+                              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium flex-shrink-0">
+                                NOUVEAU
+                              </span>
+                            )}
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-gray-900 truncate text-xs sm:text-sm">
                                 {user.name || 'N/A'}
