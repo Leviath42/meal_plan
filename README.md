@@ -29,7 +29,6 @@ http://localhost:3000
 - Validation, promotion, rétrogradation et suppression
 - Création directe d'utilisateurs par les admins
 - Page de profil utilisateur avec changement de mot de passe
-- Réinitialisation du mot de passe oublié (flux complet)
 
 ### ✅ Gestion des Recettes
 - CRUD complet des recettes
@@ -63,27 +62,20 @@ meal_plan/
 │   ├── actions/           # Server Actions
 │   ├── ingredients/       # Gestion des ingrédients
 │   ├── login/            # Page de connexion
-│   ├── forgot-password/  # Réinitialisation mot de passe
-│   ├── reset-password/   # Page de réinitialisation avec token
 │   ├── recipes/          # Gestion des recettes
 │   ├── register/         # Inscription & gestion utilisateurs
-│   ├── profile/          # Page de profil utilisateur
 │   ├── layout.tsx        # Layout principal
 │   └── page.tsx          # Page d'accueil
-├── lib/
-│   ├── auth.ts           # Configuration NextAuth
-│   ├── db/               # Schéma, connexion DB et migrations
-│   │   ├── index.ts
-│   │   ├── schema.ts
-│   │   ├── migrate.ts    # Système de migrations
-│   │   └── migrations/   # Fichiers de migration
-│   └── email.ts         # Service email avec Nodemailer
 ├── lib/
 │   ├── auth.ts           # Configuration NextAuth
 │   └── db/               # Schéma et connexion DB
 ├── proxy.ts             # Middleware proxy
 ├── package.json
 ├── README.md
+├── profile/             # Page de profil utilisateur
+│   ├── page.tsx
+│   └── ProfileClient.tsx
+├── waiting-validation/ # **SUPPRIMÉ** (GUEST ne peuvent plus se connecter)
 └── ROADMAP.md
 ```
 
@@ -92,35 +84,6 @@ meal_plan/
 | Rôle | Email | Mot de passe |
 |------|-------|--------------|
 | Admin | `admin@mealplan.local` | `admin123` |
-
-## ⚙️ Configuration
-
-### Variables d'environnement
-
-Créer un fichier `.env.local` à la racine du projet :
-
-```env
-# Authentification (déjà configuré)
-AUTH_SECRET=votre_secret_jwt_aleatoire
-AUTH_URL=http://localhost:3000
-
-# Service Email (Nodemailer - optionnel mais recommandé)
-SMTP_HOST=smtp.votre-fournisseur.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=votre@email.com
-SMTP_PASSWORD=votre_mot_de_passe
-SMTP_FROM="Meal Plan" <no-reply@mealplan.local>
-```
-
-**Fournisseurs SMTP recommandés :**
-- Gmail (nécessite "App Password")
-- Outlook/Hotmail
-- OVH
-- Mailgun
-- SendGrid
-
-**Mode développement :** Si les variables SMTP ne sont pas configurées, le système affichera le lien de réinitialisation dans la console du serveur.
 
 ## 📄 Documentation
 

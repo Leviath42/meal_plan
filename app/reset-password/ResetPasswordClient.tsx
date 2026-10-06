@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { resetPasswordWithSecurityQuestion, getUserSecurityQuestion, verifySecurityAnswer } from '@/app/actions/auth';
@@ -28,45 +28,20 @@ export default function ResetPasswordClient({
   const [email, setEmail] = useState(initialEmail || '');
   const [step, setStep] = useState(initialStep || '1');
   const [currentQuestion, setCurrentQuestion] = useState(securityQuestion);
-  
-  // States pour les champs contrôlés de l'étape 2
-  const [securityAnswer, setSecurityAnswer] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
-  // Synchroniser les states locaux avec les props quand elles changent (navigation avec router.push)
-  useEffect(() => {
-    if (initialEmail !== undefined) {
-      setEmail(initialEmail || '');
-    }
-    if (initialStep !== undefined) {
-      setStep(initialStep || '1');
-    }
-    setCurrentQuestion(securityQuestion);
-    // Réinitialiser les champs de l'étape 2 quand on revient à l'étape 1
-    if (initialStep === '1') {
-      setSecurityAnswer('');
-      setNewPassword('');
-      setConfirmPassword('');
-    }
-  }, [initialEmail, initialStep, securityQuestion]);
 
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
     setFormState(null);
 
-    const formData = new FormData(e.currentTarget);
-    const emailFromForm = formData.get('email') as string;
-
-    if (!emailFromForm) {
+    if (!email) {
       setFormState({ errors: { email: ['Email requis'] } });
       setPending(false);
       return;
     }
 
-    // Récupérer la question secrète pour cet email via navigation
-    router.push(`/reset-password?email=${encodeURIComponent(emailFromForm)}&step=1`);
+    // Récupérer la question secrète pour cet email
+    router.push(`/reset-password?email=${encodeURIComponent(email)}&step=1`);
     setPending(false);
   };
 
@@ -74,6 +49,9 @@ export default function ResetPasswordClient({
     e.preventDefault();
     setPending(true);
     setFormState(null);
+
+    const formData = new FormData(e.currentTarget);
+    const securityAnswer = formData.get('securityAnswer') as string;
 
     if (!securityAnswer) {
       setFormState({ errors: { securityAnswer: ['Réponse requise'] } });
@@ -99,6 +77,11 @@ export default function ResetPasswordClient({
     setPending(true);
     setFormState(null);
 
+    const formData = new FormData(e.currentTarget);
+    const securityAnswer = formData.get('securityAnswer') as string;
+    const newPassword = formData.get('newPassword') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+
     // Validation
     if (!securityAnswer) {
       setFormState({ errors: { securityAnswer: ['Réponse requise'] } });
@@ -118,21 +101,14 @@ export default function ResetPasswordClient({
       return;
     }
 
-    // Créer formData manuellement
-    const formData = new FormData();
+    // Ajouter l'email et la réponse au formData
     formData.append('email', email);
     formData.append('securityAnswer', securityAnswer);
-    formData.append('newPassword', newPassword);
-    formData.append('confirmPassword', confirmPassword);
 
     const result = await resetPasswordWithSecurityQuestion(null, formData);
 
     if (result?.success) {
       setFormState({ success: true, message: result.message });
-      // Réinitialiser les champs
-      setSecurityAnswer('');
-      setNewPassword('');
-      setConfirmPassword('');
       // Rediriger vers login après 3 secondes
       setTimeout(() => router.push('/login'), 3000);
     } else {
@@ -176,7 +152,6 @@ export default function ResetPasswordClient({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ton@email.com"
                   required
-                  autoComplete="username"
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.email && <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>}
@@ -234,11 +209,8 @@ export default function ResetPasswordClient({
                   id="securityAnswer"
                   name="securityAnswer"
                   type="password"
-                  value={securityAnswer}
-                  onChange={(e) => setSecurityAnswer(e.target.value)}
                   placeholder="Votre réponse"
                   required
-                  autoComplete="off"
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.securityAnswer && <p className="text-red-500 text-xs mt-1">{formState.errors.securityAnswer[0]}</p>}
@@ -250,12 +222,9 @@ export default function ResetPasswordClient({
                   id="newPassword"
                   name="newPassword"
                   type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimum 6 caractères"
                   minLength={6}
                   required
-                  autoComplete="new-password"
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.newPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.newPassword[0]}</p>}
@@ -267,11 +236,8 @@ export default function ResetPasswordClient({
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirmez votre nouveau mot de passe"
                   required
-                  autoComplete="new-password"
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {formState?.errors?.confirmPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.confirmPassword[0]}</p>}
@@ -312,7 +278,6 @@ export default function ResetPasswordClient({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ton@email.com"
                 required
-                autoComplete="username"
                 className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
