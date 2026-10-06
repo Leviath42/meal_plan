@@ -42,8 +42,9 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     setFormState(result);
     
     if (result?.success) {
-      router.refresh();
+      // Reset le formulaire avant le refresh (qui pourrait détruire le composant)
       e.currentTarget.reset();
+      router.refresh();
     }
   };
 
