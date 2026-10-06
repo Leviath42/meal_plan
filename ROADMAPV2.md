@@ -68,7 +68,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [x] Affichage calendrier hebdomadaire avec navigation (page d'accueil : J → J+6)
   - [x] 4 types de repas : Petit-déjeuner, Déjeuner, Goûter, Dîner
   - [x] Affichage des repas planifiés par jour (plusieurs plats par créneau autorisés)
-  - [ ] **Refonte page `/calendar`** : même composant que l'accueil, structure 1-3-3-3-3 (J → J+12)
+  - [x] **Refonte page `/calendar`** : composant partagé `PlannerBoard`, structure 1-3-3-3-3 (J → J+12)
   - [ ] Vue mensuelle
 - [x] **Glisser-déposer des recettes**
   - [x] Intégration de `dnd-kit` pour le drag & drop
@@ -86,9 +86,9 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [ ] Mode de planification
   - [ ] autres ?
   - [ ] **Vérifier l'ensemble des interaction utilisateur possible**
-    - [x] Formulaires (conservation des champs, remontée des erreurs serveur dans les modals)
+    - [ ] Formulaires
     - [ ] Chaque page
-  - [ ] **Revoir la mise en page de la page calendier** *(en cours : structure 1-3-3-3-3)*
+  - [x] **Revoir la mise en page de la page calendier** (structure 1-3-3-3-3 via `PlannerBoard`)
 
 **Fichiers à créer/modifier** :
 - `app/calendar/page.tsx` (page principale)
@@ -478,7 +478,7 @@ CREATE TABLE pantry_items (
 - ✅ **Modal de création d'utilisateur** sur la page register (admin)
 
 ### **Fonctionnalités à Implémenter** : ~25%
-- 🟡 **F01 - Planification** : refonte page `/calendar` en cours (structure 1-3-3-3-3)
+- ✅ **F01 - Planification** : MVP complet (accueil 7 jours, page calendrier 13 jours en 1-3-3-3-3, DnD, modals)
 - ⏳ F05 - Liste de courses
 - ⏳ F04 - Partage du planning
 - ⏳ F03 - Proposition de repas
