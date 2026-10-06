@@ -16,7 +16,7 @@ export default function HomeCalendar({ recipes = [] }: HomeCalendarProps) {
       daysCount={7}
       enableMonthNavigation
       footer={
-        <Link href="/calendar" className="text-sm text-blue-600 hover:underline">
+        <Link href="/calendar" className="text-sm text-accent hover:underline">
           Voir le calendrier complet →
         </Link>
       }

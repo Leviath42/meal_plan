@@ -41,7 +41,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
           <div className="flex gap-2 flex-shrink-0">
             <Link
               href={`/recipes/${id}/edit`}
-              className="bg-blue-600 text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-blue-700 transition-colors whitespace-nowrap"
+              className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors whitespace-nowrap"
             >
               Modifier
             </Link>
@@ -61,7 +61,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
           <div className="bg-gray-50 rounded p-2 sm:p-3 text-center">
             <p className="text-xs text-gray-500 whitespace-nowrap">Préparation</p>
-            <p className="text-lg sm:text-xl font-bold text-blue-600">{recipe.prepTime} min</p>
+            <p className="text-lg sm:text-xl font-bold text-accent">{recipe.prepTime} min</p>
           </div>
           <div className="bg-gray-50 rounded p-2 sm:p-3 text-center">
             <p className="text-xs text-gray-500 whitespace-nowrap">Cuisson</p>
@@ -130,7 +130,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                   href={recipe.source}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-accent hover:underline"
                 >
                   {recipe.source}
                 </a>

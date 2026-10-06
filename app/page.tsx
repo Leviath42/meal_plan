@@ -19,7 +19,7 @@ export default async function HomePage() {
       <div className="grid grid-cols-2 gap-3">
         <Link
           href="/recipes"
-          className="block bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow hover:border-blue-300"
+          className="block bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow hover:border-accent"
         >
           <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-1">Recettes</h2>
           <p className="text-xs sm:text-sm text-gray-600">Consultez et gérez votre catalogue de recettes.</p>

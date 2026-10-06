@@ -171,7 +171,7 @@ export default async function EditMealPlanPage({ params }: { params: Promise<{ i
             <div className="flex gap-3 pt-4">
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-6 py-2 bg-accent text-white rounded hover:bg-accent-hover"
               >
                 Enregistrer les modifications
               </button>

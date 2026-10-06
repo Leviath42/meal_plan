@@ -101,7 +101,7 @@ export default function IngredientsSelector({
           <div className="text-center py-3">
             <p className="text-xs sm:text-sm text-gray-500">Aucun ingrédient disponible.</p>
             <p className="text-xs mt-1">
-              <a href="/ingredients" className="text-blue-600 hover:underline">
+              <a href="/ingredients" className="text-accent hover:underline">
                 Ajoutez des ingrédients d'abord
               </a>
             </p>
@@ -128,7 +128,7 @@ export default function IngredientsSelector({
                   setSelectedIngredientId(e.target.value);
                   setError(null);
                 }}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 <option value="">Sélectionnez un ingrédient...</option>
                 {availableIngredients.map((ingredient) => (
@@ -154,7 +154,7 @@ export default function IngredientsSelector({
                     setQuantity(e.target.value);
                     setError(null);
                   }}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
               <div>
@@ -169,7 +169,7 @@ export default function IngredientsSelector({
                     setUnit(e.target.value);
                     setError(null);
                   }}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
             </div>
@@ -183,7 +183,7 @@ export default function IngredientsSelector({
                 type="text"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder="Ex: coupé en dés, fondu..."
               />
             </div>

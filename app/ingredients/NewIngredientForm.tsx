@@ -19,7 +19,7 @@ export default function NewIngredientForm() {
           placeholder="Nom" 
           required 
           defaultValue={getValue(state, 'name')}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" 
         />
         {state?.errors?.name && <p className="text-red-600 text-xs mt-1">{state.errors.name[0]}</p>}
       </div>
@@ -28,16 +28,16 @@ export default function NewIngredientForm() {
         placeholder="Rayon" 
         required 
         defaultValue={getValue(state, 'category')}
-        className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-accent" 
       />
       <input 
         name="defaultUnit" 
         placeholder="Unité" 
         required 
         defaultValue={getValue(state, 'defaultUnit')}
-        className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-accent" 
       />
-      <button disabled={pending} className="bg-blue-600 text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap">
+      <button disabled={pending} className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50 whitespace-nowrap">
         {pending ? 'Ajout…' : 'Ajouter'}
       </button>
     </form>

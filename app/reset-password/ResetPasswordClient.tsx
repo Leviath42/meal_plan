@@ -169,18 +169,18 @@ export default function ResetPasswordClient({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ton@email.com"
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.email && <p className="text-red-500 text-xs mt-1">{formState.errors.email[0]}</p>}
               </div>
               
-              <button type="submit" disabled={pending} className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={pending} className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50">
                 {pending ? 'En cours...' : 'Continuer'}
               </button>
             </form>
 
             <div className="mt-4 text-center text-xs text-gray-500">
-              <Link href="/login" className="text-blue-600 hover:underline">Se connecter</Link>
+              <Link href="/login" className="text-accent hover:underline">Se connecter</Link>
             </div>
           </div>
         </div>
@@ -197,8 +197,8 @@ export default function ResetPasswordClient({
             <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Réinitialiser le mot de passe</h1>
 
             {currentQuestion && (
-              <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-xs sm:text-sm font-medium text-blue-800">
+              <div className="mb-6 p-3 bg-accent-soft border border-accent-soft rounded">
+                <p className="text-xs sm:text-sm font-medium text-accent">
                   Question secrète :
                 </p>
                 <p className="text-xs sm:text-sm text-gray-800 mt-1">
@@ -231,7 +231,7 @@ export default function ResetPasswordClient({
                   placeholder="Votre réponse"
                   required
                   autoComplete="off"
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.securityAnswer && <p className="text-red-500 text-xs mt-1">{formState.errors.securityAnswer[0]}</p>}
               </div>
@@ -248,7 +248,7 @@ export default function ResetPasswordClient({
                   minLength={6}
                   required
                   autoComplete="new-password"
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.newPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.newPassword[0]}</p>}
               </div>
@@ -264,18 +264,18 @@ export default function ResetPasswordClient({
                   placeholder="Confirmez votre nouveau mot de passe"
                   required
                   autoComplete="new-password"
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {formState?.errors?.confirmPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.confirmPassword[0]}</p>}
               </div>
               
-              <button type="submit" disabled={pending} className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={pending} className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50">
                 {pending ? 'Réinitialisation en cours...' : 'Réinitialiser le mot de passe'}
               </button>
             </form>
 
             <div className="mt-4 text-center text-xs text-gray-500">
-              <Link href="/login" className="text-blue-600 hover:underline">Se connecter</Link>
+              <Link href="/login" className="text-accent hover:underline">Se connecter</Link>
             </div>
           </div>
         </div>
@@ -304,17 +304,17 @@ export default function ResetPasswordClient({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ton@email.com"
                 required
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
             
-            <button type="submit" disabled={pending} className="w-full bg-blue-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50">
+            <button type="submit" disabled={pending} className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50">
               {pending ? 'En cours...' : 'Continuer'}
             </button>
           </form>
 
           <div className="mt-4 text-center text-xs text-gray-500">
-            <Link href="/login" className="text-blue-600 hover:underline">Se connecter</Link>
+            <Link href="/login" className="text-accent hover:underline">Se connecter</Link>
           </div>
         </div>
       </div>

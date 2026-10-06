@@ -62,6 +62,7 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
 // Couleurs pour chaque type de repas
 const MEAL_TYPE_COLORS: Record<string, string> = {
   breakfast: 'bg-orange-100 text-orange-800',
+  // Couleur de catégorie (pas l'accent UI) : le Déjeuner reste bleu
   lunch: 'bg-blue-100 text-blue-800',
   snack: 'bg-green-100 text-green-800',
   dinner: 'bg-purple-100 text-purple-800',
@@ -132,7 +133,7 @@ function DroppableDayZone({
   return (
     <div
       ref={setNodeRef}
-      className={`${className} ${!disabled && isOver ? 'ring-2 ring-blue-400 rounded-lg bg-blue-50' : ''}`}
+      className={`${className} ${!disabled && isOver ? 'ring-2 ring-accent rounded-lg bg-accent-soft' : ''}`}
     >
       {children}
     </div>
@@ -348,7 +349,7 @@ function MealPlanCreationModal({
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover"
                   disabled={isLoading || !mealType}
                 >
                   {isLoading ? 'Création...' : 'Créer'}
@@ -549,7 +550,7 @@ function MealPlanActionsModal({
                   }}
                   className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
                 >
-                  <span className="font-medium text-blue-600">Modifier</span>
+                  <span className="font-medium text-accent">Modifier</span>
                   <p className="text-sm text-gray-500">Changer le type, la recette, la note ou le nombre de couverts</p>
                 </button>
 
@@ -561,7 +562,7 @@ function MealPlanActionsModal({
                   }}
                   className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
                 >
-                  <span className="font-medium text-blue-600">Replanifier</span>
+                  <span className="font-medium text-accent">Replanifier</span>
                   <p className="text-sm text-gray-500">Changer la date ou le type de repas</p>
                 </button>
 
@@ -661,7 +662,7 @@ function MealPlanActionsModal({
                     </button>
                     <button
                       onClick={handleReschedule}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover"
                       disabled={isLoading || !newDate}
                     >
                       {isLoading ? 'Replanification...' : 'Replanifier'}
@@ -750,7 +751,7 @@ function MealPlanActionsModal({
                     </button>
                     <button
                       onClick={handleEdit}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover"
                       disabled={isLoading}
                     >
                       {isLoading ? 'Modification...' : 'Modifier'}
@@ -1048,7 +1049,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className={`font-medium text-center ${mainDay.isToday ? 'text-blue-600' : 'text-gray-800'} text-lg font-bold`}>
+        <span className={`font-medium text-center ${mainDay.isToday ? 'text-accent' : 'text-gray-800'} text-lg font-bold`}>
           {mainDay.date.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase()} {mainDay.date.getDate()}
         </span>
         <button
@@ -1090,7 +1091,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
         className={`w-14 text-xs py-1 rounded border transition-colors ${
           mainDay.isPast
             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-            : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+            : 'bg-accent text-white hover:bg-accent-hover border-accent'
         }`}
         disabled={mainDay.isPast}
         title={mainDay.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
@@ -1150,7 +1151,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                 >
                   <button
                     onClick={() => goToDate(dayData.dateStr)}
-                    className="w-full rounded hover:bg-gray-100 hover:text-blue-600 transition-colors cursor-pointer"
+                    className="w-full rounded hover:bg-gray-100 hover:text-accent transition-colors cursor-pointer"
                     title="Afficher cette date en première position"
                   >
                     {formatShortDay(dayData.date)}. {dayData.date.getDate()}
@@ -1209,7 +1210,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                     className={`w-14 text-xs py-1 rounded border transition-colors ${
                       dayData.isPast
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                        : 'bg-blue-600 text-white hover:bg-blue-700 border-blue-600'
+                        : 'bg-accent text-white hover:bg-accent-hover border-accent'
                     }`}
                     disabled={dayData.isPast}
                     title={dayData.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
@@ -1267,7 +1268,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
           </div>
           <button
             onClick={goToToday}
-            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+            className="px-3 py-1 bg-accent text-white rounded hover:bg-accent-hover text-xs"
           >
             Aujourd'hui
           </button>

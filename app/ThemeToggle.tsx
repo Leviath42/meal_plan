@@ -24,7 +24,7 @@ export default function ThemeToggle() {
     }
   };
 
-  const buttonClass = 'p-1.5 rounded text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition-colors';
+  const buttonClass = 'p-1.5 rounded text-gray-600 hover:text-accent hover:bg-gray-100 transition-colors';
 
   // Avant hydration, rendu de forme identique pour éviter un décalage de layout
   if (!mounted) {

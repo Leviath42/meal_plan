@@ -12,7 +12,7 @@ export default async function RecipesPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
           <h1 className="text-lg sm:text-xl font-bold">Mes recettes</h1>
-          <Link href="/recipes/new" className="bg-blue-600 text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-blue-700 transition-colors whitespace-nowrap">
+          <Link href="/recipes/new" className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors whitespace-nowrap">
             + Nouvelle recette
           </Link>
         </div>
@@ -20,7 +20,7 @@ export default async function RecipesPage() {
         {all.length === 0 ? (
           <div className="text-center py-6">
             <p className="text-xs sm:text-sm text-gray-500">Aucune recette — créez la première !</p>
-            <Link href="/recipes/new" className="text-blue-600 hover:underline mt-2 inline-block text-xs sm:text-sm">
+            <Link href="/recipes/new" className="text-accent hover:underline mt-2 inline-block text-xs sm:text-sm">
               Ajouter une recette
             </Link>
           </div>
@@ -34,7 +34,7 @@ export default async function RecipesPage() {
                     <div className="flex-1 min-w-0">
                       <Link
                         href={`/recipes/${r.id}`}
-                        className="text-sm sm:text-base font-semibold text-blue-600 hover:underline truncate block"
+                        className="text-sm sm:text-base font-semibold text-accent hover:underline truncate block"
                       >
                         {r.title}
                       </Link>
