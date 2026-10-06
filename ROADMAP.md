@@ -23,7 +23,7 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 ### 👥 **Gestion des Utilisateurs**
 - ✅ **Inscription publique** via `/register`
   - Créé avec rôle **GUEST** par défaut
-  - **Ne peut pas se connecter** tant qu'un admin ne valide pas
+  - **Ne peut pas se connecter** tant qu'un admin ne valide pas (blocage dans `lib/auth.ts`)
   - Validation email, mot de passe (min 6 caractères), nom requis
   
 - ✅ **Interface Admin** via `/register`
@@ -87,9 +87,9 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 ```
 
 ### 2️⃣ **Améliorations Authentification** *(Haute Priorité)*
-- ✅ Ajouter un message clair aux GUEST : "Votre compte est en attente de validation" (page /waiting-validation)
 - ✅ Notification à l'admin lorsqu'un nouvel utilisateur s'inscrit (badge "NOUVEAU" sur les GUEST récents)
 - ✅ Page de profil utilisateur (changer mot de passe, voir ses infos) (page /profile)
+- ✅ **Correction importante** : Empêcher complètement la connexion des GUEST (modification `lib/auth.ts` + `proxy.ts`)
 - [ ] Mot de passe oublié / réinitialisation
 
 ### 3️⃣ **Fonctionnalités Manquantes** *(Moyenne Priorité)*
@@ -133,10 +133,10 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 | `app/register/RegisterClient.tsx` | Ajout `max-w-4xl` conteneur + `max-w-2xl` pour les cartes + badge "NOUVEAU" pour GUEST | ✅ Fonctionnel |
 | `app/Nav.tsx` | Ajout lien Profil dans menu desktop et mobile | ✅ Fonctionnel |
 | `app/profile/page.tsx` | NOUVEAU : page profil utilisateur avec gestion mot de passe | ✅ Fonctionnel |
-| `app/waiting-validation/page.tsx` | NOUVEAU : page d'attente de validation pour GUEST | ✅ Fonctionnel |
 | `app/actions/auth.ts` | Ajout updateUserPassword + import signOut | ✅ Fonctionnel |
-| `lib/auth.ts` | Modification authorize pour permettre connexion GUEST | ✅ Fonctionnel |
-| `proxy.ts` | Ajout redirection GUEST vers /waiting-validation | ✅ Fonctionnel |
+| `lib/auth.ts` | Modification authorize pour **empêcher** connexion GUEST | ✅ Fonctionnel |
+| `proxy.ts` | Suppression redirection GUEST + suppression /waiting-validation | ✅ Fonctionnel |
+| `app/waiting-validation/` | **SUPPRIMÉ** : plus nécessaire car GUEST ne peuvent plus se connecter | ❌ Supprimé |
 
 ### 🗂️ **Structure Complète du Projet**
 
@@ -168,6 +168,9 @@ meal_plan/
 │   │
 │   ├── register/
 │   │   ├── RegisterClient.tsx  # ← NOUVEAU : Client Component
+│   │   └── page.tsx            # ← NOUVEAU : Server Component
+│   ├── profile/
+│   │   ├── ProfileClient.tsx   # ← NOUVEAU : Client Component
 │   │   └── page.tsx            # ← NOUVEAU : Server Component
 │   │
 │   ├── layout.tsx
@@ -363,9 +366,9 @@ toast.success('Utilisateur validé avec succès !');
 | Gestion admin des utilisateurs | ✅ Terminée | 🟡 Haute | - |
 | Suppression utilisateur | ✅ Terminée | 🟡 Haute | - |
 | Test complet | ✅ Terminée | 🔴 Urgent | - |
-| Message GUEST validation | ✅ Terminée | 🟡 Haute | - |
 | Notification admin GUEST | ✅ Terminée | 🟡 Haute | - |
 | Page profil utilisateur | ✅ Terminée | 🟡 Moyenne | - |
+| **Correction connexion GUEST** | ✅ Terminée | 🔴 Urgent | Bloquer connexion GUEST + nettoyage |
 | Schema Zod inscription | ⏳ En attente | 🟡 Moyenne | Créer le fichier |
 | Rationalisation code | ⏳ En attente | 🟡 Moyenne | Extraire composants |
 | Notifications utilisateur | ⏳ En attente | 🟢 Basse | Intégrer Sonner |

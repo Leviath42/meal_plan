@@ -100,11 +100,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null; // Mot de passe incorrect
         }
 
-        // 3. Vérifier que l'utilisateur n'est pas GUEST (non validé)
-        // Permettre la connexion mais le rôle sera vérifié par l'application
+        // 3. Empêcher la connexion des utilisateurs GUEST (non validés)
         if (user.role === "GUEST") {
-          console.log("Auth: User is GUEST, will be redirected to validation page:", user.email);
-          // Retourner l'utilisateur avec rôle GUEST - l'application gérera la redirection
+          console.log("Auth: GUEST user cannot login, must be validated first:", user.email);
+          return null; // Empêcher la connexion des GUEST
         }
 
         // 4. Retourner l'utilisateur (sans le password)
