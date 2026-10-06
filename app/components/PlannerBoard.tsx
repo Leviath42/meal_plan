@@ -802,6 +802,12 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
     setStartDate(new Date());
   };
 
+  // Navigation : afficher une date en première position (clic sur un en-tête de date)
+  const goToDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    setStartDate(new Date(year, month - 1, day));
+  };
+
   // Navigation : mois précédent, calculé depuis la date affichée en premier
   // (le jour est conservé, ramené au dernier jour du mois cible si nécessaire)
   const goToPreviousMonth = () => {
@@ -1100,7 +1106,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
         {/* Lignes suivantes : 3 jours par ligne */}
         {restRows.map(rowDays => (
           <div key={`row-${rowDays[0].dateStr}`} className="flex flex-col gap-0.5">
-            {/* En-têtes des jours */}
+            {/* En-têtes des jours (cliquables : la date devient la première affichée) */}
             <div className="flex gap-3 justify-center mb-1">
               {rowDays.map(dayData => (
                 <DroppableDayZone
@@ -1110,7 +1116,13 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                   disabled={dayData.isPast}
                   className="w-[92px] text-center text-sm"
                 >
-                  {formatShortDay(dayData.date)}. {dayData.date.getDate()}
+                  <button
+                    onClick={() => goToDate(dayData.dateStr)}
+                    className="w-full rounded hover:bg-gray-100 hover:text-blue-600 transition-colors cursor-pointer"
+                    title="Afficher cette date en première position"
+                  >
+                    {formatShortDay(dayData.date)}. {dayData.date.getDate()}
+                  </button>
                 </DroppableDayZone>
               ))}
             </div>
