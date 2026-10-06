@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { resetPasswordWithSecurityQuestion, getUserSecurityQuestion } from '@/app/actions/auth';
+import { resetPasswordWithSecurityQuestion, getUserSecurityQuestion, verifySecurityAnswer } from '@/app/actions/auth';
 
 interface ResetPasswordClientProps {
   email?: string;
@@ -59,10 +59,16 @@ export default function ResetPasswordClient({
       return;
     }
 
-    // Vérifier la réponse et passer à l'étape 2
-    // Pour éviter de faire la vérification côté serveur avant l'étape 2, on passe directement
-    // La vérification complète se fera dans l'étape 2
-    setStep('2');
+    // Vérifier la réponse côté serveur AVANT de passer à l'étape 2
+    const result = await verifySecurityAnswer(email, securityAnswer);
+
+    if (result?.success) {
+      setStep('2');
+      setFormState({ success: true, message: result.message });
+    } else {
+      setFormState(result);
+    }
+
     setPending(false);
   };
 
@@ -95,13 +101,16 @@ export default function ResetPasswordClient({
       return;
     }
 
-    // Ajouter l'email au formData
+    // Ajouter l'email et la réponse au formData
     formData.append('email', email);
+    formData.append('securityAnswer', securityAnswer);
 
     const result = await resetPasswordWithSecurityQuestion(null, formData);
 
     if (result?.success) {
       setFormState({ success: true, message: result.message });
+      // Rediriger vers login après 3 secondes
+      setTimeout(() => router.push('/login'), 3000);
     } else {
       setFormState(result);
     }

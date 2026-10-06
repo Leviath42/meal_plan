@@ -79,7 +79,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         // 1. Trouver l'utilisateur par email
         const [user] = await db
-          .select()
+          .select({
+            id: users.id,
+            email: users.email,
+            name: users.name,
+            password: users.password,
+            role: users.role,
+            createdAt: users.createdAt,
+            updatedAt: users.updatedAt,
+          })
           .from(users)
           .where(eq(users.email, credentials.email as string))
           .limit(1) as UserWithRole[];

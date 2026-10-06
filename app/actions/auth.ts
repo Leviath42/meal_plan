@@ -306,9 +306,11 @@ export async function resetPasswordWithSecurityQuestion(
   }
 
   // Vérifier que l'utilisateur a une question secrète configurée
+  // Toujours retourner un message générique pour ne pas révéler l'existence de l'email
   if (!user.securityQuestion || !user.securityAnswerHash) {
     return { 
-      errors: { form: ['Aucune question secrète configurée pour ce compte'] } 
+      success: true,
+      message: 'Si cet email existe et a une question secrète configurée, la réinitialisation est en cours.'
     };
   }
 
@@ -363,5 +365,42 @@ export async function getUserSecurityQuestion(email: string) {
   return { 
     securityQuestion: user.securityQuestion,
     hasSecurityQuestion: true
+  };
+}
+
+// Vérifier la réponse secrète pour un email (utilisé dans l'étape 1 de la réinitialisation)
+export async function verifySecurityAnswer(
+  email: string,
+  securityAnswer: string
+): Promise<FormState> {
+  if (!email || !securityAnswer) {
+    return { errors: { form: ['Email et réponse requis'] } };
+  }
+
+  // Trouver l'utilisateur par email
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  // Toujours retourner un message générique pour ne pas révéler l'existence de l'email
+  if (!user?.securityQuestion || !user?.securityAnswerHash) {
+    return {
+      success: true,
+      message: 'Si cet email existe et a une question secrète configurée, vous pouvez continuer.'
+    };
+  }
+
+  // Vérifier la réponse
+  const isValidAnswer = await Argon2.verify(user.securityAnswerHash, securityAnswer);
+  
+  if (!isValidAnswer) {
+    return { errors: { securityAnswer: ['Réponse incorrecte'] } };
+  }
+
+  return {
+    success: true,
+    message: 'Réponse correcte. Vous pouvez maintenant réinitialiser votre mot de passe.'
   };
 }

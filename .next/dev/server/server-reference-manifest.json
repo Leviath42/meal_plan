@@ -1,42 +1,40 @@
 {
   "node": {
-    "000f4453207b5805fbfda0a853d852799e67fbdbb1": {
+    "606a5a61313a5798a155d6639bf646b9ad8a616332": {
       "workers": {
+        "app/profile/page": {
+          "moduleId": "[project]/.next-internal/server/app/profile/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
         "app/register/page": {
           "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "codeHash": null
         }
       },
       "filename": "app/actions/auth.ts",
-      "exportedName": "getAllUsers"
+      "exportedName": "updateUserSecurityQuestion"
     },
-    "40853028a1f5ee71a933f6738c39fde21d09698321": {
+    "60b87c82003b793d9fde04bbfaeb0b4add665b12fd": {
       "workers": {
+        "app/profile/page": {
+          "moduleId": "[project]/.next-internal/server/app/profile/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
         "app/register/page": {
           "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "codeHash": null
-        }
-      },
-      "filename": "app/actions/auth.ts",
-      "exportedName": "getUserById"
-    },
-    "6047d651605a74d30448a63b51cae583131697fa7f": {
-      "workers": {
-        "app/register/page": {
-          "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "codeHash": null
-        }
-      },
-      "filename": "app/actions/auth.ts",
-      "exportedName": "registerUser"
-    },
-    "60df5111765ed4e7386c1b392529bb3f3690934320": {
-      "workers": {
-        "app/register/page": {
-          "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "codeHash": null
         }
@@ -44,10 +42,63 @@
       "filename": "app/actions/auth.ts",
       "exportedName": "updateUserPassword"
     },
-    "60f854170b8224d201b956db1ff1bcb2b561de0157": {
+    "00c0f135fe5faa27b0445513ebded820c6e42d2426": {
       "workers": {
         "app/register/page": {
           "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/auth.ts",
+      "exportedName": "getAllUsers"
+    },
+    "402153de8bb17e9a7dc6f94f8987e8bcb05b6fe37e": {
+      "workers": {
+        "app/register/page": {
+          "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/auth.ts",
+      "exportedName": "getUserById"
+    },
+    "40de415ac74d4632525ab014456330219b54e01ad9": {
+      "workers": {
+        "app/register/page": {
+          "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/auth.ts",
+      "exportedName": "getUserSecurityQuestion"
+    },
+    "6024570a7b4644aa569ed1b77fc4c85faac918d6b9": {
+      "workers": {
+        "app/register/page": {
+          "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "codeHash": null
         }
@@ -55,10 +106,47 @@
       "filename": "app/actions/auth.ts",
       "exportedName": "deleteUser"
     },
-    "70b9935a2aaafb5d06c028a6540dc69c0db39d70cf": {
+    "60763e7178e886b70ca6bfc9fbaef755e3f0e396db": {
       "workers": {
         "app/register/page": {
           "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/auth.ts",
+      "exportedName": "resetPasswordWithSecurityQuestion"
+    },
+    "60eca2be3d783f99cf348fe7ec1d4411f3e2fdb588": {
+      "workers": {
+        "app/register/page": {
+          "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "filename": "app/actions/auth.ts",
+      "exportedName": "registerUser"
+    },
+    "707fbc60070bdeca2ed379caa8d46808d80b4c2e4e": {
+      "workers": {
+        "app/register/page": {
+          "moduleId": "[project]/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "codeHash": null
+        },
+        "app/reset-password/page": {
+          "moduleId": "[project]/.next-internal/server/app/reset-password/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "codeHash": null
         }
@@ -68,5 +156,5 @@
     }
   },
   "edge": {},
-  "encryptionKey": "qdPyr9UgTTnQdQo+vcD8fx4PNmCJO+1DmU4ZdYFdGMw="
+  "encryptionKey": "x1hZa5yREyKaE+QfE1oB42gaMjB22ll1HvqWL3SLuPY="
 }
