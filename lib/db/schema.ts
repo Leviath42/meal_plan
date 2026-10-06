@@ -145,10 +145,12 @@ export const recipesRelations = relations(recipes, ({ many }) => ({
   mealPlans: many(mealPlans),           // Une recette peut être planifiée plusieurs fois
 }));
 
+
 export const ingredientsRelations = relations(ingredients, ({ many }) => ({
   recipes: many(recipeIngredients),     // Un ingrédient appartient à plusieurs recettes
   shoppingItems: many(shoppingItems),   // Un ingrédient peut apparaître dans la liste de courses
 }));
+
 
 export const recipeIngredientsRelations = relations(recipeIngredients, ({ one }) => ({
   recipe: one(recipes, {
@@ -160,6 +162,7 @@ export const recipeIngredientsRelations = relations(recipeIngredients, ({ one })
     references: [ingredients.id],
   }),
 }));
+
 
 export const mealPlansRelations = relations(mealPlans, ({ one }) => ({
   recipe: one(recipes, {
@@ -178,6 +181,10 @@ export const users = sqliteTable("users", {
   role: text("role", { enum: ["ADMIN", "MEMBER", "GUEST"] })
     .notNull()
     .default("MEMBER"),
+  // Question secrète pour réinitialisation de mot de passe
+  securityQuestion: text("security_question"),
+  // Réponse hashée (avec Argon2) pour plus de sécurité
+  securityAnswerHash: text("security_answer_hash"),
   createdAt: text("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
@@ -203,6 +210,7 @@ export const sessions = sqliteTable("sessions", {
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
 }));
+
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, {
