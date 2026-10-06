@@ -36,14 +36,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    const formData = new FormData(e.currentTarget);
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
     const result = await registerUser(null, formData);
     
     setFormState(result);
     
     if (result?.success) {
-      // Reset le formulaire avant le refresh (qui pourrait détruire le composant)
-      e.currentTarget.reset();
+      // Reset le formulaire avant le refresh
+      formElement.reset();
       router.refresh();
     }
   };
