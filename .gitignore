@@ -7,8 +7,9 @@ out/
 build/
 
 # SQLite database
-data/
+# Ignore all .db files except data/sqlite.db for test content tracking
 *.db
+!data/sqlite.db
 *.db-journal
 
 # IDE
