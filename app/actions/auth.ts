@@ -1,10 +1,11 @@
 'use server';
 
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
 import Argon2 from '@node-rs/argon2';
-import { eq } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -69,8 +70,22 @@ export async function registerUser(
 
 export async function updateUserRole(
   userId: string,
-  newRole: 'ADMIN' | 'MEMBER' | 'GUEST'
+  newRole: 'ADMIN' | 'MEMBER' | 'GUEST',
+  sessionUserId?: string
 ): Promise<FormState> {
+  const session = await auth();
+  const currentUserId = sessionUserId || session?.user?.id;
+
+  // Empêcher la rétrogradation vers GUEST
+  if (newRole === 'GUEST') {
+    return { errors: { form: ['Impossible de rétrograder un utilisateur vers GUEST'] } };
+  }
+
+  // Empêcher de rétrograder ou modifier son propre compte (sauf pour ajouter un rôle plus élevé)
+  if (userId === currentUserId && newRole !== 'ADMIN') {
+    return { errors: { form: ['Vous ne pouvez pas modifier votre propre rôle'] } };
+  }
+
   try {
     await db
       .update(users)
@@ -86,9 +101,25 @@ export async function updateUserRole(
 }
 
 export async function deleteUser(userId: string, sessionUserId?: string): Promise<FormState> {
+  const session = await auth();
+  const currentUserId = sessionUserId || session?.user?.id;
+
   // Empêcher la suppression de soi-même
-  if (sessionUserId && userId === sessionUserId) {
+  if (userId === currentUserId) {
     return { errors: { form: ['Vous ne pouvez pas supprimer votre propre compte'] } };
+  }
+
+  // Empêcher la suppression du dernier admin
+  const [userToDelete] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (userToDelete?.role === 'ADMIN') {
+    const [adminsCount] = await db.select({ count: count() })
+      .from(users)
+      .where(eq(users.role, 'ADMIN'))
+      .limit(1);
+    
+    if (adminsCount.count <= 1) {
+      return { errors: { form: ['Impossible de supprimer le dernier administrateur'] } };
+    }
   }
 
   try {

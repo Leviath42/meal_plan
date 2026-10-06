@@ -9,13 +9,16 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
-  const [error, setError] = useState<string | null>(null);
+  const errorParam = searchParams.get("error");
+  const [error, setError] = useState<string | null>(errorParam === 'pending' ? 'Votre compte est en attente de validation par un administrateur.' : null);
   const [pending, setPending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
-    setError(null);
+    if (errorParam !== 'pending') {
+      setError(null);
+    }
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
