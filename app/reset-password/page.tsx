@@ -9,8 +9,10 @@ interface ResetPasswordPageProps {
 }
 
 export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
-  const email = searchParams.email as string | undefined;
-  const step = searchParams.step as string | undefined;
+  // searchParams est une Promise dans Next.js 16, il faut l'attendre
+  const resolvedSearchParams = await searchParams;
+  const email = resolvedSearchParams.email as string | undefined;
+  const step = resolvedSearchParams.step as string | undefined;
 
   // Si on a un email et qu'on est à l'étape 1, récupérer la question secrète
   let securityQuestion: string | null = null;
