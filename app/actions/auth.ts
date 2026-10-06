@@ -2,7 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { users } from '@/lib/db/schema';
+import { users, passwordResetTokens } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
 import Argon2 from '@node-rs/argon2';
 import { eq, count } from 'drizzle-orm';
@@ -201,3 +201,129 @@ export async function updateUserPassword(
     return { errors: { form: ['Une erreur est survenue lors du changement de mot de passe'] } };
   }
 }
+
+// Générer un token aléatoire sécurisé
+export function generateResetToken(): string {
+  return crypto.randomUUID();
+}
+
+// Durée de validité du token : 1 heure
+export const RESET_TOKEN_EXPIRY = 60 * 60 * 1000; // 1 heure en millisecondes
+
+// Demander une réinitialisation de mot de passe
+export async function requestPasswordReset(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const email = formData.get('email') as string;
+
+  if (!email) {
+    return { errors: { email: ['Email requis'] } };
+  }
+
+  // Trouver l'utilisateur par email
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  if (!user) {
+    // Ne pas révéler que l'email existe ou non pour des raisons de sécurité
+    // Retourner un message générique
+    return { 
+      success: true, 
+      message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' 
+    };
+  }
+
+  // Supprimer les anciens tokens pour cet utilisateur
+  await db
+    .delete(passwordResetTokens)
+    .where(eq(passwordResetTokens.userId, user.id));
+
+  // Générer un nouveau token
+  const token = generateResetToken();
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY).toISOString();
+
+  // Stocker le token en base de données
+  await db.insert(passwordResetTokens).values({
+    userId: user.id,
+    token,
+    expiresAt,
+  });
+
+  // TODO: Envoyer l'email avec le lien de réinitialisation
+  // Pour l'instant, on retourne le token pour afficher dans l'interface
+  // En production: envoyer email avec lien vers /reset-password?token=XXX
+  console.log(`[DEV] Token de réinitialisation pour ${email}:`, token);
+  console.log(`[DEV] Lien: /reset-password?token=${token}`);
+
+  return { 
+    success: true, 
+    message: 'Si cet email existe, un lien de réinitialisation a été envoyé. Vérifiez la console du serveur pour le token (mode dev).' 
+  };
+}
+
+// Réinitialiser le mot de passe avec un token
+export async function resetPassword(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const token = formData.get('token') as string;
+  const newPassword = formData.get('newPassword') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  // Validation
+  if (!token) {
+    return { errors: { form: ['Token manquant'] } };
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    return { errors: { newPassword: ['Le mot de passe doit faire au moins 6 caractères'] } };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { errors: { confirmPassword: ['Les mots de passe ne correspondent pas'] } };
+  }
+
+  // Trouver le token valide
+  const [resetToken] = await db
+    .select()
+    .from(passwordResetTokens)
+    .where(eq(passwordResetTokens.token, token))
+    .limit(1);
+
+  if (!resetToken) {
+    return { errors: { form: ['Token de réinitialisation invalide ou expiré'] } };
+  }
+
+  // Vérifier la date d'expiration
+  if (new Date(resetToken.expiresAt) < new Date()) {
+    // Supprimer le token expiré
+    await db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return { errors: { form: ['Token de réinitialisation expiré'] } };
+  }
+
+  // Hash du nouveau mot de passe
+  const hashedPassword = await hashPassword(newPassword);
+
+  // Mettre à jour le mot de passe de l'utilisateur
+  await db
+    .update(users)
+    .set({ password: hashedPassword, updatedAt: new Date().toISOString() })
+    .where(eq(users.id, resetToken.userId));
+
+  // Supprimer le token utilisé (à usage unique)
+  await db
+    .delete(passwordResetTokens)
+    .where(eq(passwordResetTokens.token, token));
+
+  return { 
+    success: true, 
+    message: 'Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.' 
+  };
+}
+

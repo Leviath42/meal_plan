@@ -29,6 +29,7 @@ http://localhost:3000
 - Validation, promotion, rétrogradation et suppression
 - Création directe d'utilisateurs par les admins
 - Page de profil utilisateur avec changement de mot de passe
+- Réinitialisation du mot de passe oublié (flux complet)
 
 ### ✅ Gestion des Recettes
 - CRUD complet des recettes
@@ -62,8 +63,11 @@ meal_plan/
 │   ├── actions/           # Server Actions
 │   ├── ingredients/       # Gestion des ingrédients
 │   ├── login/            # Page de connexion
+│   ├── forgot-password/  # Réinitialisation mot de passe
+│   ├── reset-password/   # Page de réinitialisation avec token
 │   ├── recipes/          # Gestion des recettes
 │   ├── register/         # Inscription & gestion utilisateurs
+│   ├── profile/          # Page de profil utilisateur
 │   ├── layout.tsx        # Layout principal
 │   └── page.tsx          # Page d'accueil
 ├── lib/
@@ -72,10 +76,6 @@ meal_plan/
 ├── proxy.ts             # Middleware proxy
 ├── package.json
 ├── README.md
-├── profile/             # Page de profil utilisateur
-│   ├── page.tsx
-│   └── ProfileClient.tsx
-├── waiting-validation/ # **SUPPRIMÉ** (GUEST ne peuvent plus se connecter)
 └── ROADMAP.md
 ```
 
