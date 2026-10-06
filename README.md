@@ -1,8 +1,12 @@
 # Meal Plan 🍳
 
-Application web de **planification des repas et gestion de recettes** familiale.
+**Application web familiale de planification des repas et gestion de recettes** - Auto-hébergée sur infrastructure Proxmox.
 
-## 🚀 Déploiement Local
+---
+
+## 🚀 Déploiement et Exécution
+
+### Développement Local
 
 ```bash
 # Installer les dépendances
@@ -15,97 +19,291 @@ npm run dev
 http://localhost:3000
 ```
 
+### Production (Docker)
+
+```bash
+# Build l'image
+docker build -t meal-plan .
+
+# Exécuter le conteneur
+docker run -p 3000:3000 -v ./data:/app/data meal-plan
+```
+
+---
+
 ## 📋 Fonctionnalités
 
-### ✅ Authentification
+### ✅ **Déjà Implémentées**
+
+#### 🔐 Authentification & Utilisateurs
 - Connexion par credentials (email/mot de passe)
 - Hash des mots de passe avec Argon2
 - Gestion des sessions JWT (30 jours)
-- Rôles utilisateurs : ADMIN, MEMBER, GUEST
-
-### ✅ Gestion des Utilisateurs
+- **Rôles** : ADMIN (gestion complète), MEMBER (lecture/écriture), GUEST (attente validation)
 - Inscription publique avec validation admin
-- Liste des utilisateurs avec filtrage par rôle
-- Validation, promotion, rétrogradation et suppression
-- Création directe d'utilisateurs par les admins
+- Réinitialisation de mot de passe via question secrète
 - Page de profil utilisateur avec changement de mot de passe
 
-### ✅ Gestion des Recettes
+#### 🍳 Gestion des Recettes
 - CRUD complet des recettes
-- Association recettes/ingrédients
-- Gestion des quantités, unités et descriptions
+- Association recettes/ingrédients avec quantités
+- Tags et catégories
+- Temps de préparation et de cuisson
 
-### ✅ Gestion des Ingrédients
+#### 🥕 Gestion des Ingrédients
 - CRUD complet des ingrédients
-- Catégories par rayons supermarché
+- Organisation par rayons supermarché
 - Unités par défaut configurables
 
-### ✅ Interface Responsive
-- Design mobile-first
-- Largeurs maximales cohérentes sur desktop
-- Compatibilité complète Next.js 16
+#### 🎨 Interface
+- Design responsive mobile-first
+- Compatibilité Next.js 16
+- Glisser-déposer (dnd-kit) pour le calendrier (en développement)
+
+---
+
+### 🟚 **En Développement** (Branche: `feature/calendrier`)
+
+#### 📅 Calendrier et Planification
+- [ ] Calendrier hebdomadaire/mensuel
+- [ ] Glisser-déposer des recettes vers les créneaux
+- [ ] 3 types de repas : Petit-déjeuner, Déjeuner, Dîner
+- [ ] Navigation par semaine/mois
+
+#### 📋 Liste de Courses
+- [ ] Agrégation automatique des ingrédients planifiés
+- [ ] Fusion des doublons et sommation des quantités
+- [ ] Cases à cocher pour suivi des achats
+- [ ] Export en texte brut et PDF
+
+#### 🔗 Partage
+- [ ] Export ICS pour intégration Google Calendar/Home Assistant
+- [ ] Page publique accessible par jeton d'accès
+- [ ] API REST pour intégration Home Assistant
+
+---
+
+### 📅 **Fonctionnalités Prévues** (Voir [ROADMAPV2.md](ROADMAPV2.md))
+
+| Fonctionnalité | Priorité | Statut |
+|---------------|----------|--------|
+| Calendrier + Glisser-déposer | 🔴 Haute | 🟡 En développement |
+| Génération liste de courses | 🟡 Moyenne | ⏳ Planifiée |
+| Export ICS / Page publique | 🟡 Moyenne | ⏳ Planifiée |
+| Proposition de repas | 🟡 Moyenne | ⏳ Planifiée |
+| Historique des repas | 🟢 Basse | ⏳ Planifiée |
+| Antidoublon | 🟢 Basse | ⏳ Planifiée |
+| Import de recettes depuis URL | 🟢 Basse | ⏳ Planifiée |
+| Notifications du repas du jour | 🟢 Basse | ⏳ Planifiée |
+| Gestion du garde-manger | 🟢 Basse | ⏳ Planifiée |
+| Mode hors-ligne (PWA) | 🟢 Basse | ⏳ Planifiée |
+| OAuth (Google/GitHub) | 🟢 Basse | ⏳ En attente env vars |
+
+---
 
 ## 🛠 Stack Technique
 
-- **Framework**: Next.js 16 (App Router)
-- **UI**: Tailwind CSS
-- **ORM**: Drizzle ORM
-- **Base de données**: SQLite (better-sqlite3)
-- **Authentification**: NextAuth v5
-- **Validation**: Zod
+| Couche | Technologie | Version | Documentation |
+|-------|-------------|---------|---------------|
+| **Framework** | Next.js | 16.x | [nextjs.org](https://nextjs.org) |
+| **Langage** | TypeScript | - | [typescriptlang.org](https://typescriptlang.org) |
+| **UI** | Tailwind CSS | - | [tailwindcss.com](https://tailwindcss.com) |
+| **Components** | shadcn/ui | - | [ui.shadcn.com](https://ui.shadcn.com) |
+| **Drag & Drop** | @dnd-kit | - | [dndkit.com](https://dndkit.com) |
+| **ORM** | Drizzle ORM | - | [orm.drizzle.team](https://orm.drizzle.team) |
+| **Base de données** | SQLite | better-sqlite3 | [github.com/WiseLibs/better-sqlite3](https://github.com/WiseLibs/better-sqlite3) |
+| **Authentification** | NextAuth | v5 | [next-auth.js.org](https://next-auth.js.org) |
+| **Validation** | Zod | - | [zod.dev](https://zod.dev) |
+| **Container** | Docker | - | [docker.com](https://docker.com) |
 
-## 📁 Structure du Projet
+---
+
+## 🗂️ Architecture du Projet
 
 ```
 meal_plan/
 ├── app/
-│   ├── actions/           # Server Actions
-│   ├── ingredients/       # Gestion des ingrédients
-│   ├── login/            # Page de connexion
-│   ├── recipes/          # Gestion des recettes
-│   ├── register/         # Inscription & gestion utilisateurs
-│   ├── layout.tsx        # Layout principal
-│   └── page.tsx          # Page d'accueil
+│   ├── actions/                    # Server Actions
+│   │   ├── auth.ts               # Authentification
+│   │   ├── ingredients.ts        # Gestion ingrédients
+│   │   ├── recipes.ts            # Gestion recettes
+│   │   └── meal-plan.ts          # Planification (à créer)
+│   │
+│   ├── api/                      # Endpoints API
+│   │   └── auth/                # Auth NextAuth v5
+│   │
+│   ├── calendar/                 # Calendrier (en développement)
+│   │   ├── page.tsx
+│   │   ├── CalendarClient.tsx
+│   │   ├── CalendarWeekView.tsx
+│   │   └── CalendarDayView.tsx
+│   │
+│   ├── ingredients/              # Gestion ingrédients
+│   │   ├── IngredientRow.tsx
+│   │   ├── NewIngredientForm.tsx
+│   │   └── page.tsx
+│   │
+│   ├── login/                   # Connexion
+│   │   └── page.tsx
+│   │
+│   ├── profile/                 # Profil utilisateur
+│   │   ├── ProfileClient.tsx
+│   │   └── page.tsx
+│   │
+│   ├── recipes/                 # Gestion recettes
+│   │   ├── [id]/
+│   │   │   ├── edit/
+│   │   │   │   └── page.tsx
+│   │   │   └── page.tsx
+│   │   ├── new/
+│   │   │   └── page.tsx
+│   │   └── page.tsx
+│   │
+│   ├── register/                # Inscription & Admin
+│   │   ├── RegisterClient.tsx
+│   │   └── page.tsx
+│   │
+│   ├── reset-password/          # Réinitialisation MDP
+│   │   ├── ResetPasswordClient.tsx
+│   │   └── page.tsx
+│   │
+│   ├── shopping-list/           # Liste de courses (à créer)
+│   │   ├── ShoppingListClient.tsx
+│   │   └── page.tsx
+│   │
+│   ├── layout.tsx               # Layout principal
+│   └── page.tsx                 # Page d'accueil
+│
 ├── lib/
-│   ├── auth.ts           # Configuration NextAuth
-│   └── db/               # Schéma et connexion DB
-├── proxy.ts             # Middleware proxy
+│   ├── auth.ts                 # Configuration NextAuth
+│   └── db/
+│       ├── index.ts            # Connexion DB
+│       ├── schema.ts           # Schéma de la base
+│       └── migrations/         # Migrations Drizzle
+│
+├── public/                     # Assets statiques
+│   └── manifest.json           # Manifest PWA (à compléter)
+│
+├── data/                       # Données persistantes
+│   └── sqlite.db               # Base de données SQLite
+│
+├── proxy.ts                    # Middleware proxy
 ├── package.json
 ├── README.md
-├── profile/             # Page de profil utilisateur
-│   ├── page.tsx
-│   └── ProfileClient.tsx
-├── waiting-validation/ # **SUPPRIMÉ** (GUEST ne peuvent plus se connecter)
-└── ROADMAP.md
+├── ROADMAP.md                  # Roadmap originale
+├── ROADMAPV2.md                # Planification complète
+├── meal_plan_requirements.md    # Cahier des charges
+└── drizzle.config.ts           # Configuration Drizzle
 ```
+
+---
 
 ## 🔐 Identifiants de Test
 
-| Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| Admin | `admin@mealplan.local` | `admin123` |
+| Rôle | Email | Mot de passe | Statut |
+|------|-------|--------------|--------|
+| **Admin** | `admin@mealplan.local` | `admin123` | ✅ Fonctionnel |
+
+**Pour tester** :
+1. Connectez-vous avec l'admin
+2. Créez un utilisateur GUEST via `/register`
+3. Validez le GUEST via l'interface admin
+4. Le nouvel utilisateur (MEMBER) peut se connecter
+
+---
 
 ## 📄 Documentation
 
-- [ROADMAP.md](ROADMAP.md) - Revue technique et planification
-- [meal_plan_requirements.md](meal_plan_requirements.md) - Cahier des charges détaillé
+- **[ROADMAPV2.md](ROADMAPV2.md)** - Planification complète du projet et feuille de route détaillée
+- **[ROADMAP.md](ROADMAP.md)** - Revue technique et état actuel
+- **[meal_plan_requirements.md](meal_plan_requirements.md)** - Cahier des charges complet
+
+---
 
 ## 🎯 Prochaines Étapes
 
-Voir la section **Prochaines Étapes** dans [ROADMAP.md](ROADMAP.md) pour la liste des tâches prioritaires.
+### **Priorité Immédiate** (Branche: `feature/calendrier`)
+1. **Finaliser le calendrier** (F01)
+   - Implémenter le composant calendrier avec dnd-kit
+   - Ajouter la table `meal_plans` en base de données
+   - Créer les Server Actions pour la gestion du planning
+   - Tester le glisser-déposer sur mobile et desktop
+
+2. **Génération de la liste de courses** (F05)
+   - Agrégation des ingrédients du planning
+   - Fusion des doublons et sommation des quantités
+   - Export en texte brut
+
+3. **Partage du planning** (F04)
+   - Export ICS
+   - Page publique avec jeton d'accès
+   - Intégration Home Assistant (préparation)
+
+### **Objectif Court Terme**
+Atteindre le **MVP** : Planification des repas + Liste de courses + Partage basique
+
+### **Objectif Long Terme**
+Implémenter **100% du cahier des charges** (voir [ROADMAPV2.md](ROADMAPV2.md))
+
+---
 
 ## 🤝 Contribution
 
-1. Forker le projet
-2. Créer une branche de feature (`git checkout -b feature/nom-feature`)
-3. Committer les changements (`git commit -m 'feat: description'`)
-4. Pousser vers la branche (`git push origin feature/nom-feature`)
-5. Ouvrir une Pull Request
+### Branches
+- `main` - Version stable (tag: `last-stable`)
+- `feature/calendrier` - Développement du calendrier (en cours)
 
-## 📞 Support
+### Processus
+1. **Créer une branche** depuis `main` :
+   ```bash
+   git checkout -b feature/nom-feature
+   ```
+2. **Commiter les changements** :
+   ```bash
+   git commit -m 'feat: description de la fonctionnalité'
+   ```
+3. **Pousser vers GitHub** :
+   ```bash
+   git push origin feature/nom-feature
+   ```
+4. **Ouvrir une Pull Request** vers `main`
 
-Pour toute question, consulter la documentation ou vérifier les logs du serveur.
+### Bonnes Pratiques
+- Un commit par fonctionnalité atomique
+- Messages de commit clairs et descriptifs
+- Tests avant chaque push
+- Documentation mise à jour
+
+---
+
+## 📞 Support et Dépannage
+
+### Problèmes Courants
+
+| Problème | Solution |
+|----------|----------|
+| Base de données en lecture seule | Vérifier les permissions du fichier `data/sqlite.db` |
+| Erreur de connexion | Vérifier que le rôle n'est pas GUEST |
+| Drag & drop ne fonctionne pas | Vérifier l'intégration de dnd-kit |
+
+### Vérifications
+1. **Logs du serveur** : `npm run dev`
+2. **Base de données** : `data/sqlite.db`
+3. **Variables d'environnement** : `.env.local`
+
+---
+
+## 🏆 Objectifs du Projet
+
+- ✅ **Authentification complète**
+- ✅ **Gestion utilisateurs**
+- ✅ **Gestion recettes et ingrédients**
+- 🟡 **Calendrier et planification** (en développement)
+- ⏳ **Liste de courses automatique**
+- ⏳ **Partage et intégrations**
+- ⏳ **Fonctionnalités avancées** (PWA, notifications, etc.)
 
 ---
 
 *Application développée avec ❤️ pour simplifier la planification des repas familiaux.*
+*Projet auto-hébergé sur infrastructure Proxmox avec accès multi-supports.*

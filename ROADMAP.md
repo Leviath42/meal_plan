@@ -115,9 +115,9 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 - ✅ **Mot de passe oublié / réinitialisation** via question secrète (flux complet implémenté)
 
 ### 3️⃣ **Fonctionnalités Manquantes** *(Moyenne Priorité)*
-- [ ] **OAuth** (Google, GitHub) - *Attendre d'avoir les variables d'environnement*
-- [ ] Import/Export des recettes (JSON)
-- [ ] Recherche avancée (par tags, ingrédients)
+- [ ] Implémentation du calendrier
+- [ ] Planification des repas manuelle
+- [ ] Disponibilité flux ICal (ics) pour android/home assistant
 - [ ] Planification hebdomadaire automatique
 - [ ] Génération de liste de courses intelligente
 
@@ -126,6 +126,11 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 - [ ] Animations de chargement
 - [ ] Messages de succès/erreur plus visibles
 - [ ] Dark mode
+
+### 5️⃣ **Fonctionnalités Manquantes** *(Basse Priorité)*
+- [ ] Recherche avancée (par tags, ingrédients)
+- [ ] **OAuth** (Google, GitHub) - *Attendre d'avoir les variables d'environnement*
+- [ ] Import/Export des recettes (JSON)
 
 ---
 
