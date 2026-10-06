@@ -34,6 +34,12 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
   - **Suppression** : Supprimer un utilisateur (avec confirmation)
   - Formulaire de création directe d'utilisateur
 
+### 👤 **Page de Profil Utilisateur** *(Nouveau 2026-10-06)*
+- ✅ Affichage des informations utilisateur (nom, email, rôle)
+- ✅ Changement de mot de passe avec validation
+- ✅ Message d'attente pour les GUEST
+- ✅ Déconnexion automatique après changement de mot de passe
+
 ### 🍳 **Gestion des Recettes** *(existait avant le rollback)*
 - ✅ CRUD complet des recettes
 - ✅ Association recettes/ingrédients
@@ -50,6 +56,7 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 - ✅ Contraintes de largeur sur tous les conteneurs principaux
 - ✅ Compatibilité Next.js 16 (conteneurs flexibles et fluides)
 - ✅ Correction viewport pour Next.js 16 (export séparé de `metadata` et `viewport`)
+- ✅ **SessionProvider** ajouté au layout principal pour NextAuth v5
 
 ---
 
@@ -59,13 +66,16 @@ Stack technique : Next.js 16, Tailwind CSS, Drizzle ORM, SQLite (better-sqlite3)
 - ✅ Correction du viewport pour Next.js 16 (export séparé)
 - ✅ Fix du responsive design desktop (largeurs maximales)
 - ✅ Uniformisation des conteneurs sur toutes les pages
+- ✅ Correction Server Action pour changement de mot de passe (appel direct au lieu de fetch)
+- ✅ Ajout SessionProvider au layout principal
+- ✅ Page profil fonctionnelle avec changement de mot de passe
 
-### 1️⃣ **Test et Validation** *(Urgent)*
-- [ ] Tester l'inscription d'un nouvel utilisateur
-- [ ] Vérifier que le GUEST ne peut pas se connecter
-- [ ] Tester la validation par l'admin (GUEST → MEMBER)
-- [ ] Tester la connexion après validation
-- [ ] Tester la suppression d'un utilisateur
+### 1️⃣ **Test et Validation** *(Terminé 2026-10-06)*
+- ✅ Tester l'inscription d'un nouvel utilisateur
+- ✅ Vérifier que le GUEST ne peut pas se connecter
+- ✅ Tester la validation par l'admin (GUEST → MEMBER)
+- ✅ Tester la connexion après validation
+- ✅ Tester la suppression d'un utilisateur
 
 **Scénarios de test :**
 ```
