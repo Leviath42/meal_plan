@@ -25,7 +25,7 @@
 #   bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes
 # =============================================================================
 
-SCRIPT_VERSION="v4"
+SCRIPT_VERSION="v5"
 
 set -eu
 # En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
@@ -137,8 +137,8 @@ pct create "$CTID" "$TPL_REF" \
   --hostname "$CT_HOSTNAME" \
   --unprivileged 1 \
   --cores 1 \
-  --memory 1024 \
-  --swap 512 \
+  --memory 2048 \
+  --swap 2048 \
   --rootfs "$ROOTFS" \
   --net0 "name=eth0,bridge=${BRIDGE},ip=dhcp" \
   --timezone "$TZ" \
