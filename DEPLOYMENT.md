@@ -4,6 +4,45 @@
 
 ---
 
+## Option A — Installation automatique (une seule commande)
+
+Un script fait **tout** : création du conteneur LXC, installation de Node.js, déploiement de la beta, configuration (secret généré automatiquement, fuseau Europe/Paris, accès par IP), création de la base et du compte admin, compilation, lancement sous PM2. Il affiche à la fin l'URL, les identifiants et les commandes de suivi.
+
+**Où** : le **Shell de l'hôte Proxmox** (node → Shell, en root — PAS dans un conteneur).
+
+**Avec quoi** (si le repo est public) :
+
+```bash
+wget -qO /root/proxmox-install.sh https://raw.githubusercontent.com/Leviath42/meal_plan/beta/scripts/proxmox-install.sh
+bash /root/proxmox-install.sh 120 ton@email.fr 'TonMotDePasse' yes
+```
+
+**Ou**, si le repo est privé — télécharge le fichier `scripts/proxmox-install.sh` depuis GitHub (bouton Raw → enregistrer), transfère-le sur l'hôte Proxmox, puis :
+
+```bash
+bash proxmox-install.sh 120 ton@email.fr 'TonMotDePasse' yes
+```
+
+**Arguments** : `CTID` (numéro du conteneur à créer, ex. 120), `email admin`, `mot de passe admin` (si omis : généré aléatoirement et affiché), `yes/no` pour charger les 45 recettes de démonstration.
+
+**Variables optionnelles** (avant d'appeler le script) : `BRIDGE=vmbr0` par défaut (pont réseau), `ROOTFS=local-lvm:5` par défaut (stockage disque).
+
+**Ce que le script ne fait pas** : ouvrir `http://IP_AFFICHÉE:3000` depuis le téléphone, et changer le mot de passe admin depuis la page Profil.
+
+**Mise à jour de la beta ensuite** (le script installe un raccourci) :
+
+```bash
+pct exec 120 -- bash /opt/meal_plan/update.sh
+```
+
+**Limites assumées** : le script est vérifié syntaxiquement mais n'a pas encore été exécuté sur un Proxmox réel ; en cas d'échec, le message indique l'étape en cause, le conteneur reste en place pour inspection (`pct enter 120`), et le guide détaillé ci-dessous (Option B) décrit chaque étape manuelle équivalente. Installation prévue pour un usage familial : DHCP sur le pont par défaut, pas de HTTPS (voir plus bas).
+
+> Le reste du document reste la référence : il explique ce que fait chaque étape — utile pour comprendre, dépanner, ou installer à la main.
+
+---
+
+## Option B — Installation manuelle, expliquée pas à pas
+
 ## Vue d'ensemble : ce qu'on est en train de faire
 
 Avant les commandes, le schéma mental :
