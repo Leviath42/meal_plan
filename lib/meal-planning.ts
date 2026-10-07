@@ -2,9 +2,10 @@
 // Logique partagée de planification (F08 historique, F09 antidoublon,
 // F03 suggestions) : utilisée à la fois par les Server Actions et par les
 // tests d'exécution réelle (tmp/), qui rejouent exactement le même code.
-import { and, eq, gte, isNull, lt, lte, ne, or } from 'drizzle-orm';
+import { and, eq, gte, isNull, lt, lte, ne, notExists, or, sql, type SQL } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { mealPlans, recipes, users } from '@/lib/db/schema';
+import type { SuggestedRecipe } from '@/app/types/meal-plan';
 
 // Contexte de transaction better-sqlite3 (driver synchrone)
 export type SqliteTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -100,4 +101,56 @@ export async function findPlanInWindow(opts: {
 // F09 - message de refus antidoublon (affiché tel quel dans l'interface)
 export function antidoublonMessage(conflictDate: string, minDays: number): string {
   return `Cette recette est déjà planifiée le ${formatFrDate(conflictDate)} — l'intervalle minimum est de ${minDays} jours (modifiable dans Paramètres)`;
+}
+
+// F03 - suggestions : recettes candidates pour une date, en excluant celles
+// déjà planifiées dans la fenêtre antidoublon de l'utilisateur (même règle
+// que F09) et en filtrant optionnellement par tag (insensible à la casse).
+// Sélection au hasard (SQL ORDER BY RANDOM() LIMIT n), puis tri secondaire :
+// les plus anciennement servis d'abord (jamais servis en tête).
+export async function findSuggestableRecipes(opts: {
+  date: string;
+  minDays: number;
+  tag?: string;
+  limit?: number;
+}): Promise<SuggestedRecipe[]> {
+  const conditions: SQL[] = [];
+  if (opts.minDays > 0) {
+    conditions.push(
+      notExists(
+        db
+          .select({ one: sql`1` })
+          .from(mealPlans)
+          .where(
+            and(
+              eq(mealPlans.recipeId, recipes.id),
+              gte(mealPlans.date, addDaysToDateStr(opts.date, -opts.minDays)),
+              lte(mealPlans.date, addDaysToDateStr(opts.date, opts.minDays)),
+            ),
+          ),
+      ),
+    );
+  }
+  if (opts.tag) {
+    const needle = `%${opts.tag.toLowerCase()}%`;
+    conditions.push(sql`lower(coalesce(${recipes.tags}, '')) LIKE ${needle}`);
+  }
+
+  const rows = await db
+    .select({
+      id: recipes.id,
+      title: recipes.title,
+      mealCourse: recipes.mealCourse,
+      lastServedAt: recipes.lastServedAt,
+    })
+    .from(recipes)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(sql`RANDOM()`)
+    .limit(opts.limit ?? 3);
+
+  // Tri secondaire (jamais servis d'abord, puis les plus anciennement servis)
+  const servedTime = (value: string | null): number =>
+    value ? parseLocalDateStr(value).getTime() : Number.NEGATIVE_INFINITY;
+  rows.sort((a, b) => servedTime(a.lastServedAt) - servedTime(b.lastServedAt));
+  return rows;
 }
