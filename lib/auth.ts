@@ -15,11 +15,6 @@ interface UserWithRole {
   updatedAt: string;
 }
 
-// Fonction pour vérifier que le rôle est valide
-function isValidRole(role: string): role is "ADMIN" | "MEMBER" | "GUEST" {
-  return ["ADMIN", "MEMBER", "GUEST"].includes(role);
-}
-
 // Secret pour signer les cookies JWT
 // IMPORTANT: AUTH_SECRET est requis en production, le fallback ne sert qu'en dev
 function getAuthSecret(): string {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { resetPasswordWithSecurityQuestion, getUserSecurityQuestion, verifySecurityAnswer } from '@/app/actions/auth';
+import { resetPasswordWithSecurityQuestion, getUserSecurityQuestion } from '@/app/actions/auth';
 
 interface ResetPasswordClientProps {
   email?: string;
@@ -64,30 +64,6 @@ export default function ResetPasswordClient({
       });
     }
     
-    setPending(false);
-  };
-
-  const handleQuestionSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setPending(true);
-    setFormState(null);
-
-    if (!securityAnswer) {
-      setFormState({ errors: { securityAnswer: ['Réponse requise'] } });
-      setPending(false);
-      return;
-    }
-
-    // Vérifier la réponse côté serveur AVANT de passer à l'étape 2
-    const result = await verifySecurityAnswer(email, securityAnswer);
-
-    if (result?.success) {
-      setStep('2');
-      setFormState({ success: true, message: result.message });
-    } else {
-      setFormState(result);
-    }
-
     setPending(false);
   };
 
