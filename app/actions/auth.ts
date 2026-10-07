@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from '@/lib/auth';
-import { requireAdmin } from '@/lib/auth-guards';
+import { requireAdmin, requireSession } from '@/lib/auth-guards';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
@@ -89,6 +89,21 @@ export async function updateUserRole(
     return { errors: { form: ['Vous ne pouvez pas modifier votre propre rôle'] } };
   }
 
+  // Empêcher de rétrograder le dernier administrateur
+  if (newRole !== 'ADMIN') {
+    const [userToUpdate] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+    if (userToUpdate?.role === 'ADMIN') {
+      const [adminsCount] = await db.select({ count: count() })
+        .from(users)
+        .where(eq(users.role, 'ADMIN'))
+        .limit(1);
+
+      if (adminsCount.count <= 1) {
+        return { errors: { form: ['Impossible de rétrograder le dernier administrateur'] } };
+      }
+    }
+  }
+
   try {
     await db
       .update(users)
@@ -141,7 +156,13 @@ export async function deleteUser(userId: string): Promise<FormState> {
 // Récupérer tous les utilisateurs (pour l'admin)
 export async function getAllUsers() {
   await requireAdmin();
-  return await db.select().from(users).orderBy(users.createdAt);
+  return await db.select({
+    id: users.id,
+    email: users.email,
+    name: users.name,
+    role: users.role,
+    createdAt: users.createdAt,
+  }).from(users).orderBy(users.createdAt);
 }
 
 
@@ -151,12 +172,7 @@ export async function updateUserPassword(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const session = await auth();
-  
-  if (!session?.user) {
-    return { errors: { form: ['Vous devez être connecté pour changer votre mot de passe'] } };
-  }
-
+  const session = await requireSession();
   const userId = formData.get('userId') as string;
   const currentPassword = formData.get('currentPassword') as string;
   const newPassword = formData.get('newPassword') as string;
@@ -211,12 +227,7 @@ export async function updateUserSecurityQuestion(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const session = await auth();
-  
-  if (!session?.user) {
-    return { errors: { form: ['Vous devez être connecté pour mettre à jour votre question secrète'] } };
-  }
-
+  const session = await requireSession();
   const userId = formData.get('userId') as string;
   const securityQuestion = formData.get('securityQuestion') as string;
   const securityAnswer = formData.get('securityAnswer') as string;

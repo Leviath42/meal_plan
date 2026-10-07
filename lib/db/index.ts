@@ -15,6 +15,9 @@ const globalForDb = globalThis as unknown as {
 
 const sqlite = globalForDb.sqlite ?? new Database(dbPath);
 
+// Active l'application des contraintes de clés étrangères (cascades, set null).
+sqlite.pragma('foreign_keys = ON');
+
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.sqlite = sqlite;
 }
