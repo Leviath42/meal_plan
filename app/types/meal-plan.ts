@@ -9,6 +9,8 @@ export interface Recipe {
   prepTime?: number;
   cookTime?: number;
   defaultServings?: number;
+  // Date (AAAA-MM-JJ) du dernier repas planifié avec cette recette (F08 - historique)
+  lastServedAt?: string | null;
 }
 
 // Schéma de validation pour les repas planifiés
