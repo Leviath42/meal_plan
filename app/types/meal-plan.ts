@@ -53,3 +53,12 @@ export interface MealPlanFormResult {
   mealPlan?: MealPlan;
   errors?: Record<string, string[]>;
 }
+
+// Proposition de recette (F03) renvoyée par suggestRecipes
+export interface SuggestedRecipe {
+  id: string;
+  title: string;
+  mealCourse: string | null;
+  // Date (AAAA-MM-JJ) du dernier repas planifié avec cette recette
+  lastServedAt: string | null;
+}
