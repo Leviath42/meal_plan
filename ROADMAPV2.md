@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V2 - Planification Complète du Cahier des Charges
 
-*Dernière mise à jour : 2026-10-06*
-*Version : 2.5*
+*Dernière mise à jour : 2026-10-07*
+*Version : 2.6*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md)*
 
 ---
@@ -78,20 +78,25 @@ Application web **familiale** de planification des repas et gestion de recettes.
   - [x] Boutons Précédent/Suivant par jour + retour à la journée en cours
   - [x] Boutons Précédent/Suivant par mois (accueil et calendrier)
   - [x] Clic sur une date affichée pour la placer en première position (accueil et calendrier)
-- [x] **Affichage des détails**
+- [X] **Affichage des détails**
   - [x] Modal d'actions par repas (modifier — type de repas, recette, note, couverts —, replanifier, supprimer)
 - [ ] **Vérifier l'ensemble des interaction utilisateur possible**
   - [ ] Formulaires
   - [ ] Chaque page
-  - [x] **Revoir la mise en page de la page calendier** (structure 1-3-3-3-3 via `PlannerBoard`)
+  - [x] **Revoir la mise en page de la page calendier** (structure 1-3-3-3-3 via `PlannerBoard`
+  - [ ] Faire une version prod a installer sur le proxmox et tester en beta sur téléphone⏫ 
+  - [ ] Faire développer les phases en parallèle par l'IA en désignant un agent colle chef de projet pour surveiller que les autres ne tournent pas en boucle et orchestrer les interactions pour un merge
 
 - [ ] **A faire plus tard en option**
   - [ ] Ajout d'une recette à un créneau vide directement par glisser-déposer (actuellement via le modal « + »)
+  - [ ] Ajustement des couleurs et cadre pour les dates
+  - [ ] Corriger le comportement du menu
   - [ ] Voir les informations de la recette directement dans le calendrier
+  - [ ] Voir des informations supplémentaires sur la date en 1er dans le calendrier
   - [ ] **Création d'une page de paramétrage**
     - [ ] Nombres de couverts par défaut
     - [ ] Mode de planification
-    - [x] Gestion du thème (sombre/clair/système) - *fait via la bascule de la navigation : défaut = préférence système, persistance localStorage, anti-flash au chargement*
+    - [ ] Gestion du thème (sombre/clair/système)
     - [ ] autres ?
 
 **Fichiers à créer/modifier** :
@@ -480,7 +485,6 @@ CREATE TABLE pantry_items (
 - ✅ **Suppression de la contrainte d'unicité** - plusieurs plats par créneau (date + type de repas)
 - ✅ **Corrections UX/scroll** - min-h-screen fautif supprimé (layout, profil, register), pages compactées (accueil, profil, register)
 - ✅ **Modal de création d'utilisateur** sur la page register (admin)
-- ✅ **Mode sombre** - palette remappée via les variables Tailwind v4, bascule dans la navigation (défaut : préférence système), persistance localStorage, anti-flash au chargement
 
 ### **Fonctionnalités à Implémenter** : ~25%
 - ✅ **F01 - Planification** : MVP complet (accueil 7 jours, page calendrier 19 jours en 1-3-3-3-3-3-3 avec navigation jour/mois, DnD, modals)
@@ -524,11 +528,6 @@ CREATE TABLE pantry_items (
 15. ✅ **Fix scroll permanent** - min-h-screen fautif (layout + pages profil/register)
 16. ✅ **Compactage pages** - Accueil, profil, register
 17. ✅ **Modal création utilisateur** - Bouton admin sur la page register
-18. ✅ **Navigation par clic** - Clic sur une date pour la placer en première position (accueil et calendrier)
-19. ✅ **Fix fuseau horaire** - Dates formatées/parsées en local (le clic sur une date affichait J-1 et filtrait les repas de la veille)
-20. ✅ **Chevrons repensés** - Jour autour de la 1re date, mois à côté du titre du mois (changement de mois relatif à la 1re date, jour conservé)
-21. ✅ **Type de repas** - Modifiable dans le formulaire Modifier du modal, défaut « Dîner » à la création
-22. ✅ **Hauteur du bandeau** - Conteneurs centrés de login et reset-password corrigés (calc(100vh - navbar), plus aucun min-h-screen)
 
 ### **Priorité Immédiate**
 - ✅ **F01 - Calendrier** : refonte de la page `/calendar` terminée (composant partagé `PlannerBoard`, 19 jours en 1-3-3-3-3-3-3, navigation par jour et par mois)
