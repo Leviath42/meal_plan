@@ -8,7 +8,6 @@ export default auth((req) => {
   const publicRoutes = [
     '/api/auth',
     '/login',
-    '/logout',
     '/register',
     '/reset-password',
     '/_next/static',

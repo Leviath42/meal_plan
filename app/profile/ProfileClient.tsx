@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
@@ -29,9 +29,15 @@ export default function ProfileClient({ session }: ProfileClientProps) {
   const [pending, setPending] = useState(false);
   const [activeTab, setActiveTab] = useState<'password' | 'security-question'>('password');
 
-  // Rediriger si pas de session
+  // Rediriger si pas de session — dans un effet, un push pendant le rendu
+  // est un anti-pattern React
+  useEffect(() => {
+    if (!session?.user) {
+      router.push('/login');
+    }
+  }, [session, router]);
+
   if (!session?.user) {
-    router.push('/login');
     return null;
   }
 

@@ -8,7 +8,13 @@ import Link from "next/link";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  // Ne suivre que les chemins internes : un callbackUrl externe (ou "//host")
+  // redirigerait vers un site arbitraire apres connexion (open redirect)
+  const rawCallbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl =
+    rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")
+      ? rawCallbackUrl
+      : "/";
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
