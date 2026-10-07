@@ -15,7 +15,8 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { getMealPlans, addMealPlan, deleteMealPlan, updateMealPlan } from '@/app/actions/meal-plan';
-import type { MealPlan, MealType, Recipe } from '@/app/types/meal-plan';
+import { suggestRecipes } from '@/app/actions/suggestions';
+import type { MealPlan, MealType, Recipe, SuggestedRecipe } from '@/app/types/meal-plan';
 
 interface PlannerBoardProps {
   recipes: Recipe[];
@@ -218,6 +219,10 @@ function MealPlanCreationModal({
   const [servings, setServings] = useState<string>(String(defaultServings));
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  // Suggestions (F03) : propositions cliquables pour choisir une recette
+  const [suggestions, setSuggestions] = useState<SuggestedRecipe[] | null>(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState<boolean>(false);
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
 
   // Réinitialiser les états quand le modal s'ouvre ou se ferme
   useEffect(() => {
@@ -228,6 +233,8 @@ function MealPlanCreationModal({
       setCustomNote('');
       setServings(String(defaultServings));
       setError(null);
+      setSuggestions(null);
+      setSuggestionsError(null);
       setIsLoading(false);
     }
   }, [isOpen]);
@@ -277,6 +284,29 @@ function MealPlanCreationModal({
     setServings(String(defaultServings));
     setError(null);
     onClose();
+  };
+
+  // Suggérer 3 recettes pour la date du modal (F03) : cliquer sur une
+  // proposition sélectionne la recette dans le formulaire
+  const handleSuggest = async () => {
+    setSuggestionsLoading(true);
+    setSuggestionsError(null);
+    try {
+      const result = await suggestRecipes({ date });
+      if (!result.success || result.recipes.length === 0) {
+        setSuggestions(null);
+        setSuggestionsError(
+          result.message ?? 'Aucune suggestion disponible — toutes les recettes récentes sont déjà planifiées'
+        );
+        return;
+      }
+      setSuggestions(result.recipes);
+    } catch {
+      setSuggestions(null);
+      setSuggestionsError('Impossible de récupérer les suggestions');
+    } finally {
+      setSuggestionsLoading(false);
+    }
   };
 
   return (
@@ -340,6 +370,44 @@ function MealPlanCreationModal({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Suggestions (F03) : 3 recettes au hasard, hors fenêtre antidoublon */}
+              <div>
+                <button
+                  onClick={handleSuggest}
+                  disabled={suggestionsLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border rounded hover:bg-gray-50 text-sm"
+                  title="Proposer 3 recettes non planifiées à proximité de cette date"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {suggestionsLoading ? 'Suggestion...' : 'Suggérer'}
+                </button>
+
+                {suggestionsError && (
+                  <p className="mt-2 text-xs text-gray-500">{suggestionsError}</p>
+                )}
+
+                {suggestions && suggestions.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {suggestions.map(recipe => (
+                      <button
+                        key={recipe.id}
+                        onClick={() => setRecipeId(recipe.id)}
+                        className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                          recipeId === recipe.id
+                            ? 'bg-accent text-white border-accent'
+                            : 'bg-gray-50 text-gray-800 border-gray-300 hover:border-accent'
+                        }`}
+                        title={recipe.lastServedAt ? `Dernier repas planifié avec cette recette : ${recipe.lastServedAt}` : 'Jamais planifiée récemment'}
+                      >
+                        {recipe.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Note personnalisée */}
@@ -1028,6 +1096,31 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       <span className="ml-1 text-[10px] font-normal opacity-70">{plan.mealCourse}</span>
     ) : null;
 
+  // Indicateur d'historique (F08) : petit point discret quand la recette a déjà
+  // été servie le jour même ou à moins de 30 jours de la date affichée
+  const getBadgeHistorySuffix = (plan: MealPlan): ReactNode => {
+    const recipe = plan.recipeId ? recipes.find(r => r.id === plan.recipeId) : undefined;
+    if (!recipe?.lastServedAt || recipe.lastServedAt > plan.date) return null;
+    const days = Math.round(
+      (parseLocalDate(plan.date).getTime() - parseLocalDate(recipe.lastServedAt).getTime()) / 86400000
+    );
+    if (days > 30) return null;
+    const servedOn = parseLocalDate(recipe.lastServedAt).toLocaleDateString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    return (
+      <span className="ml-0.5 text-[10px] font-normal opacity-60" title={`Déjà servi le ${servedOn}`}>•</span>
+    );
+  };
+
+  // Suffixe complet d'un badge : type de plat hérité + indicateur d'historique
+  const getBadgeSuffix = (plan: MealPlan): ReactNode => (
+    <>
+      {getBadgeCourseSuffix(plan)}
+      {getBadgeHistorySuffix(plan)}
+    </>
+  );
+
   // Début du drag : mémoriser le repas déplacé
   const handleDragStart = (event: DragStartEvent) => {
     const dragData = event.active.data.current as { plan?: MealPlan; recipe?: Recipe } | undefined;
@@ -1191,7 +1284,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                 displayText={getPlanDisplayText(plan)}
                 badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType as MealType]} text-sm truncate text-center w-full text-left`}
                 badgeTitle={getBadgeTooltip(plan)}
-                badgeSuffix={getBadgeCourseSuffix(plan)}
+                badgeSuffix={getBadgeSuffix(plan)}
                 onClick={() => openActionsModal(plan)}
               />
             ))}
@@ -1303,7 +1396,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                             displayText={getPlanDisplayText(plan)}
                             badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[mealType as MealType]} text-xs truncate text-center max-w-[88px]`}
                             badgeTitle={getBadgeTooltip(plan)}
-                            badgeSuffix={getBadgeCourseSuffix(plan)}
+                            badgeSuffix={getBadgeSuffix(plan)}
                             onClick={() => openActionsModal(plan)}
                           />
                         ))}

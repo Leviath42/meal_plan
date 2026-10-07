@@ -9,6 +9,8 @@ export interface Recipe {
   prepTime?: number;
   cookTime?: number;
   defaultServings?: number;
+  // Date (AAAA-MM-JJ) du dernier repas planifié avec cette recette (F08 - historique)
+  lastServedAt?: string | null;
 }
 
 // Schéma de validation pour les repas planifiés
@@ -50,4 +52,13 @@ export interface MealPlanFormResult {
   message: string;
   mealPlan?: MealPlan;
   errors?: Record<string, string[]>;
+}
+
+// Proposition de recette (F03) renvoyée par suggestRecipes
+export interface SuggestedRecipe {
+  id: string;
+  title: string;
+  mealCourse: string | null;
+  // Date (AAAA-MM-JJ) du dernier repas planifié avec cette recette
+  lastServedAt: string | null;
 }
