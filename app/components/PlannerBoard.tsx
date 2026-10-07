@@ -494,10 +494,6 @@ function MealPlanActionsModal({
     return recipe ? recipe.title : 'Recette inconnue';
   };
 
-  const displayRecipe = newRecipeId ?
-    recipes.find(r => r.id === newRecipeId)?.title || 'Recette inconnue' :
-    mealPlan.recipeId ? getRecipeTitle(mealPlan.recipeId) : 'Aucune recette';
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
@@ -774,6 +770,13 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Le bandeau d'erreur se ferme tout seul apres 6 secondes
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 6000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   // Modal pour la création
   const [selectedDateForCreation, setSelectedDateForCreation] = useState<string | null>(null);
