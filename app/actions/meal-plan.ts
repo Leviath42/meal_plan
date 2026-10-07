@@ -11,6 +11,7 @@ import {
   type MealPlan,
   type MealPlanFormResult
 } from '@/app/types/meal-plan';
+import { bumpRecipeLastServedAt } from '@/lib/meal-planning';
 
 // Helper pour convertir FormData en Record<string, string>
 function formDataToRecord(formData: FormData): Record<string, string> {
@@ -87,17 +88,46 @@ export async function updateMealPlan(
     };
   }
 
+  // Repas existant : recette et date effectives après une mise à jour partielle
+  const [existing] = await db
+    .select()
+    .from(mealPlans)
+    .where(eq(mealPlans.id, id))
+    .limit(1);
+
+  if (!existing) {
+    return {
+      errors: { general: ['Repas planifié introuvable'] },
+      values: rawData
+    };
+  }
+
   // Si la recette change (et qu'aucun mealCourse explicite n'est fourni),
   // hériter le type de plat de la nouvelle recette — ou le vider sans recette
   if ('recipeId' in data && !('mealCourse' in data)) {
     data.mealCourse = data.recipeId ? await getRecipeMealCourse(data.recipeId) : null;
   }
 
+  // Recette et date effectives après la mise à jour partielle
+  const effectiveRecipeId = 'recipeId' in data ? data.recipeId : existing.recipeId;
+  const effectiveDate = data.date !== undefined ? data.date : existing.date;
+
   try {
-    await db
-      .update(mealPlans)
-      .set({ ...data, updatedAt: new Date().toISOString() })
-      .where(eq(mealPlans.id, id));
+    // better-sqlite3 est synchrone : callback de transaction synchrone,
+    // requêteurs .get()/.run() (un callback async est refusé par drizzle).
+    // F08 - historique : mémoriser si le repas (recette + date) devient plus
+    // récent ; aucun recalcul en cas de retrait de recette (historique).
+    db.transaction((tx) => {
+      tx
+        .update(mealPlans)
+        .set({ ...data, updatedAt: new Date().toISOString() })
+        .where(eq(mealPlans.id, id))
+        .run();
+
+      if (effectiveRecipeId && effectiveDate) {
+        bumpRecipeLastServedAt(tx, effectiveRecipeId, effectiveDate);
+      }
+    });
 
     revalidatePath('/calendar');
     return { errors: undefined, values: undefined };
@@ -195,10 +225,22 @@ export async function addMealPlan(
 
     const now = new Date().toISOString();
 
-    const [mealPlan] = await db
-      .insert(mealPlans)
-      .values({ ...data, createdAt: now, updatedAt: now })
-      .returning();
+    // better-sqlite3 est synchrone : callback de transaction synchrone,
+    // requêteurs .get()/.run() (un callback async est refusé par drizzle)
+    const mealPlan = db.transaction((tx) => {
+      const inserted = tx
+        .insert(mealPlans)
+        .values({ ...data, createdAt: now, updatedAt: now })
+        .returning()
+        .get();
+
+      // F08 - historique : date du repas le plus récent planifié avec cette recette
+      if (data.recipeId) {
+        bumpRecipeLastServedAt(tx, data.recipeId, data.date);
+      }
+
+      return inserted;
+    });
 
     revalidatePath('/calendar');
 

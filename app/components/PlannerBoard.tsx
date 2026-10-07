@@ -1028,6 +1028,31 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       <span className="ml-1 text-[10px] font-normal opacity-70">{plan.mealCourse}</span>
     ) : null;
 
+  // Indicateur d'historique (F08) : petit point discret quand la recette a déjà
+  // été servie le jour même ou à moins de 30 jours de la date affichée
+  const getBadgeHistorySuffix = (plan: MealPlan): ReactNode => {
+    const recipe = plan.recipeId ? recipes.find(r => r.id === plan.recipeId) : undefined;
+    if (!recipe?.lastServedAt || recipe.lastServedAt > plan.date) return null;
+    const days = Math.round(
+      (parseLocalDate(plan.date).getTime() - parseLocalDate(recipe.lastServedAt).getTime()) / 86400000
+    );
+    if (days > 30) return null;
+    const servedOn = parseLocalDate(recipe.lastServedAt).toLocaleDateString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    return (
+      <span className="ml-0.5 text-[10px] font-normal opacity-60" title={`Déjà servi le ${servedOn}`}>•</span>
+    );
+  };
+
+  // Suffixe complet d'un badge : type de plat hérité + indicateur d'historique
+  const getBadgeSuffix = (plan: MealPlan): ReactNode => (
+    <>
+      {getBadgeCourseSuffix(plan)}
+      {getBadgeHistorySuffix(plan)}
+    </>
+  );
+
   // Début du drag : mémoriser le repas déplacé
   const handleDragStart = (event: DragStartEvent) => {
     const dragData = event.active.data.current as { plan?: MealPlan; recipe?: Recipe } | undefined;
@@ -1191,7 +1216,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                 displayText={getPlanDisplayText(plan)}
                 badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType as MealType]} text-sm truncate text-center w-full text-left`}
                 badgeTitle={getBadgeTooltip(plan)}
-                badgeSuffix={getBadgeCourseSuffix(plan)}
+                badgeSuffix={getBadgeSuffix(plan)}
                 onClick={() => openActionsModal(plan)}
               />
             ))}
@@ -1303,7 +1328,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                             displayText={getPlanDisplayText(plan)}
                             badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[mealType as MealType]} text-xs truncate text-center max-w-[88px]`}
                             badgeTitle={getBadgeTooltip(plan)}
-                            badgeSuffix={getBadgeCourseSuffix(plan)}
+                            badgeSuffix={getBadgeSuffix(plan)}
                             onClick={() => openActionsModal(plan)}
                           />
                         ))}

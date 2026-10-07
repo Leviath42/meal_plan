@@ -148,6 +148,12 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
           <p>
             Modifié le : {new Date(recipe.updatedAt).toLocaleDateString('fr-FR')}
           </p>
+          {recipe.lastServedAt && (
+            <p>
+              Dernier repas planifié :{' '}
+              {new Date(recipe.lastServedAt + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          )}
         </div>
       </div>
     </main>
