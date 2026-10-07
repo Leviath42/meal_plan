@@ -11,8 +11,11 @@ CREATE TABLE `meal_plans` (
 	`date` text NOT NULL,
 	`meal_type` text NOT NULL,
 	`custom_note` text,
-	`servings` integer,
+	`servings` integer DEFAULT 4,
+	`meal_course` text,
 	`recipe_id` text,
+	`created_at` text,
+	`updated_at` text,
 	FOREIGN KEY (`recipe_id`) REFERENCES `recipes`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
@@ -34,11 +37,19 @@ CREATE TABLE `recipes` (
 	`prep_time` integer NOT NULL,
 	`cook_time` integer NOT NULL,
 	`default_servings` integer DEFAULT 3 NOT NULL,
+	`meal_course` text,
 	`instructions` text NOT NULL,
 	`tags` text,
 	`source` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `sessions` (
+	`session_token` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`expires` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `shopping_items` (
@@ -51,3 +62,17 @@ CREATE TABLE `shopping_items` (
 	`ingredient_id` text,
 	FOREIGN KEY (`ingredient_id`) REFERENCES `ingredients`(`id`) ON UPDATE no action ON DELETE no action
 );
+--> statement-breakpoint
+CREATE TABLE `users` (
+	`id` text PRIMARY KEY NOT NULL,
+	`email` text NOT NULL,
+	`name` text,
+	`password` text NOT NULL,
+	`role` text DEFAULT 'MEMBER' NOT NULL,
+	`security_question` text,
+	`security_answer_hash` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);

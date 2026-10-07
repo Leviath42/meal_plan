@@ -9,7 +9,10 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "seed": "tsx lib/db/seed.ts",
-    "seed:clear": "tsx lib/db/seed.ts --clear"
+    "seed:clear": "tsx lib/db/seed.ts --clear",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
