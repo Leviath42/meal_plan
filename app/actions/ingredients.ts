@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
+import { requireSession } from '@/lib/auth-guards';
 import { ingredients } from '@/lib/db/schema';
 import { ingredientInput } from '@/lib/validators/ingredients';
 import { eq } from 'drizzle-orm';
@@ -27,6 +28,7 @@ export async function createIngredient(
   prevState: IngredientFormState,
   formData: FormData
 ): Promise<IngredientFormState> {
+  await requireSession();
   const rawData = formDataToRecord(formData);
   const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
@@ -50,6 +52,7 @@ export async function updateIngredient(
   id: string,
   formData: FormData
 ): Promise<IngredientFormState> {
+  await requireSession();
   const rawData = formDataToRecord(formData);
   const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
@@ -70,6 +73,7 @@ export async function updateIngredient(
 
 export async function deleteIngredient(id: string): Promise<{ error?: string }> {
   try {
+    await requireSession();
     await db.delete(ingredients).where(eq(ingredients.id, id));
     revalidatePath('/ingredients');
     return {};
