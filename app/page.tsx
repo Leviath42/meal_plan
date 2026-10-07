@@ -13,6 +13,7 @@ export default async function HomePage() {
     prepTime: recipes.prepTime,
     cookTime: recipes.cookTime,
     defaultServings: recipes.defaultServings,
+    lastServedAt: recipes.lastServedAt,
   }).from(recipes).orderBy(recipes.title);
 
   // Nombre de couverts par défaut (page de paramétrage)
