@@ -1,0 +1,190 @@
+# Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
+
+*Dernière mise à jour : 2026-10-07*
+*Version : 3.0 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
+
+---
+
+## 📋 Résumé du Projet
+
+Application web **familiale** de planification des repas et gestion de recettes.
+
+**Objectif principal** : Planifier les repas sur un calendrier, gérer un livre de recettes local, générer automatiquement les listes de courses et partager le planning, sans coût d'abonnement.
+
+**Accès** : Fluide à la maison comme à l'extérieur (ex. consultation de la liste de courses au supermarché, via tunnel Cloudflare).
+
+---
+
+## 🎯 Rôles et Permissions
+
+| Rôle | Accès | Description |
+|------|-------|-------------|
+| **ADMIN** | Lecture + Écriture + Gestion | Gère les comptes, les jetons de partage, les paramètres globaux |
+| **MEMBER** | Lecture + Écriture | Recettes, planning, liste de courses, ses propres préférences |
+| **GUEST** | Aucun | Compte en attente de validation par un ADMIN |
+
+---
+
+## 📊 État du Projet — Phases 1 à 3 TERMINÉES
+
+### ✅ Fonctionnalités implémentées et livrées sur `beta`
+
+| Phase | Fonctionnalité | État | Notes de validation |
+|-------|---------------|------|---------------------|
+| 1 | **F01 - Planification** | ✅ Complet | CRUD, DnD, navigation jour/mois, modals — validé en usage réel |
+| 1 | F01 options — palette drag&drop, page `/settings`, correctifs menu/dates | ✅ Complet | À valider en campagne de tests |
+| 1 | F01 — version prod Proxmox + tunnel Cloudflare | ✅ En service | CT 103, `update.sh` pour les mises à jour |
+| 2 | **F05 - Liste de courses** | ✅ Complet | Génération validée en réel (échelle des couverts, rayons, fusion) |
+| 2 | **F04 - Partage** | ✅ Complet | Jetons, page publique, ICS, API JSON HA — test partiel effectué (jeton actif) |
+| 3 | **F08 - Historique** | ✅ Complet | `lastServedAt`, indicateur dans le calendrier — 6 tests runtime PASS |
+| 3 | **F09 - Antidoublon** | ✅ Complet | Fenêtre configurable par utilisateur — 10 tests runtime PASS |
+| 3 | **F03 - Suggestions** | ✅ Complet | 3 propositions excluant la fenêtre antidoublon — 9 tests runtime PASS |
+| - | Auth, recettes, ingrédients, profil, admin | ✅ Complet | Audits de sécurité passés |
+
+### 📌 Stack Technique
+
+| Couche | Technologie |
+|-------|-------------|
+| Framework | Next.js 16 (App Router, Turbopack) |
+| UI | Tailwind CSS v4, mode sombre par remappage de palette |
+| ORM | Drizzle ORM + migrations versionnées (`drizzle/`) |
+| Base de données | SQLite (better-sqlite3) — un seul fichier `data/sqlite.db` |
+| Authentification | NextAuth v5 (JWT), rôles revalidés en base à chaque action |
+| Hashage | Argon2 |
+| Validation | Zod v4 |
+| Drag & drop | @dnd-kit |
+
+---
+
+## 🤖 Processus de développement — vagues IA supervisées
+
+Le projet se développe par **vagues de travail parallèle** orchestrées par un agent chef de projet :
+
+1. **Contrat** : tout ce qui est partagé (schéma DB, migration, liens de navigation, routes publiques) est figé et committé sur `beta` AVANT le lancement des workers ;
+2. **Workers** : un agent par fonctionnalité, sur un `git worktree` et une branche `feature/*` dédiés, avec mission bornée (liste de fichiers autorisés/interdits, spec, critères d'acceptation) ;
+3. **Portes de qualité** : `tsc` + `build` + **tests d'exécution réels** (toute action serveur qui écrit en base doit être testée en runtime — tsc/build ne détectent pas, par ex., les transactions async refusées par better-sqlite3) ;
+4. **Fusion séquentielle** : `beta` ← une branche à la fois, vérification de conformité par le chef de projet avant chaque merge ;
+5. **Validation humaine** : tests sur le conteneur Proxmox, promotion `beta → main` et tag `last-stable` sur décision du propriétaire.
+
+Historique des vagues : **V1** (F05 + F04 + F01-options, 3 workers), **V2** (F08 + F09 + F03, couloir unique).
+
+---
+
+## 🧪 Campagne de tests en cours (validation humaine)
+
+Checklists de validation restantes, fonctionnalité par fonctionnalité :
+
+### F04 — Partage
+- [ ] Créer un jeton depuis `/share` (ADMIN) ; ouvrir le lien public en navigation privée
+- [ ] Révoquer le jeton → recharger → « Lien invalide ou expiré »
+- [ ] Télécharger l'ICS (`/api/calendar/ics?token=…`) et l'importer dans un agenda
+- [ ] API JSON (`/api/calendar/public?token=…`) — test Home Assistant
+- [ ] `/share` en tant que MEMBER → redirection vers l'accueil
+
+### F01 options
+- [ ] Palette « Recettes » sur `/calendar` : glisser une recette dans un créneau vide, un en-tête de date, une cellule jour+type
+- [ ] Refus des dates passées depuis la palette ; rien n'est supprimable depuis la palette
+- [ ] Info-bulles des badges (temps de préparation/cuisson) et suffixe type de plat
+- [ ] Menu mobile : clic extérieur, touche Échap, navigation par les liens
+- [ ] `/settings` : ADMIN modifie les couverts par défaut → pré-remplissage du modal de création ; MEMBER en lecture seule
+
+### Phase 3 (F08 / F09 / F03)
+- [ ] Planifier une recette, tenter de la replanir à J+3 → refus ; à J+8 → accepté ; contrôle désactivé (0) → accepté
+- [ ] Badge « • » déjà servi + info-bulle ; ligne « Dernier repas planifié » sur la page recette
+- [ ] Bouton « Suggérer » du modal de création : les propositions excluent la fenêtre antidoublon ; cas d'échec (petit catalogue / intervalle élevé)
+- [ ] `/settings` → « Mes préférences » : intervalle antidoublon enregistrable par un MEMBER
+
+### Général
+- [ ] Parcours complet sur téléphone (via tunnel Cloudflare) : chaque page, chaque formulaire, mode sombre
+- [ ] Deux comptes simultanés (ADMIN + MEMBER) : permissions réelles de chaque rôle
+
+---
+
+## 🛠️ Section CORRECTIONS — à alimenter pendant les tests
+
+> **Mode d'emploi** : pendant la campagne de tests, ajoute une ligne par problème rencontré. Format libre mais les cinq premières colonnes aident la priorisation. Chaque vague de correction traite les lignes « À corriger », puis passe le statut en « Corrigé » avec le commit de référence.
+
+| ID | Date | Fonctionnalité / Page | Description du problème (étapes → attendu → constaté) | Statut | Priorité |
+|----|------|------------------------|--------------------------------------------------------|--------|----------|
+| C-001 | 2026-10-07 | F05 - Liste de courses | Quantités affichées en décimales brutes (ex. « 2.667 filet », « 333.333 g ») — envisager arrondi d'affichage (2 décimales, virgule FR) ou arrondi métier | À corriger | Basse |
+| C-002 | | | | | |
+
+*Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
+
+---
+
+## 🚀 Phase 4 — Fonctionnalités restantes (prochaine vague)
+
+### F07 - Import de Recettes depuis URL
+- Extraction des métadonnées Schema.org (Recipe), parse des sites populaires (Marmiton, 750g…)
+- Prévisualisation avant import, message clair si site non supporté, import manuel toujours possible
+- Fichiers : `app/actions/import-recipe.ts`, `app/recipes/import/ImportRecipeForm.tsx`
+- Estimation : 2-3 jours
+
+### F10 - Notifications du Repas du Jour
+- Notifications push (PWA) quotidiennes à heure configurable : « Aujourd'hui : [Nom du repas] »
+- Email optionnel (si SMTP configuré)
+- Fichiers : Service Worker, `app/api/notifications/route.ts`
+- Estimation : 2 jours — *dépend partiellement de F12 (PWA)*
+
+### F11 - Gestion du Garde-Manger
+- Quantité disponible par ingrédient, date de péremption optionnelle
+- Intégration liste de courses : exclusion des ingrédients en stock, suggestions d'achat
+- Fichiers : table `pantry_items` (schéma), `app/pantry/page.tsx`, migration
+- Estimation : 2-3 jours
+
+### F12 - Mode Hors-Ligne Partiel (PWA)
+- Service Worker : cache des recettes/ingrédients, consultation du calendrier hors ligne, synchro au retour en ligne
+- Manifest PWA complet (icônes, thème) pour installation
+- Fichiers : `public/manifest.json`, `app/sw.ts`, configuration Next.js
+- Estimation : 2-3 jours
+
+### OAuth (Google, GitHub) — en attente de variables d'environnement
+- Providers, boutons de connexion alternatifs, comptes liés
+- Estimation : 1 jour
+
+*Contrat de la vague 3 à prévoir : table `pantry_items` au schéma (F11). F07, F10 et F12 sont majoritairement des fichiers nouveaux → parallélisables en 3 workers ; F11 en 4ᵉ position ou en parallèle avec son contrat.*
+
+---
+
+## 🎨 Finitions / Backlog (basse priorité)
+
+- [ ] Export PDF de la liste de courses (F05, optionnel)
+- [ ] Partage de la liste de courses par lien (F05, optionnel)
+- [ ] Réglage de la taille des formulaires (barres de scroll non désirées dans certains modals)
+- [ ] Uniformisation des tailles de composants, très petits écrans, accessibilité (contrastes, navigation clavier)
+- [ ] Statistiques de fréquence des recettes (F08, optionnel)
+- [ ] Headers de sécurité HTTP (CSP, X-Frame-Options) via `next.config`
+- [ ] Retrait de `data/sqlite.db` du suivi git si le repo devient public (contient des hash de mots de passe)
+
+---
+
+## 🗂️ Organisation des branches et du déploiement
+
+| Branche | Rôle |
+|---------|------|
+| `main` | Référence stable — tag `last-stable` sur la dernière version validée |
+| `beta` | Branche de test : déployée sur le conteneur Proxmox (CT 103), mise à jour via `pct exec 103 -- bash /opt/meal_plan/update.sh` |
+| `feature/*` | Une branche par fonctionnalité (vagues IA) — conservées sur GitHub pour revue |
+
+Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.md](DEPLOYMENT.md)**
+
+---
+
+## 🔗 Ressources et Références
+
+- [Cahier des charges](meal_plan_requirements.md)
+- [DEPLOYMENT.md](DEPLOYMENT.md) — guide de déploiement pas à pas (option script automatique incluse)
+- [archives/ROADMAPV2.md](archives/ROADMAPV2.md) — historique de planification des phases 1-3
+- [Documentation Next.js](https://nextjs.org/docs) · [dnd-kit](https://dndkit.com/) · [Drizzle ORM](https://orm.drizzle.team/)
+
+---
+
+## 📜 Historique des versions
+
+| Version | Période | Contenu |
+|---------|---------|---------|
+| V1 (archivée) | - | Roadmap originale |
+| V2 (archivée) | 2026-10 | Planification des phases 1-3 du cahier des charges |
+| **V3 (ce document)** | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
