@@ -1061,7 +1061,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       dropId={`day-card:${mainDay.dateStr}`}
       dropDate={mainDay.dateStr}
       disabled={mainDay.isPast}
-      className="flex flex-col items-center p-1.5 bg-gray-50 rounded-lg w-full max-w-xs"
+      className={`flex flex-col items-center p-1.5 bg-gray-50 rounded-lg w-full max-w-xs ${mainDay.isToday ? 'border-2 border-accent' : ''}`}
     >
       {/* Jour de la semaine + date, avec navigation par jour */}
       <div className="flex items-center justify-center gap-1 mb-1">
@@ -1089,6 +1089,15 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
           </svg>
         </button>
       </div>
+
+      {/* Date complète en français et nombre de repas planifiés */}
+      <p className="text-xs text-gray-500 mb-1">
+        <span className="capitalize">
+          {mainDay.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+        </span>
+        {' · '}
+        {mainDay.plans.length} repas
+      </p>
 
       {/* Repas planifiés */}
       <div className="w-full mb-1 min-h-[20px]">
@@ -1175,7 +1184,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                   dropId={`header:${dayData.dateStr}`}
                   dropDate={dayData.dateStr}
                   disabled={dayData.isPast}
-                  className="w-[92px] text-center text-sm"
+                  className={`w-[92px] text-center text-sm rounded-lg border px-1 ${dayData.isToday ? 'border-accent' : 'border-gray-200'}`}
                 >
                   <button
                     onClick={() => goToDate(dayData.dateStr)}
