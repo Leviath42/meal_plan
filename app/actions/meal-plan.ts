@@ -2,10 +2,9 @@
 
 import { db } from '@/lib/db';
 import { requireSession } from '@/lib/auth-guards';
-import { mealPlans } from '@/lib/db/schema';
+import { mealPlans, recipes } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { eq, and, gte, lte, or } from 'drizzle-orm';
+import { eq, and, gte, lte } from 'drizzle-orm';
 import {
   mealPlanInput,
   type MealPlanFormState,
@@ -24,41 +23,25 @@ function formDataToRecord(formData: FormData): Record<string, string> {
   return record;
 }
 
-// Créer un nouveau repas planifié
-export async function createMealPlan(
-  prevState: MealPlanFormState,
-  formData: FormData
-): Promise<MealPlanFormState> {
-  await requireSession();
-  const rawData = formDataToRecord(formData);
-  
-  const parsed = mealPlanInput.safeParse(rawData);
-  
-  if (!parsed.success) {
-    return {
-      errors: parsed.error.flatten().fieldErrors,
-      values: rawData
-    };
-  }
+// Date du jour au format YYYY-MM-DD, fuseau local du serveur.
+// Comparaison lexicographique fiable sur ce format ISO.
+function todayLocalStr(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-  const data = parsed.data;
-
-  try {
-    const now = new Date().toISOString();
-    const [mealPlan] = await db
-      .insert(mealPlans)
-      .values({ ...data, createdAt: now, updatedAt: now })
-      .returning();
-
-    revalidatePath('/calendar');
-    return { errors: undefined, values: undefined };
-  } catch (error) {
-    console.error('Erreur lors de la création du repas planifié:', error);
-    return {
-      errors: { general: ['Une erreur est survenue lors de la création'] },
-      values: rawData
-    };
-  }
+// Heritage du type de plat (mealCourse) depuis la recette.
+// Retourne null si la recette n'existe pas ou n'a pas de type de plat.
+async function getRecipeMealCourse(recipeId: string): Promise<string | null> {
+  const [recipe] = await db
+    .select({ mealCourse: recipes.mealCourse })
+    .from(recipes)
+    .where(eq(recipes.id, recipeId))
+    .limit(1);
+  return recipe?.mealCourse ?? null;
 }
 
 // Mettre à jour un repas planifié
@@ -92,7 +75,22 @@ export async function updateMealPlan(
   // Ne conserver que les champs réellement présents dans le FormData
   // (évite qu'un default Zod, ex. servings=4, écrase une valeur existante)
   for (const key of Object.keys(data)) {
-    if (!(key in raw)) delete data[key];
+    if (!(key in raw)) delete (data as Record<string, unknown>)[key];
+  }
+
+  // Pas de replanification vers une date passée (le contrôle côté client
+  // du modal ne suffit pas : l'attribut HTML min est contournable au clavier)
+  if (data.date !== undefined && data.date < todayLocalStr()) {
+    return {
+      errors: { date: ['Impossible de replanifier un repas dans le passé'], general: ['Impossible de replanifier un repas dans le passé'] },
+      values: rawData
+    };
+  }
+
+  // Si la recette change (et qu'aucun mealCourse explicite n'est fourni),
+  // hériter le type de plat de la nouvelle recette — ou le vider sans recette
+  if ('recipeId' in data && !('mealCourse' in data)) {
+    data.mealCourse = data.recipeId ? await getRecipeMealCourse(data.recipeId) : null;
   }
 
   try {
@@ -128,60 +126,7 @@ export async function deleteMealPlan(id: string): Promise<{ error?: string }> {
   }
 }
 
-// Replanifier un repas (déplacer via drag & drop)
-// Plusieurs repas peuvent coexister sur un même créneau (date + type de repas)
-export async function replanMealPlan(
-  mealPlanId: string,
-  newDate: string,
-  newMealType: string
-): Promise<{ error?: string }> {
-  try {
-    await requireSession();
-    await db
-      .update(mealPlans)
-      .set({
-        date: newDate,
-        mealType: newMealType,
-        updatedAt: new Date().toISOString()
-      })
-      .where(eq(mealPlans.id, mealPlanId));
-
-    revalidatePath('/calendar');
-    return {};
-  } catch (error) {
-    console.error('Erreur lors de la replanification:', error);
-    return { error: 'Impossible de replanifier ce repas' };
-  }
-}
-
-// Récupérer tous les repas planifiés pour une période
-export async function getMealPlansByDateRange(
-  startDate: string,
-  endDate: string
-): Promise<MealPlan[]> {
-  try {
-    const mealPlansList = await db
-      .select()
-      .from(mealPlans)
-      .where(
-        or(
-          eq(mealPlans.date, startDate),
-          and(
-            gte(mealPlans.date, startDate),
-            lte(mealPlans.date, endDate)
-          )
-        )
-      )
-      .orderBy(mealPlans.date);
-
-    return mealPlansList as MealPlan[];
-  } catch (error) {
-    console.error('Erreur lors de la récupération des repas planifiés:', error);
-    return [];
-  }
-}
-
-// Récupérer tous les repas planifiés pour une période (version compatible avec le composant existant)
+// Récupérer tous les repas planifiés pour une période [startDate, endDate]
 export async function getMealPlans(
   startDate: string,
   endDate: string
@@ -191,12 +136,9 @@ export async function getMealPlans(
       .select()
       .from(mealPlans)
       .where(
-        or(
-          eq(mealPlans.date, startDate),
-          and(
-            gte(mealPlans.date, startDate),
-            lte(mealPlans.date, endDate)
-          )
+        and(
+          gte(mealPlans.date, startDate),
+          lte(mealPlans.date, endDate)
         )
       )
       .orderBy(mealPlans.date);
@@ -208,38 +150,7 @@ export async function getMealPlans(
   }
 }
 
-// Récupérer tous les repas planifiés
-export async function getAllMealPlans(): Promise<MealPlan[]> {
-  try {
-    const mealPlansList = await db
-      .select()
-      .from(mealPlans)
-      .orderBy(mealPlans.date);
-
-    return mealPlansList as MealPlan[];
-  } catch (error) {
-    console.error('Erreur lors de la récupération de tous les repas planifiés:', error);
-    return [];
-  }
-}
-
-// Récupérer un repas planifié par ID
-export async function getMealPlanById(id: string): Promise<MealPlan | null> {
-  try {
-    const [mealPlan] = await db
-      .select()
-      .from(mealPlans)
-      .where(eq(mealPlans.id, id))
-      .limit(1);
-
-    return mealPlan as MealPlan | null;
-  } catch (error) {
-    console.error('Erreur lors de la récupération du repas planifié:', error);
-    return null;
-  }
-}
-
-// Fonction compatible avec le composant existant (addMealPlan)
+// Ajouter un repas planifié (appelé depuis les modals du PlannerBoard)
 export async function addMealPlan(
   prevState: any,
   formData: FormData
@@ -258,22 +169,39 @@ export async function addMealPlan(
     const parsed = mealPlanInput.safeParse(raw);
 
     if (!parsed.success) {
+      const firstError = Object.values(parsed.error.flatten().fieldErrors).flat()[0];
       return {
         success: false,
-        message: 'Données invalides',
+        message: firstError || 'Données invalides',
         errors: parsed.error.flatten().fieldErrors
       };
+    }
+
+    const data = parsed.data;
+
+    // Pas de planification dans le passé
+    if (data.date < todayLocalStr()) {
+      return {
+        success: false,
+        message: 'Impossible de planifier un repas dans le passé',
+        errors: { date: ['Impossible de planifier un repas dans le passé'] }
+      };
+    }
+
+    // Hériter le type de plat de la recette si non fourni
+    if (data.recipeId && !data.mealCourse) {
+      data.mealCourse = await getRecipeMealCourse(data.recipeId);
     }
 
     const now = new Date().toISOString();
 
     const [mealPlan] = await db
       .insert(mealPlans)
-      .values({ ...parsed.data, createdAt: now, updatedAt: now })
+      .values({ ...data, createdAt: now, updatedAt: now })
       .returning();
 
     revalidatePath('/calendar');
-    
+
     return {
       success: true,
       message: 'Repas planifié ajouté avec succès',
@@ -285,43 +213,6 @@ export async function addMealPlan(
       success: false,
       message: 'Une erreur est survenue lors de l\'ajout',
       errors: { general: ['Une erreur est survenue'] }
-    };
-  }
-}
-
-// Fonction compatible avec le composant existant (deleteMealPlan avec formData)
-export async function deleteMealPlanFromForm(
-  prevState: any,
-  formData: FormData
-): Promise<MealPlanFormResult> {
-  try {
-    await requireSession();
-    const id = formData.get('id') as string;
-    
-    if (!id) {
-      return {
-        success: false,
-        message: 'ID manquant',
-        errors: { id: ['L\'ID est requis'] }
-      };
-    }
-
-    await db
-      .delete(mealPlans)
-      .where(eq(mealPlans.id, id));
-
-    revalidatePath('/calendar');
-    
-    return {
-      success: true,
-      message: 'Repas planifié supprimé avec succès'
-    };
-  } catch (error) {
-    console.error('Erreur lors de la suppression du repas planifié:', error);
-    return {
-      success: false,
-      message: 'Impossible de supprimer ce repas planifié',
-      errors: { general: ['Impossible de supprimer ce repas planifié'] }
     };
   }
 }
