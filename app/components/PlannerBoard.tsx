@@ -25,6 +25,11 @@ interface PlannerBoardProps {
   footer?: ReactNode;
   // Afficher la navigation par mois en plus de la navigation par jour (page calendrier)
   enableMonthNavigation?: boolean;
+  // Panneau dépliable de recettes draggables : glisser une recette vers un
+  // jour/créneau crée directement un repas planifié (page calendrier)
+  enableRecipePalette?: boolean;
+  // Nombre de couverts par défaut (page de paramétrage) pour les créations
+  defaultServings?: number;
 }
 
 // Données d'un jour affiché dans la grille
@@ -166,6 +171,27 @@ function DeleteDropZone({ label }: { label: string }) {
         </span>
       </div>
     </div>
+  );
+}
+
+// Puce de recette draggable (palette) : un drag de type « recette », distinct
+// des badges de repas ({ plan }). Le dépôt crée un repas planifié.
+function RecipePaletteChip({ recipe }: { recipe: Recipe }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `recipe-palette:${recipe.id}`,
+    data: { recipe },
+  });
+
+  return (
+    <button
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      title={`Glissez vers un jour ou un créneau pour planifier : ${recipe.title}`}
+      className={`px-2 py-0.5 rounded-full bg-gray-100 text-gray-800 text-xs truncate max-w-[140px] cursor-grab active:cursor-grabbing touch-none ${isDragging ? 'opacity-30' : ''}`}
+    >
+      {recipe.title}
+    </button>
   );
 }
 
@@ -770,7 +796,7 @@ function MealPlanActionsModal({
 
 // Composant principal : calendrier de planification réutilisable
 // (page d'accueil : 7 jours en 1-3-3 ; page calendrier : 19 jours en 1-3-3-3-3-3-3)
-export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false }: PlannerBoardProps) {
+export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false, enableRecipePalette = false, defaultServings }: PlannerBoardProps) {
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -793,6 +819,10 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
 
   // Repas en cours de drag & drop
   const [activeDragPlan, setActiveDragPlan] = useState<MealPlan | null>(null);
+  // Recette en cours de drag depuis la palette (type de drag distinct des repas)
+  const [activeDragRecipe, setActiveDragRecipe] = useState<Recipe | null>(null);
+  // Panneau de recettes draggables, replié par défaut
+  const [showRecipePalette, setShowRecipePalette] = useState(false);
   // Clic vs drag : le drag démarre après 6px de mouvement, le clic ouvre toujours le modal
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -997,16 +1027,60 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
 
   // Début du drag : mémoriser le repas déplacé
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveDragPlan((event.active.data.current?.plan as MealPlan) ?? null);
+    const dragData = event.active.data.current as { plan?: MealPlan; recipe?: Recipe } | undefined;
+    setActiveDragPlan((dragData?.plan as MealPlan) ?? null);
+    setActiveDragRecipe((dragData?.recipe as Recipe) ?? null);
   };
 
-  const handleDragCancel = () => setActiveDragPlan(null);
+  const handleDragCancel = () => {
+    setActiveDragPlan(null);
+    setActiveDragRecipe(null);
+  };
 
   // Fin du drag : replanifier vers la zone de dépôt ou supprimer
   const handleDragEnd = async (event: DragEndEvent) => {
     const plan = event.active.data.current?.plan as MealPlan | undefined;
+    const recipe = event.active.data.current?.recipe as Recipe | undefined;
     const over = event.over;
+    setActiveDragRecipe(null);
     setActiveDragPlan(null);
+
+    // Drag depuis la palette de recettes : dépôt = création d'un repas planifié
+    if (!plan && recipe) {
+      // La zone de suppression ne s'applique pas aux recettes
+      if (!over || over.id === DELETE_ZONE_ID) return;
+
+      const overData = over.data.current as { date?: string; mealType?: string } | undefined;
+      if (!overData?.date) return;
+
+      const targetDate = overData.date;
+      // Cellule jour + type de repas -> ce type ; en-tête de date -> Dîner par défaut
+      const targetMealType = (overData.mealType as MealType) || 'dinner';
+
+      if (targetDate < formatDate(new Date())) {
+        setError('Impossible de planifier un repas dans le passé');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('date', targetDate);
+        formData.append('mealType', targetMealType);
+        formData.append('recipeId', recipe.id);
+        formData.append('servings', String(defaultServings ?? 4));
+
+        const result = await addMealPlan(null, formData);
+        if (result && result.success === false) {
+          setError(result.message || 'Erreur lors de la création du repas');
+          return;
+        }
+        await fetchMealPlans();
+      } catch (err) {
+        console.error('Erreur:', err);
+        setError('Erreur lors de la création du repas');
+      }
+      return;
+    }
 
     if (!plan || !over) return;
 
@@ -1275,7 +1349,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
     >
     <section className="w-full max-w-4xl mx-auto mb-3">
       <div className="bg-white rounded-lg shadow-sm p-3">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-3">
             <h2 className="text-base sm:text-lg font-bold text-gray-800 capitalize">
               {startDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
@@ -1311,7 +1385,38 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
           >
             Aujourd'hui
           </button>
+          {enableRecipePalette && (
+            <button
+              onClick={() => setShowRecipePalette(open => !open)}
+              className={`px-3 py-1 rounded text-xs border transition-colors ${
+                showRecipePalette
+                  ? 'bg-accent text-white border-accent hover:bg-accent-hover'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+              aria-expanded={showRecipePalette}
+            >
+              Recettes
+            </button>
+          )}
         </div>
+
+        {/* Panneau de recettes draggables : déplier avec le bouton « Recettes » */}
+        {enableRecipePalette && showRecipePalette && (
+          <div className="mb-2 p-2 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1.5">
+              Glissez une recette vers un jour ou un créneau de repas pour la planifier :
+            </p>
+            {recipes.length === 0 ? (
+              <p className="text-sm text-gray-500">Aucune recette dans le catalogue.</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {recipes.map(recipe => (
+                  <RecipePaletteChip key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-4">Chargement...</div>
@@ -1376,6 +1481,11 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
           className={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[activeDragPlan.mealType]} text-xs truncate shadow-lg border border-gray-300 cursor-grabbing`}
         >
           {getPlanDisplayText(activeDragPlan)}
+        </div>
+      )}
+      {activeDragRecipe && (
+        <div className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-800 text-xs truncate max-w-[140px] shadow-lg border border-gray-300 cursor-grabbing">
+          {activeDragRecipe.title}
         </div>
       )}
     </DragOverlay>
