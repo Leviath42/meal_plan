@@ -25,6 +25,8 @@
 #   bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes
 # =============================================================================
 
+SCRIPT_VERSION="v2"
+
 set -eu
 # En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
 trap 'printf "\nERREUR ligne %s : %s\n" "$LINENO" "$BASH_COMMAND" >&2' ERR
@@ -53,6 +55,8 @@ die()  { printf '\033[1;31mERREUR: %s\033[0m\n' "$1" >&2; exit 1; }
 # Verifications prealables
 # ---------------------------------------------------------------------------
 bold "Installation de Meal Plan (beta) sur Proxmox"
+printf "Version du script : %s (toute erreur affiche un message ERREUR ligne N)
+" "$SCRIPT_VERSION"
 
 [ "$(id -u)" -eq 0 ] || die "Ce script doit etre lance en root sur l'hote Proxmox."
 command -v pct >/dev/null 2>&1 || die "Commande 'pct' introuvable : ce script doit etre execute sur l'hote Proxmox, pas dans un conteneur."
