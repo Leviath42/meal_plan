@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { registerUser, updateUserRole, deleteUser } from '@/app/actions/auth';
 
@@ -133,8 +133,15 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     return actions;
   };
 
+  // Rediriger les non-admin dans un effet : un push pendant le rendu
+  // est un anti-pattern React
+  useEffect(() => {
+    if (session && session.user?.role !== 'ADMIN') {
+      router.push('/');
+    }
+  }, [session, router]);
+
   if (session && session.user?.role !== 'ADMIN') {
-    router.push('/');
     return null;
   }
 

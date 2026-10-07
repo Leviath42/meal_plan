@@ -7,16 +7,12 @@ import { resetPasswordWithSecurityQuestion, getUserSecurityQuestion } from '@/ap
 
 interface ResetPasswordClientProps {
   email?: string;
-  step?: string;
   securityQuestion: string | null;
-  hasSecurityQuestion: boolean;
 }
 
 export default function ResetPasswordClient({ 
   email: initialEmail, 
-  step: initialStep,
   securityQuestion,
-  hasSecurityQuestion 
 }: ResetPasswordClientProps) {
   const router = useRouter();
   const [formState, setFormState] = useState<{
@@ -26,7 +22,6 @@ export default function ResetPasswordClient({
   } | null>(null);
   const [pending, setPending] = useState(false);
   const [email, setEmail] = useState(initialEmail || '');
-  const [step, setStep] = useState(initialStep || '1');
   const [currentQuestion, setCurrentQuestion] = useState(securityQuestion);
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -49,7 +44,6 @@ export default function ResetPasswordClient({
       
       if (questionData.securityQuestion) {
         setCurrentQuestion(questionData.securityQuestion);
-        setStep('1');
         setFormState({ success: true, message: 'Question secrète trouvée' });
       } else {
         // Pas de question secrète configurée pour cet email
@@ -112,7 +106,7 @@ export default function ResetPasswordClient({
   };
 
   // Étape 1 : Demander l'email
-  if (step === '1' && !currentQuestion) {
+  if (!currentQuestion) {
     return (
       <main className="min-h-[calc(100vh-3rem)] sm:min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-3 bg-gray-50">
         <div className="w-full max-w-md">
@@ -165,7 +159,7 @@ export default function ResetPasswordClient({
   }
 
   // Étape 2 : Répondre à la question secrète et définir un nouveau mot de passe
-  if (step === '2' || (step === '1' && currentQuestion)) {
+  if (currentQuestion) {
     return (
       <main className="min-h-[calc(100vh-3rem)] sm:min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-3 bg-gray-50">
         <div className="w-full max-w-md">
@@ -258,42 +252,6 @@ export default function ResetPasswordClient({
       </main>
     );
   }
-
-  // Cas par défaut : demander l'email
-  return (
-    <main className="min-h-[calc(100vh-3rem)] sm:min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-3 bg-gray-50">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Réinitialiser le mot de passe</h1>
-          <p className="text-xs sm:text-sm text-gray-600 mb-6">
-            Entrez votre adresse email pour commencer la réinitialisation.
-          </p>
-
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ton@email.com"
-                required
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-            
-            <button type="submit" disabled={pending} className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50">
-              {pending ? 'En cours...' : 'Continuer'}
-            </button>
-          </form>
-
-          <div className="mt-4 text-center text-xs text-gray-500">
-            <Link href="/login" className="text-accent hover:underline">Se connecter</Link>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
+  // Sans question secrete connue, demander l'email
+  return null;
 }
