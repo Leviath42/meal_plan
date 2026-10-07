@@ -25,7 +25,7 @@
 #   bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes
 # =============================================================================
 
-SCRIPT_VERSION="v2"
+SCRIPT_VERSION="v3"
 
 set -eu
 # En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
@@ -39,10 +39,23 @@ ADMIN_EMAIL="${2:-}"
 ADMIN_PASSWORD="${3:-}"
 SEED="${4:-no}"
 
-BRIDGE="${BRIDGE:-vmbr0}"
-ROOTFS="${ROOTFS:-local-lvm:5}"
+BRIDGE="${BRIDGE:-}"
+ROOTFS="${ROOTFS:-}"
 TZ="${TZ:-Europe/Paris}"
 PORT="${PORT:-3000}"
+# Pont reseau : auto-detection si non fourni
+if [ -z "$BRIDGE" ]; then
+  BRIDGE="$(ip -o link show type bridge 2>/dev/null | awk -F': ' '{print $2}' | head -n1)"
+fi
+[ -n "$BRIDGE" ] || die "Aucun pont reseau detecte. Relance avec BRIDGE=<ton pont> (ex. BRIDGE=vmbr0)."
+
+# Stockage disque du conteneur : auto-detection si non fourni
+if [ -z "$ROOTFS" ]; then
+  ROOTDISK="$(pvesm status --content rootdir 2>/dev/null | awk 'NR>1 && NF>=3 {print $1}' | head -n1)"
+  [ -n "$ROOTDISK" ] || die "Aucun stockage avec le contenu 'Container' (rootdir). Relance avec ROOTFS=<stockage>:<Go> (ex. ROOTFS=local-lvm:5)."
+  ROOTFS="${ROOTDISK}:5"
+fi
+
 CT_HOSTNAME="meal-plan"
 APP_DIR="/opt/meal_plan"
 REPO_URL="https://github.com/Leviath42/meal_plan.git"
@@ -81,13 +94,13 @@ step "1/7 Preparation du template Debian 12"
 
 pveam update >/dev/null 2>&1 || true
 
-if ! pveam status >/dev/null 2>&1; then
-  die "La commande 'pveam status' echoue. Lance-la a la main pour voir l'erreur."
+if ! command -v pvesm >/dev/null 2>&1; then
+  die "Commande 'pvesm' introuvable : ce script doit etre execute sur l'hote Proxmox."
 fi
 
-# Stockage de templates : premiere ligne de donnees de 'pveam status'
-STORAGE="$(pveam status 2>/dev/null | awk 'NR>1 && NF>=3 {print $1}' | head -n1)"
-[ -n "$STORAGE" ] || die "Aucun stockage de templates LXC trouve via 'pveam status'. Ajoute le contenu 'CT templates' a un stockage (Datacenter > Storage) ou relance avec STORAGE=<nom>."
+# Stockage de templates : les stockages dont le contenu inclut vztmpl
+STORAGE="$(pvesm status --content vztmpl 2>/dev/null | awk 'NR>1 && NF>=3 {print $1}' | head -n1)"
+[ -n "$STORAGE" ] || die "Aucun stockage avec le contenu 'CT templates' (vztmpl). Datacenter > Storage > Edit : ajoute 'CT templates' au contenu d'un stockage, puis relance."
 printf 'Stockage de templates detecte : %s\n' "$STORAGE"
 
 # Template deja telecharge ?
