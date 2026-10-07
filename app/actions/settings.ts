@@ -4,8 +4,10 @@ import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { appSettings } from '@/lib/db/schema';
-import { requireAdmin } from '@/lib/auth-guards';
+import { appSettings, users } from '@/lib/db/schema';
+import { requireAdmin, requireSession } from '@/lib/auth-guards';
+import { auth } from '@/lib/auth';
+import { getUserMinDaysBetween } from '@/lib/meal-planning';
 
 // Paramètres de l'application (une seule ligne, id = 1, partagée par tous)
 export interface AppSettings {
@@ -71,6 +73,55 @@ export async function updateDefaultServings(servings: number): Promise<UpdateSet
     return { success: true, message: 'Paramètres enregistrés' };
   } catch (error) {
     console.error('Erreur lors de la mise à jour des paramètres:', error);
+    const message = error instanceof Error && error.message
+      ? error.message
+      : 'Une erreur est survenue lors de l\'enregistrement';
+    return { success: false, message };
+  }
+}
+
+// Validation de l'intervalle minimum entre deux plans de la même recette
+const minDaysBetweenInput = z.coerce
+  .number()
+  .int('L\'intervalle doit être un nombre entier de jours')
+  .min(0, 'Le minimum est 0 (contrôle désactivé)')
+  .max(60, 'Maximum 60 jours');
+
+// Antidoublon (F09) : intervalle minimum entre deux planifications de la
+// même recette, propre à l'utilisateur connecté (défaut : 7 jours, 0 = désactivé).
+// Utilisé par la page /settings pour afficher la préférence courante.
+export async function getCurrentUserMinDaysBetween(): Promise<number> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return 7;
+  return await getUserMinDaysBetween(userId);
+}
+
+// Mettre à jour l'intervalle antidoublon de l'utilisateur connecté
+// (préférence personnelle : pas réservée aux administrateurs)
+export async function updateMinDaysBetween(days: number): Promise<UpdateSettingsResult> {
+  try {
+    const session = await requireSession();
+    const userId = session.user?.id;
+    if (!userId) {
+      return { success: false, message: 'Action refusée : vous devez être connecté' };
+    }
+
+    const parsed = minDaysBetweenInput.safeParse(days);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.issues[0]?.message ?? 'Valeur invalide' };
+    }
+
+    await db
+      .update(users)
+      .set({ minDaysBetween: parsed.data, updatedAt: new Date().toISOString() })
+      .where(eq(users.id, userId));
+
+    revalidatePath('/settings');
+
+    return { success: true, message: 'Préférence enregistrée' };
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la préférence:', error);
     const message = error instanceof Error && error.message
       ? error.message
       : 'Une erreur est survenue lors de l\'enregistrement';

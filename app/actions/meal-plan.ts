@@ -11,7 +11,12 @@ import {
   type MealPlan,
   type MealPlanFormResult
 } from '@/app/types/meal-plan';
-import { bumpRecipeLastServedAt } from '@/lib/meal-planning';
+import {
+  bumpRecipeLastServedAt,
+  getUserMinDaysBetween,
+  findPlanInWindow,
+  antidoublonMessage
+} from '@/lib/meal-planning';
 
 // Helper pour convertir FormData en Record<string, string>
 function formDataToRecord(formData: FormData): Record<string, string> {
@@ -54,7 +59,9 @@ export async function updateMealPlan(
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
-  await requireSession();
+  const session = await requireSession();
+  const userId = session.user?.id;
+
   const rawData = formDataToRecord(formData);
 
   const raw: Record<string, string | null> = { ...rawData };
@@ -111,6 +118,32 @@ export async function updateMealPlan(
   // Recette et date effectives après la mise à jour partielle
   const effectiveRecipeId = 'recipeId' in data ? data.recipeId : existing.recipeId;
   const effectiveDate = data.date !== undefined ? data.date : existing.date;
+
+  // Antidoublon (F09) : refuser si la recette (nouvelle ou inchangée) est
+  // déjà planifiée à moins de X jours de la date effective, hors ce plan
+  if (
+    userId &&
+    ('recipeId' in data || data.date !== undefined) &&
+    effectiveRecipeId &&
+    effectiveDate
+  ) {
+    const minDays = await getUserMinDaysBetween(userId);
+    if (minDays > 0) {
+      const conflict = await findPlanInWindow({
+        recipeId: effectiveRecipeId,
+        date: effectiveDate,
+        minDays,
+        excludePlanId: id
+      });
+      if (conflict) {
+        const message = antidoublonMessage(conflict.date, minDays);
+        return {
+          errors: { general: [message] },
+          values: rawData
+        };
+      }
+    }
+  }
 
   try {
     // better-sqlite3 est synchrone : callback de transaction synchrone,
@@ -186,7 +219,8 @@ export async function addMealPlan(
   formData: FormData
 ): Promise<MealPlanFormResult> {
   try {
-    await requireSession();
+    const session = await requireSession();
+    const userId = session.user?.id;
 
     const rawData = formDataToRecord(formData);
 
@@ -216,6 +250,27 @@ export async function addMealPlan(
         message: 'Impossible de planifier un repas dans le passé',
         errors: { date: ['Impossible de planifier un repas dans le passé'] }
       };
+    }
+
+    // Antidoublon (F09) : refuser une recette déjà planifiée à moins de X jours
+    // de la nouvelle date (fenêtre [date - X, date + X], dates ISO)
+    if (data.recipeId && userId) {
+      const minDays = await getUserMinDaysBetween(userId);
+      if (minDays > 0) {
+        const conflict = await findPlanInWindow({
+          recipeId: data.recipeId,
+          date: data.date,
+          minDays
+        });
+        if (conflict) {
+          const message = antidoublonMessage(conflict.date, minDays);
+          return {
+            success: false,
+            message,
+            errors: { recipeId: [message] }
+          };
+        }
+      }
     }
 
     // Hériter le type de plat de la recette si non fourni

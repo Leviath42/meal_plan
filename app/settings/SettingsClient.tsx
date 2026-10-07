@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useTransition, type FormEvent } from 'react';
-import { updateDefaultServings } from '@/app/actions/settings';
+import { updateDefaultServings, updateMinDaysBetween } from '@/app/actions/settings';
 
 interface SettingsClientProps {
   role?: string | null;
   defaultServings: number;
+  // Antidoublon (F09) : intervalle minimum de l'utilisateur connecté
+  minDaysBetween: number;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -16,10 +18,14 @@ const ROLE_LABELS: Record<string, string> = {
 
 // Page de paramétrage : seul l'administrateur peut modifier les paramètres,
 // les autres membres les consultent en lecture seule.
-export default function SettingsClient({ role, defaultServings }: SettingsClientProps) {
+export default function SettingsClient({ role, defaultServings, minDaysBetween }: SettingsClientProps) {
   const [servings, setServings] = useState<string>(String(defaultServings));
   const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+  // Antidoublon (F09) : préférence personnelle de l'utilisateur
+  const [minDays, setMinDays] = useState<string>(String(minDaysBetween));
+  const [minDaysFeedback, setMinDaysFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [isMinDaysPending, startMinDaysTransition] = useTransition();
 
   const isAdmin = role === 'ADMIN';
   const roleLabel = role ? ROLE_LABELS[role] ?? role : 'Inconnu';
@@ -39,6 +45,26 @@ export default function SettingsClient({ role, defaultServings }: SettingsClient
         setFeedback({ success: result.success, message: result.message });
       } catch {
         setFeedback({ success: false, message: 'Une erreur est survenue lors de l\'enregistrement' });
+      }
+    });
+  };
+
+  // Enregistrer l'intervalle antidoublon (F09)
+  const handleMinDaysSubmit = (event: FormEvent) => {
+    event.preventDefault();
+
+    const value = parseInt(minDays, 10);
+    if (Number.isNaN(value)) {
+      setMinDaysFeedback({ success: false, message: 'L\'intervalle doit être un nombre entier de jours' });
+      return;
+    }
+
+    startMinDaysTransition(async () => {
+      try {
+        const result = await updateMinDaysBetween(value);
+        setMinDaysFeedback({ success: result.success, message: result.message });
+      } catch {
+        setMinDaysFeedback({ success: false, message: 'Une erreur est survenue lors de l\'enregistrement' });
       }
     });
   };
@@ -92,6 +118,41 @@ export default function SettingsClient({ role, defaultServings }: SettingsClient
         {feedback && (
           <p className={`text-sm ${feedback.success ? 'text-green-600' : 'text-red-500'}`}>
             {feedback.message}
+          </p>
+        )}
+      </form>
+
+      {/* Mes préférences : intervalle antidoublon (F09) */}
+      <form onSubmit={handleMinDaysSubmit} className="border-t border-gray-200 pt-3 space-y-3">
+        <h2 className="text-sm font-medium text-gray-700">Mes préférences</h2>
+        <div>
+          <label htmlFor="min-days-between" className="block text-sm font-medium text-gray-700 mb-1">
+            Intervalle minimum entre deux plans de la même recette (jours)
+          </label>
+          <input
+            id="min-days-between"
+            type="number"
+            value={minDays}
+            onChange={(e) => setMinDays(e.target.value)}
+            min="0"
+            max="60"
+            className="w-full sm:w-32 p-2 border rounded bg-white text-gray-800"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Une recette ne peut pas être replanifiée à moins de ce nombre de jours
+            d'une autre planification. 0 = contrôle désactivé (défaut : 7 jours).
+          </p>
+        </div>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover"
+          disabled={isMinDaysPending}
+        >
+          {isMinDaysPending ? 'Enregistrement...' : 'Enregistrer'}
+        </button>
+        {minDaysFeedback && (
+          <p className={`text-sm ${minDaysFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
+            {minDaysFeedback.message}
           </p>
         )}
       </form>
