@@ -18,14 +18,14 @@
 #   seed           : "yes" pour charger les 45 recettes de demo (defaut: no)
 #
 # Variables d'environnement optionnelles (a definir avant d'appeler le script) :
-#   BRIDGE : pont reseau Proxmox (defaut: vmbr0)
-#   ROOTFS : stockage disque du conteneur (defaut: local-lvm:5  => 5 Go)
+#   BRIDGE : pont reseau Proxmox (defaut : auto-detecte)
+#   ROOTFS : stockage disque du conteneur (defaut : auto-detecte, 5 Go)
 #
 # Exemple :
 #   bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes
 # =============================================================================
 
-SCRIPT_VERSION="v3"
+SCRIPT_VERSION="v4"
 
 set -eu
 # En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
@@ -43,20 +43,6 @@ BRIDGE="${BRIDGE:-}"
 ROOTFS="${ROOTFS:-}"
 TZ="${TZ:-Europe/Paris}"
 PORT="${PORT:-3000}"
-# Pont reseau : auto-detection si non fourni
-if [ -z "$BRIDGE" ]; then
-  BRIDGE="$(ip -o link show type bridge 2>/dev/null | awk -F': ' '{print $2}' | head -n1)"
-fi
-[ -n "$BRIDGE" ] || die "Aucun pont reseau detecte. Relance avec BRIDGE=<ton pont> (ex. BRIDGE=vmbr0)."
-
-# Stockage disque du conteneur : auto-detection si non fourni
-if [ -z "$ROOTFS" ]; then
-  ROOTDISK="$(pvesm status --content rootdir 2>/dev/null | awk 'NR>1 && NF>=3 {print $1}' | head -n1)"
-  [ -n "$ROOTDISK" ] || die "Aucun stockage avec le contenu 'Container' (rootdir). Relance avec ROOTFS=<stockage>:<Go> (ex. ROOTFS=local-lvm:5)."
-  ROOTFS="${ROOTDISK}:5"
-fi
-
-CT_HOSTNAME="meal-plan"
 APP_DIR="/opt/meal_plan"
 REPO_URL="https://github.com/Leviath42/meal_plan.git"
 
@@ -68,11 +54,11 @@ die()  { printf '\033[1;31mERREUR: %s\033[0m\n' "$1" >&2; exit 1; }
 # Verifications prealables
 # ---------------------------------------------------------------------------
 bold "Installation de Meal Plan (beta) sur Proxmox"
-printf "Version du script : %s (toute erreur affiche un message ERREUR ligne N)
-" "$SCRIPT_VERSION"
+printf "Version du script : %s (toute erreur affiche un message ERREUR ligne N)\n" "$SCRIPT_VERSION"
 
 [ "$(id -u)" -eq 0 ] || die "Ce script doit etre lance en root sur l'hote Proxmox."
 command -v pct >/dev/null 2>&1 || die "Commande 'pct' introuvable : ce script doit etre execute sur l'hote Proxmox, pas dans un conteneur."
+command -v pvesm >/dev/null 2>&1 || die "Commande 'pvesm' introuvable : ce script doit etre execute sur l'hote Proxmox."
 [ -n "$CTID" ] || die "Usage: bash proxmox-install.sh <CTID> <ADMIN_EMAIL> [ADMIN_PASSWORD] [seed]
 Exemple: bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes"
 case "$CTID" in *[!0-9]*) die "Le CTID doit etre un nombre (ex. 120).";; esac
@@ -87,6 +73,12 @@ if [ -z "$ADMIN_PASSWORD" ]; then
   printf '(mot de passe admin non fourni : un mot de passe aleatoire sera genere et affiche a la fin)\n'
 fi
 
+# Pont reseau : auto-detection si non fourni
+if [ -z "$BRIDGE" ]; then
+  BRIDGE="$(ip -o link show type bridge 2>/dev/null | awk -F': ' '{print $2}' | head -n1)"
+fi
+[ -n "$BRIDGE" ] || die "Aucun pont reseau detecte. Relance avec BRIDGE=<ton pont> (ex. BRIDGE=vmbr0)."
+
 # ---------------------------------------------------------------------------
 # Template Debian 12 : detection du stockage et telechargement si besoin
 # ---------------------------------------------------------------------------
@@ -94,36 +86,54 @@ step "1/7 Preparation du template Debian 12"
 
 pveam update >/dev/null 2>&1 || true
 
-if ! command -v pvesm >/dev/null 2>&1; then
-  die "Commande 'pvesm' introuvable : ce script doit etre execute sur l'hote Proxmox."
-fi
-
 # Stockage de templates : les stockages dont le contenu inclut vztmpl
 STORAGE="$(pvesm status --content vztmpl 2>/dev/null | awk 'NR>1 && NF>=3 {print $1}' | head -n1)"
 [ -n "$STORAGE" ] || die "Aucun stockage avec le contenu 'CT templates' (vztmpl). Datacenter > Storage > Edit : ajoute 'CT templates' au contenu d'un stockage, puis relance."
 printf 'Stockage de templates detecte : %s\n' "$STORAGE"
 
-# Template deja telecharge ?
-TPL_FILE="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $2}' | tail -n1)"
+# Template deja telecharge ? La 1re colonne de 'pveam list' est la reference
+# complete du volume (ex. local:vztmpl/debian-12-standard_...tar.zst)
+TPL_REF="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $1}' | tail -n1)"
 
-if [ -z "$TPL_FILE" ]; then
+if [ -z "$TPL_REF" ]; then
   printf "Telechargement du template Debian 12 dans %s...\n" "$STORAGE"
   TPL_NAME="$(pveam available 2>/dev/null | awk '/debian-12-standard/ {print $2}' | sort | tail -n1)"
   [ -n "$TPL_NAME" ] || die "Template Debian 12 introuvable dans 'pveam available'."
   pveam download "$STORAGE" "$TPL_NAME"
-  TPL_FILE="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $2}' | tail -n1)"
+  TPL_REF="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $1}' | tail -n1)"
 fi
-[ -n "$TPL_FILE" ] || die "Impossible d'obtenir le template Debian 12."
-printf 'Template utilise : %s\n' "$TPL_FILE"
+[ -n "$TPL_REF" ] || die "Impossible d'obtenir le template Debian 12."
+
+# Normaliser la reference : 'local:vztmpl/fichier', 'vztmpl/fichier' ou 'fichier'
+case "$TPL_REF" in
+  "$STORAGE":*) ;;
+  vztmpl/*) TPL_REF="${STORAGE}:${TPL_REF}" ;;
+  *) TPL_REF="${STORAGE}:vztmpl/${TPL_REF}" ;;
+esac
+printf 'Template utilise : %s\n' "$TPL_REF"
 
 CT_PASSWORD="$(openssl rand -base64 12)"
+
+# ---------------------------------------------------------------------------
+# Stockage disque du conteneur : auto-detection si non fourni
+# (avertissement : l'auto-detection prend le PREMIER stockage avec contenu
+#  'Container' — preciser ROOTFS si ce n'est pas celui souhaite)
+# ---------------------------------------------------------------------------
+if [ -z "$ROOTFS" ]; then
+  ROOTDISK="$(pvesm status --content rootdir 2>/dev/null | awk 'NR>1 && NF>=3 {print $1}' | head -n1)"
+  [ -n "$ROOTDISK" ] || die "Aucun stockage avec le contenu 'Container' (rootdir). Relance avec ROOTFS=<stockage>:<Go> (ex. ROOTFS=local-zfs:5)."
+  ROOTFS="${ROOTDISK}:5"
+  printf "Attention : stockage disque auto-detecte '%s'. Relance avec ROOTFS=<stockage>:5 si ce n'est pas celui voulu.\n" "$ROOTFS"
+fi
 
 # ---------------------------------------------------------------------------
 # Creation du conteneur
 # ---------------------------------------------------------------------------
 step "2/7 Creation du conteneur $CTID ($CT_HOSTNAME)"
 
-pct create "$CTID" "${STORAGE}:vztmpl/${TPL_FILE}" \
+CT_HOSTNAME="meal-plan"
+
+pct create "$CTID" "$TPL_REF" \
   --hostname "$CT_HOSTNAME" \
   --unprivileged 1 \
   --cores 1 \
