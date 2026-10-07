@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
+import { requireSession } from '@/lib/auth-guards';
 import { recipes, recipeIngredients } from '@/lib/db/schema';
 import { recipeInput } from '@/lib/validators/recipes';
 import { revalidatePath } from 'next/cache';
@@ -14,16 +15,11 @@ export type RecipeFormState = {
 } | null;
 
 // Helper pour convertir FormData en Record<string, string | number>
-function formDataToRecord(formData: FormData): Record<string, string | number> {
-  const record: Record<string, string | number> = {};
+function formDataToRecord(formData: FormData): Record<string, string> {
+  const record: Record<string, string> = {};
   for (const [key, value] of formData.entries()) {
     if (typeof value === 'string') {
-      // Essayer de parser en number si possible
-      if (!isNaN(Number(value))) {
-        record[key] = Number(value);
-      } else {
-        record[key] = value;
-      }
+      record[key] = value;
     }
   }
   return record;
@@ -33,6 +29,7 @@ export async function createRecipe(
   prevState: RecipeFormState,
   formData: FormData
 ): Promise<RecipeFormState> {
+  await requireSession();
   const rawData = formDataToRecord(formData);
   const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
   const parsed = recipeInput.safeParse({
@@ -50,26 +47,29 @@ export async function createRecipe(
 
   const { ingredients: items, ...recipeData } = parsed.data;
 
-  const [recipe] = await db
-    .insert(recipes)
-    .values(recipeData)
-    .returning({ id: recipes.id });
+  const recipeId = await db.transaction(async (tx) => {
+    const [recipe] = await tx
+      .insert(recipes)
+      .values(recipeData)
+      .returning({ id: recipes.id });
 
-  // Only insert ingredients if there are any
-  if (items.length > 0) {
-    await db.insert(recipeIngredients).values(
-      items.map((it) => ({ ...it, recipeId: recipe.id }))
-    );
-  }
+    if (items.length > 0) {
+      await tx.insert(recipeIngredients).values(
+        items.map((it) => ({ ...it, recipeId: recipe.id }))
+      );
+    }
+    return recipe.id;
+  });
 
   revalidatePath('/recipes');
-  redirect(`/recipes/${recipe.id}`);
+  redirect(`/recipes/${recipeId}`);
 }
 
 export async function updateRecipe(
   prevState: RecipeFormState,
   formData: FormData
 ): Promise<RecipeFormState> {
+  await requireSession();
   const id = String(formData.get('id'));
   const rawData = formDataToRecord(formData);
   const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
@@ -89,19 +89,20 @@ export async function updateRecipe(
 
   const { ingredients: items, ...recipeData } = parsed.data;
 
-  // Mettre à jour la recette
-  await db.update(recipes)
-    .set({ ...recipeData, updatedAt: new Date().toISOString() })
-    .where(eq(recipes.id, id));
+  // Mise à jour transactionnelle : recette + ingrédients, ou rien
+  await db.transaction(async (tx) => {
+    await tx.update(recipes)
+      .set({ ...recipeData, updatedAt: new Date().toISOString() })
+      .where(eq(recipes.id, id));
 
-  // Supprimer les anciens ingrédients et en ajouter les nouveaux
-  await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
-  
-  if (items.length > 0) {
-    await db.insert(recipeIngredients).values(
-      items.map((it) => ({ ...it, recipeId: id }))
-    );
-  }
+    await tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
+
+    if (items.length > 0) {
+      await tx.insert(recipeIngredients).values(
+        items.map((it) => ({ ...it, recipeId: id }))
+      );
+    }
+  });
 
   revalidatePath('/recipes');
   revalidatePath(`/recipes/${id}`);
@@ -109,6 +110,7 @@ export async function updateRecipe(
 }
 
 export async function deleteRecipe(id: string) {
+  await requireSession();
   await db.delete(recipes).where(eq(recipes.id, id));
   revalidatePath('/recipes');
   redirect('/recipes');
