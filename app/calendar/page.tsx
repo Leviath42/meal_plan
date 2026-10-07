@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { recipes } from '@/lib/db/schema';
 import PlannerBoard from '@/app/components/PlannerBoard';
+import { getAppSettings } from '@/app/actions/settings';
 
 export default async function CalendarPage() {
   // Récupérer les recettes pour le sélecteur
@@ -13,11 +14,14 @@ export default async function CalendarPage() {
     defaultServings: recipes.defaultServings,
   }).from(recipes).orderBy(recipes.title);
 
+  // Nombre de couverts par défaut (page de paramétrage)
+  const settings = await getAppSettings();
+
   return (
     <main className="px-3 sm:px-6 py-2 sm:py-3 max-w-4xl mx-auto">
       {/* Calendrier sur 19 jours (J → J+18) en structure 1-3-3-3-3-3-3,
           avec navigation par jour et par mois */}
-      <PlannerBoard recipes={allRecipes} daysCount={19} enableMonthNavigation enableRecipePalette />
+      <PlannerBoard recipes={allRecipes} daysCount={19} enableMonthNavigation enableRecipePalette defaultServings={settings.defaultServings} />
     </main>
   );
 }

@@ -202,17 +202,20 @@ function MealPlanCreationModal({
   date,
   recipes,
   onCreate,
+  defaultServings,
 }: {
   isOpen: boolean;
   onClose: () => void;
   date: string;
   recipes: Recipe[];
   onCreate: (data: { date: string; mealType: MealType; recipeId?: string | null; customNote?: string | null; servings: number }) => Promise<void>;
+  // Valeur pré-remplie du champ couverts (paramétrage de l'application)
+  defaultServings: number;
 }) {
   const [mealType, setMealType] = useState<MealType | ''>('dinner');
   const [recipeId, setRecipeId] = useState<string | ''>('');
   const [customNote, setCustomNote] = useState<string>('');
-  const [servings, setServings] = useState<string>('4');
+  const [servings, setServings] = useState<string>(String(defaultServings));
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -223,7 +226,7 @@ function MealPlanCreationModal({
       setMealType('dinner');
       setRecipeId('');
       setCustomNote('');
-      setServings('4');
+      setServings(String(defaultServings));
       setError(null);
       setIsLoading(false);
     }
@@ -252,14 +255,14 @@ function MealPlanCreationModal({
         mealType: mealType as MealType,
         recipeId: recipeId || null,
         customNote: customNote || null,
-        servings: parseInt(servings, 10) || 4,
+        servings: parseInt(servings, 10) || defaultServings,
       });
 
       // Réinitialiser le formulaire
       setMealType('dinner');
       setRecipeId('');
       setCustomNote('');
-      setServings('4');
+      setServings(String(defaultServings));
       onClose();
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : 'Impossible de créer ce repas planifié');
@@ -271,7 +274,7 @@ function MealPlanCreationModal({
     setMealType('dinner');
     setRecipeId('');
     setCustomNote('');
-    setServings('4');
+    setServings(String(defaultServings));
     setError(null);
     onClose();
   };
@@ -1449,6 +1452,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
           }}
           date={selectedDateForCreation || ''}
           recipes={recipes}
+          defaultServings={defaultServings ?? 4}
           onCreate={handleCreateMealPlan}
         />
       )}
