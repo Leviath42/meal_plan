@@ -10,7 +10,7 @@ export interface Recipe {
 // Schéma de validation pour les repas planifiés
 export const mealPlanInput = z.object({
   // Format ISO AAAA-MM-JJ obligatoire (les comparaisons de dates sont lexicographiques)
-  date: z.string().regex(/^d{4}-d{2}-d{2}$/, 'Format de date invalide (AAAA-MM-JJ)'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (AAAA-MM-JJ)'),
   mealType: z.string().min(1, 'Le type de repas est requis'),
   recipeId: z.string().uuid().optional().nullable(),
   customNote: z.string().optional().nullable(),

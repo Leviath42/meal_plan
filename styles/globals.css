@@ -70,3 +70,14 @@
 :root.dark body {
   color: #f3f4f6;
 }
+
+/* Champs de formulaire natifs sans classe de fond : le navigateur les rend
+   blancs par défaut, ce qui échappe au remappage ci-dessus — en mode sombre,
+   le texte hérité clair y devient illisible. On leur applique les couleurs
+   remappées (équivalent de bg-white text-gray-800 sur chaque champ). */
+:root.dark body input,
+:root.dark body select,
+:root.dark body textarea {
+  background-color: var(--color-white);
+  color: var(--color-gray-800);
+}

@@ -181,7 +181,7 @@ function MealPlanCreationModal({
   const [mealType, setMealType] = useState<MealType | ''>('dinner');
   const [recipeId, setRecipeId] = useState<string | ''>('');
   const [customNote, setCustomNote] = useState<string>('');
-  const [servings, setServings] = useState<number>(4);
+  const [servings, setServings] = useState<string>('4');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,7 +192,7 @@ function MealPlanCreationModal({
       setMealType('dinner');
       setRecipeId('');
       setCustomNote('');
-      setServings(4);
+      setServings('4');
       setError(null);
       setIsLoading(false);
     }
@@ -221,14 +221,14 @@ function MealPlanCreationModal({
         mealType: mealType as MealType,
         recipeId: recipeId || null,
         customNote: customNote || null,
-        servings: servings || 4,
+        servings: parseInt(servings, 10) || 4,
       });
 
       // Réinitialiser le formulaire
       setMealType('dinner');
       setRecipeId('');
       setCustomNote('');
-      setServings(4);
+      setServings('4');
       onClose();
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : 'Impossible de créer ce repas planifié');
@@ -240,7 +240,7 @@ function MealPlanCreationModal({
     setMealType('dinner');
     setRecipeId('');
     setCustomNote('');
-    setServings(4);
+    setServings('4');
     setError(null);
     onClose();
   };
@@ -278,7 +278,7 @@ function MealPlanCreationModal({
                 <select
                   value={mealType}
                   onChange={(e) => setMealType(e.target.value as MealType | '')}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded bg-white text-gray-800"
                 >
                   {(Object.keys(MEAL_TYPE_LABELS) as MealType[]).map(type => (
                     <option key={type} value={type}>
@@ -296,7 +296,7 @@ function MealPlanCreationModal({
                 <select
                   value={recipeId}
                   onChange={(e) => setRecipeId(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded bg-white text-gray-800"
                   disabled={!mealType}
                 >
                   <option value="">-- Aucune recette --</option>
@@ -318,7 +318,7 @@ function MealPlanCreationModal({
                   value={customNote}
                   onChange={(e) => setCustomNote(e.target.value)}
                   placeholder="Ex: Soirée Pizza, Barbecue..."
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded bg-white text-gray-800"
                 />
               </div>
 
@@ -330,10 +330,10 @@ function MealPlanCreationModal({
                 <input
                   type="number"
                   value={servings}
-                  onChange={(e) => setServings(parseInt(e.target.value) || 4)}
+                  onChange={(e) => setServings(e.target.value)}
                   min="1"
                   max="20"
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded bg-white text-gray-800"
                 />
               </div>
 
@@ -386,7 +386,7 @@ function MealPlanActionsModal({
   const [newMealType, setNewMealType] = useState<MealType | null>(null);
   const [newRecipeId, setNewRecipeId] = useState<string | null>(null);
   const [newCustomNote, setNewCustomNote] = useState<string>('');
-  const [newServings, setNewServings] = useState<number>(4);
+  const [newServings, setNewServings] = useState<string>('4');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -397,7 +397,7 @@ function MealPlanActionsModal({
       setNewMealType(null);
       setNewRecipeId(null);
       setNewCustomNote('');
-      setNewServings(4);
+      setNewServings('4');
       setAction(null);
       setError(null);
       setIsLoading(false);
@@ -465,7 +465,7 @@ function MealPlanActionsModal({
       const updates: Partial<MealPlan> = {
         recipeId: newRecipeId,
         customNote: newCustomNote || null,
-        servings: newServings,
+        servings: parseInt(newServings, 10) || 4,
         mealType: newMealType || mealPlan.mealType,
       };
 
@@ -540,7 +540,7 @@ function MealPlanActionsModal({
                   onClick={() => {
                     setNewRecipeId(mealPlan.recipeId);
                     setNewCustomNote(mealPlan.customNote ?? '');
-                    setNewServings(mealPlan.servings ?? 4);
+                    setNewServings(String(mealPlan.servings ?? 4));
                     setNewMealType(mealPlan.mealType as MealType);
                     setAction('edit');
                   }}
@@ -622,7 +622,7 @@ function MealPlanActionsModal({
                       value={newDate}
                       onChange={(e) => setNewDate(e.target.value)}
                       min={toLocalDateStr(minDate)}
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 border rounded bg-white text-gray-800"
                     />
                   </div>
 
@@ -633,7 +633,7 @@ function MealPlanActionsModal({
                     <select
                       value={newMealType || mealPlan?.mealType}
                       onChange={(e) => setNewMealType(e.target.value as MealType)}
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 border rounded bg-white text-gray-800"
                     >
                       {mealTypeOptions.map(type => (
                         <option key={type} value={type}>
@@ -677,7 +677,7 @@ function MealPlanActionsModal({
                     <select
                       value={newMealType || mealPlan?.mealType}
                       onChange={(e) => setNewMealType(e.target.value as MealType)}
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 border rounded bg-white text-gray-800"
                     >
                       {mealTypeOptions.map(type => (
                         <option key={type} value={type}>
@@ -694,7 +694,7 @@ function MealPlanActionsModal({
                     <select
                       value={newRecipeId ?? ''}
                       onChange={(e) => setNewRecipeId(e.target.value || null)}
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 border rounded bg-white text-gray-800"
                     >
                       <option value="">-- Aucune recette --</option>
                       {recipes.map(recipe => (
@@ -714,7 +714,7 @@ function MealPlanActionsModal({
                       value={newCustomNote}
                       onChange={(e) => setNewCustomNote(e.target.value)}
                       placeholder="Ex: Soirée Pizza, Barbecue..."
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 border rounded bg-white text-gray-800"
                     />
                   </div>
 
@@ -725,10 +725,10 @@ function MealPlanActionsModal({
                     <input
                       type="number"
                       value={newServings}
-                      onChange={(e) => setNewServings(parseInt(e.target.value) || 4)}
+                      onChange={(e) => setNewServings(e.target.value)}
                       min="1"
                       max="20"
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 border rounded bg-white text-gray-800"
                     />
                   </div>
 
