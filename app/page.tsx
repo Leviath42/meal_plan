@@ -9,6 +9,9 @@ export default async function HomePage() {
     id: recipes.id,
     title: recipes.title,
     mealCourse: recipes.mealCourse,
+    prepTime: recipes.prepTime,
+    cookTime: recipes.cookTime,
+    defaultServings: recipes.defaultServings,
   }).from(recipes).orderBy(recipes.title);
 
   return (
