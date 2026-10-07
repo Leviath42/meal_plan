@@ -5,6 +5,10 @@ export interface Recipe {
   id: string;
   title: string;
   mealCourse?: string | null;
+  // Temps de préparation / cuisson en minutes, pour l'info-bulle du calendrier
+  prepTime?: number;
+  cookTime?: number;
+  defaultServings?: number;
 }
 
 // Schéma de validation pour les repas planifiés

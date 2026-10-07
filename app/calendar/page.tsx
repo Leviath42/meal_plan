@@ -8,6 +8,9 @@ export default async function CalendarPage() {
     id: recipes.id,
     title: recipes.title,
     mealCourse: recipes.mealCourse,
+    prepTime: recipes.prepTime,
+    cookTime: recipes.cookTime,
+    defaultServings: recipes.defaultServings,
   }).from(recipes).orderBy(recipes.title);
 
   return (

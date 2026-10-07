@@ -81,6 +81,8 @@ const DELETE_ZONE_ID = 'delete-meal-zone';
 function DraggableMealBadge({
   plan,
   displayText,
+  badgeTitle,
+  badgeSuffix,
   badgeClass,
   onClick,
 }: {
@@ -88,6 +90,8 @@ function DraggableMealBadge({
   displayText: string;
   badgeClass: string;
   onClick: () => void;
+  badgeTitle: string;
+  badgeSuffix?: ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: plan.id,
@@ -101,9 +105,10 @@ function DraggableMealBadge({
       {...listeners}
       onClick={onClick}
       className={`${badgeClass} ${isDragging ? 'opacity-30' : ''} cursor-grab active:cursor-grabbing touch-none`}
-      title={`Glissez pour replanifier ou supprimer, cliquez pour gérer : ${displayText}`}
+      title={badgeTitle}
     >
       {displayText}
+      {badgeSuffix}
     </button>
   );
 }
@@ -972,6 +977,24 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
   const getPlanDisplayText = (plan: MealPlan): string =>
     plan.customNote || getRecipeTitle(plan.recipeId) || MEAL_TYPE_LABELS[plan.mealType as MealType];
 
+  // Info-bulle d'un badge : temps de préparation/cuisson de la recette si renseignés
+  const getBadgeTooltip = (plan: MealPlan): string => {
+    const recipe = plan.recipeId ? recipes.find(r => r.id === plan.recipeId) : undefined;
+    if (!recipe) {
+      return `Glissez pour replanifier ou supprimer, cliquez pour gérer : ${getPlanDisplayText(plan)}`;
+    }
+    const times: string[] = [];
+    if (recipe.prepTime && recipe.prepTime > 0) times.push(`préparation ${recipe.prepTime} min`);
+    if (recipe.cookTime && recipe.cookTime > 0) times.push(`cuisson ${recipe.cookTime} min`);
+    return times.length > 0 ? `${recipe.title} — ${times.join(', ')}` : recipe.title;
+  };
+
+  // Suffixe gris discret sous le texte du badge : type de plat hérité de la recette
+  const getBadgeCourseSuffix = (plan: MealPlan): ReactNode =>
+    plan.mealCourse ? (
+      <span className="ml-1 text-[10px] font-normal opacity-70">{plan.mealCourse}</span>
+    ) : null;
+
   // Début du drag : mémoriser le repas déplacé
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragPlan((event.active.data.current?.plan as MealPlan) ?? null);
@@ -1081,6 +1104,8 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                 plan={plan}
                 displayText={getPlanDisplayText(plan)}
                 badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType as MealType]} text-sm truncate text-center w-full text-left`}
+                badgeTitle={getBadgeTooltip(plan)}
+                badgeSuffix={getBadgeCourseSuffix(plan)}
                 onClick={() => openActionsModal(plan)}
               />
             ))}
@@ -1191,6 +1216,8 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                             plan={plan}
                             displayText={getPlanDisplayText(plan)}
                             badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[mealType as MealType]} text-xs truncate text-center max-w-[88px]`}
+                            badgeTitle={getBadgeTooltip(plan)}
+                            badgeSuffix={getBadgeCourseSuffix(plan)}
                             onClick={() => openActionsModal(plan)}
                           />
                         ))}
