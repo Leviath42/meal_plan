@@ -228,3 +228,51 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+
+// ============================================================================
+// 8. JETONS D'ACCÈS PUBLICS (F04 - partage du planning)
+// ============================================================================
+// Permettent de partager le calendrier en lecture seule (page publique,
+// export ICS, API Home Assistant) sans exposer de compte.
+export const accessTokens = sqliteTable("access_tokens", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+
+  // Valeur présentée dans l'URL (?token=...), générée côté serveur
+  token: text("token").notNull().unique(),
+
+  // Créateur du jeton (ADMIN). "set null" : le jeton survit à la suppression du compte
+  createdByUserId: text("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
+
+  // 'calendar_read' : page publique + ICS ; 'api' : endpoint JSON (Home Assistant)
+  type: text("type", { enum: ["calendar_read", "api"] }).notNull().default("calendar_read"),
+
+  // Date d'expiration au format ISO (7 jours par défaut à la création)
+  expiresAt: text("expires_at").notNull(),
+
+  // Null = actif. Renseigné à la révocation
+  revokedAt: text("revoked_at"),
+
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// ============================================================================
+// 9. PARAMÈTRES DE L'APPLICATION (F01 options - page de paramétrage)
+// ============================================================================
+// Une seule ligne (id = 1), partagée par toute la famille.
+export const appSettings = sqliteTable("app_settings", {
+  id: integer("id").primaryKey().default(1),
+
+  // Nombre de couverts pré-remplis dans le modal de création de repas
+  defaultServings: integer("default_servings").notNull().default(4),
+
+  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// Relation jeton -> créateur (pour l'interface d'administration)
+export const accessTokensRelations = relations(accessTokens, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [accessTokens.createdByUserId],
+    references: [users.id],
+  }),
+}));

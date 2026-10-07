@@ -9,6 +9,8 @@ export default auth((req) => {
     '/api/auth',
     '/login',
     '/register',
+    '/public/calendar',
+    '/api/calendar',
     '/reset-password',
     '/_next/static',
     '/_next/image',

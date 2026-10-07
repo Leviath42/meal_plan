@@ -36,6 +36,7 @@ export default function Nav({ session }: { session: Session | null }) {
                   Recettes
                 </Link>
                 <Link href="/ingredients" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/ingredients') ? 'font-medium text-accent' : ''}`}>
+                <Link href="/shopping-list" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
                   Ingrédients
                 </Link>
                 {session.user?.role === "ADMIN" && (
@@ -43,6 +44,11 @@ export default function Nav({ session }: { session: Session | null }) {
                     Utilisateurs
                   </Link>
                 )}
+                {session.user?.role === "ADMIN" && (
+                  <Link href="/share" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/share') ? 'font-medium text-accent' : ''}`}>Partage</Link>
+                )}
+                <Link href="/settings" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
+
                 <Link href="/profile" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/profile') ? 'font-medium text-accent' : ''}`}>
                   Profil
                 </Link>
@@ -81,6 +87,7 @@ export default function Nav({ session }: { session: Session | null }) {
                 Recettes
               </Link>
               <Link href="/ingredients" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/ingredients') ? 'font-medium text-accent' : ''}`}>
+              <Link href="/shopping-list" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
                 Ingrédients
               </Link>
               {session.user?.role === "ADMIN" && (
@@ -88,6 +95,11 @@ export default function Nav({ session }: { session: Session | null }) {
                   Gérer les utilisateurs
                 </Link>
               )}
+              {session.user?.role === "ADMIN" && (
+                <Link href="/share" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/share') ? 'font-medium text-accent' : ''}`}>Partage</Link>
+              )}
+              <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
+
               <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/profile') ? 'font-medium text-accent' : ''}`}>
                 Profil
               </Link>
