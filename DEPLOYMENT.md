@@ -80,7 +80,7 @@ Ordre des opérations, et pourquoi dans cet ordre :
 2. **Template** : **Debian 12** (télécharge-la d'abord via Templates si absente).
 3. **Disks** : 5 Go suffisent largement (le code fait ~200 Mo, la base quelques Mo).
 4. **CPU** : 1 cœur suffit pour une famille.
-5. **Memory** : 1024 Mo (512 Mo fonctionneraient, mais le build a besoin d'air).
+5. **Memory** : **2048 Mo** — le build de production a été observé tué par manque de mémoire (OOM) à 1024 Mo. On peut redescendre à 1024 après le build (l'application lancée n'utilise que ~200 Mo).
 6. **Network** : garde DHCP (le routeur donnera une adresse au conteneur) ou fixe une IP statique. **Note l'adresse IP** : c'est l'adresse que tu taperas sur le téléphone.
 7. Termine, sélectionne le conteneur, **Start**, puis ouvre sa **Console** (bouton en haut).
 
@@ -283,6 +283,7 @@ pm2 start meal-plan
 | Le site est inaccessible depuis le téléphone | Mauvaise IP, ou réseau différent (Wi-Fi invité) | `ip a` dans le conteneur ; vérifier que téléphone et conteneur sont sur le même réseau |
 | Les repas du soir apparaissent "hier" ou l'app refuse un repas d'aujourd'hui | Fuseau horaire du conteneur | Étape 1 (timezone Proxmox) ou variable `TZ` dans `.env.local`, puis redémarrer |
 | « EADDRINUSE » au démarrage | Le port 3000 est déjà pris | Changer `PORT` dans `.env.local` |
+| `npm run build` s'arrête sur « Killed » | Mémoire insuffisante du conteneur (OOM) | `pct set <ID> --memory 2048 --swap 2048`, redémarrer le conteneur, relancer le build |
 
 ---
 
