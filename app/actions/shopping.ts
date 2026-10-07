@@ -151,10 +151,10 @@ export async function generateShoppingList(
     }));
 
     // Remplacement atomique des lignes générées (les manuelles sont préservées)
-    await db.transaction(async (tx) => {
-      await tx.delete(shoppingItems).where(eq(shoppingItems.addedManually, false));
+    db.transaction((tx) => {
+      tx.delete(shoppingItems).where(eq(shoppingItems.addedManually, false)).run();
       if (rowsToInsert.length > 0) {
-        await tx.insert(shoppingItems).values(rowsToInsert);
+        tx.insert(shoppingItems).values(rowsToInsert).run();
       }
     });
 

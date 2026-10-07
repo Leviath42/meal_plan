@@ -47,16 +47,19 @@ export async function createRecipe(
 
   const { ingredients: items, ...recipeData } = parsed.data;
 
-  const recipeId = await db.transaction(async (tx) => {
-    const [recipe] = await tx
+  // better-sqlite3 est synchrone : callback de transaction synchrone,
+  // requeteurs .get()/.run() (un callback async est refuse par drizzle)
+  const recipeId = db.transaction((tx) => {
+    const recipe = tx
       .insert(recipes)
       .values(recipeData)
-      .returning({ id: recipes.id });
+      .returning({ id: recipes.id })
+      .get();
 
     if (items.length > 0) {
-      await tx.insert(recipeIngredients).values(
+      tx.insert(recipeIngredients).values(
         items.map((it) => ({ ...it, recipeId: recipe.id }))
-      );
+      ).run();
     }
     return recipe.id;
   });
@@ -90,17 +93,18 @@ export async function updateRecipe(
   const { ingredients: items, ...recipeData } = parsed.data;
 
   // Mise à jour transactionnelle : recette + ingrédients, ou rien
-  await db.transaction(async (tx) => {
-    await tx.update(recipes)
+  db.transaction((tx) => {
+    tx.update(recipes)
       .set({ ...recipeData, updatedAt: new Date().toISOString() })
-      .where(eq(recipes.id, id));
+      .where(eq(recipes.id, id))
+      .run();
 
-    await tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
+    tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id)).run();
 
     if (items.length > 0) {
-      await tx.insert(recipeIngredients).values(
+      tx.insert(recipeIngredients).values(
         items.map((it) => ({ ...it, recipeId: id }))
-      );
+      ).run();
     }
   });
 
