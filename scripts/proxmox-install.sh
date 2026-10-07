@@ -18,14 +18,16 @@
 #   seed           : "yes" pour charger les 45 recettes de demo (defaut: no)
 #
 # Variables d'environnement optionnelles (a definir avant d'appeler le script) :
-#   BRIDGE   : pont reseau Proxmox (defaut: vmbr0)
-#   ROOTFS   : stockage disque du conteneur (defaut: local-lvm:5  => 5 Go)
+#   BRIDGE : pont reseau Proxmox (defaut: vmbr0)
+#   ROOTFS : stockage disque du conteneur (defaut: local-lvm:5  => 5 Go)
 #
 # Exemple :
 #   bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes
 # =============================================================================
 
-set -euo pipefail
+set -eu
+# En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
+trap 'printf "\nERREUR ligne %s : %s\n" "$LINENO" "$BASH_COMMAND" >&2' ERR
 
 # ---------------------------------------------------------------------------
 # Parametres
@@ -56,10 +58,12 @@ bold "Installation de Meal Plan (beta) sur Proxmox"
 command -v pct >/dev/null 2>&1 || die "Commande 'pct' introuvable : ce script doit etre execute sur l'hote Proxmox, pas dans un conteneur."
 [ -n "$CTID" ] || die "Usage: bash proxmox-install.sh <CTID> <ADMIN_EMAIL> [ADMIN_PASSWORD] [seed]
 Exemple: bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes"
-[[ "$CTID" =~ ^[0-9]+$ ]] || die "Le CTID doit etre un nombre (ex. 120)."
+case "$CTID" in *[!0-9]*) die "Le CTID doit etre un nombre (ex. 120).";; esac
 [ -n "$ADMIN_EMAIL" ] || die "Indique l'email du compte administrateur (2e argument)."
 
-pct status "$CTID" >/dev/null 2>&1 && die "Le conteneur $CTID existe deja. Choisis un autre CTID ou supprime-le d'abord (pct destroy $CTID)."
+if pct status "$CTID" >/dev/null 2>&1; then
+  die "Le conteneur $CTID existe deja. Choisis un autre CTID ou supprime-le d'abord (pct destroy $CTID)."
+fi
 
 if [ -z "$ADMIN_PASSWORD" ]; then
   ADMIN_PASSWORD="$(openssl rand -base64 12)"
@@ -73,18 +77,27 @@ step "1/7 Preparation du template Debian 12"
 
 pveam update >/dev/null 2>&1 || true
 
-STORAGE="$(pveam status 2>/dev/null | awk 'NR>1 && NF>=3 {print $1; exit}')"
-[ -n "$STORAGE" ] || die "Aucun stockage de templates LXC (vztmpl) trouve via 'pveam status'."
+if ! pveam status >/dev/null 2>&1; then
+  die "La commande 'pveam status' echoue. Lance-la a la main pour voir l'erreur."
+fi
 
-TPL_FILE="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $2}' | tail -1)"
+# Stockage de templates : premiere ligne de donnees de 'pveam status'
+STORAGE="$(pveam status 2>/dev/null | awk 'NR>1 && NF>=3 {print $1}' | head -n1)"
+[ -n "$STORAGE" ] || die "Aucun stockage de templates LXC trouve via 'pveam status'. Ajoute le contenu 'CT templates' a un stockage (Datacenter > Storage) ou relance avec STORAGE=<nom>."
+printf 'Stockage de templates detecte : %s\n' "$STORAGE"
+
+# Template deja telecharge ?
+TPL_FILE="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $2}' | tail -n1)"
+
 if [ -z "$TPL_FILE" ]; then
   printf "Telechargement du template Debian 12 dans %s...\n" "$STORAGE"
-  TPL_NAME="$(pveam available 2>/dev/null | awk '/debian-12-standard/ {print $2}' | sort | tail -1)"
+  TPL_NAME="$(pveam available 2>/dev/null | awk '/debian-12-standard/ {print $2}' | sort | tail -n1)"
   [ -n "$TPL_NAME" ] || die "Template Debian 12 introuvable dans 'pveam available'."
   pveam download "$STORAGE" "$TPL_NAME"
-  TPL_FILE="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $2}' | tail -1)"
+  TPL_FILE="$(pveam list "$STORAGE" 2>/dev/null | awk '/debian-12/ {print $2}' | tail -n1)"
 fi
 [ -n "$TPL_FILE" ] || die "Impossible d'obtenir le template Debian 12."
+printf 'Template utilise : %s\n' "$TPL_FILE"
 
 CT_PASSWORD="$(openssl rand -base64 12)"
 
@@ -111,7 +124,9 @@ for _ in $(seq 1 30); do
   if pct exec "$CTID" -- ping -c 1 -W 2 1.1.1.1 >/dev/null 2>&1; then NET_OK=1; break; fi
   sleep 2
 done
-[ "$NET_OK" -eq 1 ] || die "Le conteneur n'obtient pas d'acces reseau (DHCP). Verifie le pont '$BRIDGE' (variable BRIDGE pour en changer) : ip link show $BRIDGE"
+if [ "$NET_OK" -ne 1 ]; then
+  die "Le conteneur n'obtient pas d'acces reseau (DHCP). Verifie le pont '$BRIDGE' (ip link show $BRIDGE) ou relance avec BRIDGE=<ton pont>."
+fi
 printf "Reseau OK.\n"
 
 # ---------------------------------------------------------------------------
@@ -120,10 +135,11 @@ printf "Reseau OK.\n"
 step "3/7 Ecriture du script d'installation du conteneur"
 
 INNER="$(mktemp)"
-cat > "$INNER" <<'EOF'
+cat > "$INNER" <<'INNEREOF'
 #!/usr/bin/env bash
 # Installation de Meal Plan dans le conteneur (execute par pct exec).
-set -euo pipefail
+set -eu
+trap 'printf "\nERREUR interne ligne %s : %s\n" "$LINENO" "$BASH_COMMAND" >&2' ERR
 export DEBIAN_FRONTEND=noninteractive
 
 APP_DIR="/opt/meal_plan"
@@ -148,12 +164,12 @@ npm ci --no-audit --no-fund
 echo "[5/6] Configuration + base de donnees..."
 if [ ! -f .env.local ]; then
   AUTH_SECRET="$(openssl rand -base64 32)"
-  cat > .env.local <<ENVEOF
-AUTH_SECRET=$AUTH_SECRET
-AUTH_TRUST_HOST=true
-TZ=${TZ}
-PORT=${PORT}
-ENVEOF
+  {
+    echo "AUTH_SECRET=$AUTH_SECRET"
+    echo "AUTH_TRUST_HOST=true"
+    echo "TZ=${TZ}"
+    echo "PORT=${PORT}"
+  } > .env.local
   echo "Fichier .env.local cree (secret genere automatiquement)."
 fi
 npm run db:migrate
@@ -193,7 +209,7 @@ UPDATEEOF
 chmod +x "$APP_DIR/update.sh"
 
 echo "Installation terminee dans le conteneur."
-EOF
+INNEREOF
 
 pct push "$CTID" "$INNER" /root/install-app.sh --perms 755
 rm -f "$INNER"
