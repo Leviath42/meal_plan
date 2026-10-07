@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
+import { requireSession } from '@/lib/auth-guards';
 import { mealPlans } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -28,6 +29,7 @@ export async function createMealPlan(
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
+  await requireSession();
   const rawData = formDataToRecord(formData);
   
   const parsed = mealPlanInput.safeParse(rawData);
@@ -68,6 +70,7 @@ export async function updateMealPlan(
   prevState: MealPlanFormState,
   formData: FormData
 ): Promise<MealPlanFormState> {
+  await requireSession();
   const rawData = formDataToRecord(formData);
 
   const raw: Record<string, string | null> = { ...rawData };
@@ -112,6 +115,7 @@ export async function updateMealPlan(
 // Supprimer un repas planifié
 export async function deleteMealPlan(id: string): Promise<{ error?: string }> {
   try {
+    await requireSession();
     await db
       .delete(mealPlans)
       .where(eq(mealPlans.id, id));
@@ -132,6 +136,7 @@ export async function replanMealPlan(
   newMealType: string
 ): Promise<{ error?: string }> {
   try {
+    await requireSession();
     await db
       .update(mealPlans)
       .set({
@@ -240,35 +245,31 @@ export async function addMealPlan(
   formData: FormData
 ): Promise<MealPlanFormResult> {
   try {
+    await requireSession();
+
     const rawData = formDataToRecord(formData);
-    
-    // Validation basique
-    if (!rawData.date || !rawData.mealType) {
+
+    // Les champs nullable vides ('') doivent valoir null (ex. recipeId non-UUID)
+    const raw: Record<string, string | null> = { ...rawData };
+    for (const key of ['recipeId', 'customNote', 'mealCourse']) {
+      if (raw[key] === '') raw[key] = null;
+    }
+
+    const parsed = mealPlanInput.safeParse(raw);
+
+    if (!parsed.success) {
       return {
         success: false,
-        message: 'La date et le type de repas sont requis',
-        errors: {
-          date: !rawData.date ? ['La date est requise'] : [],
-          mealType: !rawData.mealType ? ['Le type de repas est requis'] : []
-        }
+        message: 'Données invalides',
+        errors: parsed.error.flatten().fieldErrors
       };
     }
 
     const now = new Date().toISOString();
-    const mealPlanData = {
-      date: rawData.date as string,
-      mealType: rawData.mealType as string,
-      recipeId: rawData.recipeId as string | null || null,
-      customNote: rawData.customNote as string | null || null,
-      servings: rawData.servings ? parseInt(rawData.servings as string) || 4 : 4,
-      mealCourse: rawData.mealCourse as string | null || null,
-      createdAt: now,
-      updatedAt: now,
-    };
 
     const [mealPlan] = await db
       .insert(mealPlans)
-      .values(mealPlanData)
+      .values({ ...parsed.data, createdAt: now, updatedAt: now })
       .returning();
 
     revalidatePath('/calendar');
@@ -294,6 +295,7 @@ export async function deleteMealPlanFromForm(
   formData: FormData
 ): Promise<MealPlanFormResult> {
   try {
+    await requireSession();
     const id = formData.get('id') as string;
     
     if (!id) {

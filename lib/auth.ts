@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
 import { users } from "./db/schema";
 import Argon2 from "@node-rs/argon2";
@@ -21,14 +20,19 @@ function isValidRole(role: string): role is "ADMIN" | "MEMBER" | "GUEST" {
   return ["ADMIN", "MEMBER", "GUEST"].includes(role);
 }
 
+// Secret pour signer les cookies JWT
+// IMPORTANT: AUTH_SECRET est requis en production, le fallback ne sert qu'en dev
+function getAuthSecret(): string {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret && process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET est requis en production. Définissez cette variable d'environnement.");
+  }
+  return secret || "dev-secret-change-in-production";
+}
+
 // Configuration principale de NextAuth
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // Secret pour signer les cookies JWT
-  // IMPORTANT: Définir AUTH_SECRET dans .env pour la production
-  secret: process.env.AUTH_SECRET || 'dev-secret-change-in-production',
-
-  // Adapter pour Drizzle ORM + SQLite
-  adapter: DrizzleAdapter(db),
+  secret: getAuthSecret(),
 
   // Configuration de la session
   session: {

@@ -2,13 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getMealPlans, addMealPlan, deleteMealPlanFromForm } from './actions/meal-plan';
+import { getMealPlans, addMealPlan } from './actions/meal-plan';
 import { useRouter } from 'next/navigation';
 import type { JSX } from 'react';
 import type { MealPlan, MealPlanFormResult, MealType } from '@/app/types/meal-plan';
 
 interface CalendarProps {
   recipes?: Array<{ id: string; title: string }>;
+}
+
+// Formater une Date en YYYY-MM-DD selon le fuseau local.
+// toISOString() formaterait en UTC : minuit local (UTC+2) deviendrait la veille.
+function toLocalDateStr(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Noms des types de repas en français
@@ -33,9 +42,6 @@ const MEAL_TYPE_ORDER: string[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 // Types de plats pour l'ordre chronologique dans un repas
 const MEAL_COURSE_ORDER: string[] = ['apéritif', 'entrée', 'plat', 'accompagnement', 'dessert', 'boisson'];
 
-// Jours de la semaine en français
-const DAYS_OF_WEEK = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-
 export default function Calendar({ recipes = [] }: CalendarProps) {
   const router = useRouter();
   const [startDate, setStartDate] = useState(new Date());
@@ -53,8 +59,8 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
       const endDate = new Date(startDate);
       endDate.setDate(startDate.getDate() + 6);
 
-      const startStr = startDate.toISOString().split('T')[0];
-      const endStr = endDate.toISOString().split('T')[0];
+      const startStr = toLocalDateStr(startDate);
+      const endStr = toLocalDateStr(endDate);
 
       const result = await getMealPlans(startStr, endStr);
       setMealPlans(result.mealPlans);
@@ -98,49 +104,13 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
   };
 
   const getDateString = (date: Date): string => {
-    return date.toISOString().split('T')[0];
+    return toLocalDateStr(date);
   };
 
   // Gérer le clic sur un jour
   const handleDateClick = (dateStr: string) => {
     setSelectedDate(dateStr);
     setSelectedMealType(null);
-  };
-
-  // Gérer le clic sur un type de repas spécifique
-  const handleMealTypeClick = (dateStr: string, mealType: MealType) => {
-    // Vérifier s'il y a déjà un repas ce jour-là pour ce type
-    const existing = mealPlans.find(
-      mp => mp.date === dateStr && mp.mealType === mealType
-    );
-
-    if (existing) {
-      // Demander confirmation de suppression
-      const mealName = recipes.find(r => r.id === existing.recipeId)?.title || 
-                       existing.customNote || 
-                       MEAL_TYPE_LABELS[mealType];
-      if (window.confirm(`Supprimer le repas "${mealName}" du ${new Date(dateStr).toLocaleDateString('fr-FR')} (${MEAL_TYPE_LABELS[mealType]}) ?`)) {
-        deleteMealPlanAction(existing.id);
-      }
-    } else {
-      // Ouvrir le sélecteur pour ajouter un repas
-      setSelectedDate(dateStr);
-      setSelectedMealType(mealType);
-    }
-  };
-
-  const deleteMealPlanAction = async (id: string) => {
-    const formData = new FormData();
-    formData.append('id', id);
-    
-    const result = await deleteMealPlanFromForm(null, formData);
-    if (result?.success) {
-      setFormState({ success: true, message: result.message });
-      fetchMealPlans();
-      setTimeout(() => setFormState(null), 3000);
-    } else {
-      setFormState(result);
-    }
   };
 
   const addMealPlanAction = async (recipeId: string | null, customNote?: string, servings: number = 4) => {
@@ -168,21 +138,6 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
   const cancelSelection = () => {
     setSelectedDate(null);
     setSelectedMealType(null);
-  };
-
-  // Récupérer les repas pour une date
-  const getPlansForDate = (dateStr: string): MealPlan[] => {
-    return mealPlans.filter(mp => mp.date === dateStr);
-  };
-
-  // Compter le nombre de repas pour une date
-  const getMealCountForDate = (dateStr: string): number => {
-    return getPlansForDate(dateStr).length;
-  };
-
-  // Récupérer la liste des types de repas pour une date
-  const getMealTypesForDate = (dateStr: string): string[] => {
-    return getPlansForDate(dateStr).map(mp => mp.mealType);
   };
 
   // Composant DayCard pour le layout vertical
@@ -683,7 +638,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
               onClick={goToPreviousDay}
               className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
               disabled={loading}
-              title="Semaine précédente"
+              title="Jour précédent"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -693,7 +648,7 @@ export default function Calendar({ recipes = [] }: CalendarProps) {
               onClick={goToNextDay}
               className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50"
               disabled={loading}
-              title="Semaine suivante"
+              title="Jour suivant"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
