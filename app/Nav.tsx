@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from "next-auth/react";
@@ -11,6 +11,16 @@ export default function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Touche Échap : fermer le menu mobile quand il est ouvert
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen]);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -77,8 +87,17 @@ export default function Nav({ session }: { session: Session | null }) {
           </div>
         </div>
 
+        {/* Fond overlay sous le menu mobile : un clic en dehors le ferme */}
         {isMobileMenuOpen && session && (
-          <div className="md:hidden bg-white border-t border-gray-100 px-3 sm:px-4 pb-3">
+          <div
+            className="fixed top-12 sm:top-14 inset-x-0 bottom-0 z-10 bg-black/25 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        {isMobileMenuOpen && session && (
+          <div className="md:hidden relative z-20 bg-white border-t border-gray-100 px-3 sm:px-4 pb-3">
             <div className="flex flex-col gap-2">
               <Link href="/calendar" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/calendar') ? 'font-medium text-accent' : ''}`}>
                 Calendrier
