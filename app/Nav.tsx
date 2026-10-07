@@ -46,9 +46,9 @@ export default function Nav({ session }: { session: Session | null }) {
                   Recettes
                 </Link>
                 <Link href="/ingredients" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/ingredients') ? 'font-medium text-accent' : ''}`}>
-                <Link href="/shopping-list" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
                   Ingrédients
                 </Link>
+                <Link href="/shopping-list" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
                 {session.user?.role === "ADMIN" && (
                   <Link href="/register" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/register') ? 'font-medium text-accent' : ''}`}>
                     Utilisateurs
@@ -106,9 +106,9 @@ export default function Nav({ session }: { session: Session | null }) {
                 Recettes
               </Link>
               <Link href="/ingredients" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/ingredients') ? 'font-medium text-accent' : ''}`}>
-              <Link href="/shopping-list" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
                 Ingrédients
               </Link>
+              <Link href="/shopping-list" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
               {session.user?.role === "ADMIN" && (
                 <Link href="/register" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/register') ? 'font-medium text-accent' : ''}`}>
                   Gérer les utilisateurs
