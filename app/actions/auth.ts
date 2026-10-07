@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-guards';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
@@ -78,11 +79,10 @@ export async function registerUser(
 
 export async function updateUserRole(
   userId: string,
-  newRole: 'ADMIN' | 'MEMBER' | 'GUEST',
-  sessionUserId?: string
+  newRole: 'ADMIN' | 'MEMBER' | 'GUEST'
 ): Promise<FormState> {
-  const session = await auth();
-  const currentUserId = sessionUserId || session?.user?.id;
+  const session = await requireAdmin();
+  const currentUserId = session.user.id;
 
   // Empêcher de modifier son propre compte (sauf pour ajouter un rôle plus élevé)
   if (userId === currentUserId && newRole !== 'ADMIN') {
@@ -104,9 +104,9 @@ export async function updateUserRole(
 }
 
 
-export async function deleteUser(userId: string, sessionUserId?: string): Promise<FormState> {
-  const session = await auth();
-  const currentUserId = sessionUserId || session?.user?.id;
+export async function deleteUser(userId: string): Promise<FormState> {
+  const session = await requireAdmin();
+  const currentUserId = session.user.id;
 
   // Empêcher la suppression de soi-même
   if (userId === currentUserId) {
@@ -140,19 +140,11 @@ export async function deleteUser(userId: string, sessionUserId?: string): Promis
 
 // Récupérer tous les utilisateurs (pour l'admin)
 export async function getAllUsers() {
+  await requireAdmin();
   return await db.select().from(users).orderBy(users.createdAt);
 }
 
 
-// Récupérer un utilisateur par ID
-export async function getUserById(id: string) {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, id))
-    .limit(1);
-  return user;
-}
 
 
 export async function updateUserPassword(

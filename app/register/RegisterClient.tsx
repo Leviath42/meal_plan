@@ -52,7 +52,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
   };
 
   const handleUpdateRole = async (userId: string, newRole: 'ADMIN' | 'MEMBER' | 'GUEST') => {
-    const result = await updateUserRole(userId, newRole, currentUserId);
+    const result = await updateUserRole(userId, newRole);
     setFormState(result);
     
     if (result?.success) {
@@ -67,7 +67,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     }
     
     if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-      const result = await deleteUser(userId, currentUserId);
+      const result = await deleteUser(userId);
       setFormState(result);
       
       if (result?.success) {
