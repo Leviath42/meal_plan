@@ -37,6 +37,9 @@ export const recipes = sqliteTable("recipes", {
   // Lien vers un site web ou nom d'un livre papier pour retrouver l'inspiration originale
   source: text("source"),
   
+  // Date (AAAA-MM-JJ) du repas le plus recent planifie avec cette recette (F08 - historique)
+  lastServedAt: text("last_served_at"),
+  
   // Date de création et de dernière modification (gérées automatiquement)
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
@@ -195,6 +198,10 @@ export const users = sqliteTable("users", {
   securityQuestion: text("security_question"),
   // Réponse hashée (avec Argon2) pour plus de sécurité
   securityAnswerHash: text("security_answer_hash"),
+  
+  // Antidoublon (F09) : interdire de replanifier la meme recette a moins de X jours
+  // d'intervalle. 0 = controle desactive. Defaut : 7 jours.
+  minDaysBetween: integer("min_days_between").notNull().default(7),
   createdAt: text("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
