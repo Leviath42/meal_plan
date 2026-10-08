@@ -12,6 +12,7 @@
     "seed:clear": "tsx lib/db/seed.ts --clear",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:ensure": "tsx scripts/db-ensure.ts",
     "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
