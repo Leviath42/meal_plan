@@ -34,9 +34,9 @@ export default async function ShoppingListPage() {
   return (
     <main className="px-3 sm:px-6 py-4">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-3">
-          <h1 className="text-lg sm:text-xl font-bold">Liste de courses</h1>
-        </div>
+        {/* Titre rendu par ShoppingListClient : rangée « Liste de courses »
+            + bouton « + Nouvel article » (même structure que les pages
+            Recettes et Ingrédients) */}
         <ShoppingListClient items={items} />
       </div>
     </main>

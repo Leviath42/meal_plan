@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-// Presets de période acceptés pour la génération (à partir d'aujourd'hui)
-export const SHOPPING_PERIOD_PRESETS = [7, 14, 30] as const;
+// Preset de période accepté pour la génération (à partir d'aujourd'hui) ;
+// les autres durées passent par le mode « dates précises »
+export const SHOPPING_PERIOD_PRESETS = [7] as const;
 export type ShoppingPeriodPreset = (typeof SHOPPING_PERIOD_PRESETS)[number];
 
 // Sélection de période pour la génération de la liste : soit un preset
@@ -22,7 +23,7 @@ export const shoppingPeriodInput = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['days'],
-          message: 'Période invalide (7, 14 ou 30 jours)',
+          message: 'Période invalide (7 jours)',
         });
       }
       return;
