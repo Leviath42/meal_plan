@@ -38,7 +38,7 @@
 #   BRANCH=main CF_TUNNEL_TOKEN=eyJ... bash proxmox-install.sh 121 famille@exemple.fr MonMotDePasse
 # =============================================================================
 
-SCRIPT_VERSION="v7"
+SCRIPT_VERSION="v8"
 
 set -eu
 # En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
@@ -144,9 +144,9 @@ fi
 # ---------------------------------------------------------------------------
 # Creation du conteneur
 # ---------------------------------------------------------------------------
-step "2/7 Creation du conteneur $CTID ($CT_HOSTNAME)"
-
 CT_HOSTNAME="meal-plan"
+
+step "2/7 Creation du conteneur $CTID ($CT_HOSTNAME)"
 
 pct create "$CTID" "$TPL_REF" \
   --hostname "$CT_HOSTNAME" \
