@@ -1,12 +1,13 @@
 'use server';
 
 import { auth } from '@/lib/auth';
-import { requireAdmin } from '@/lib/auth-guards';
+import { requireAdmin, requireSession } from '@/lib/auth-guards';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
 import Argon2 from '@node-rs/argon2';
 import { rateLimit } from '@/lib/rate-limit';
+import { headers } from 'next/headers';
 import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -33,6 +34,15 @@ export async function registerUser(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  // Limiter les créations de compte par IP (le tunnel Cloudflare fournit
+  // l'IP réelle via x-forwarded-for) — évite le remplissage de la table
+  // par des comptes fantômes
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+  const registerLimit = rateLimit(`register:${ip}`, 5, 60 * 60 * 1000);
+  if (!registerLimit.allowed) {
+    return { errors: { email: ['Trop de créations de compte. Réessayez plus tard.'] } };
+  }
+
   // Parse et valide les données avec Zod
   const parsed = registerInput.safeParse({
     email: formData.get('email'),
@@ -139,10 +149,21 @@ export async function deleteUser(userId: string): Promise<FormState> {
 }
 
 
-// Récupérer tous les utilisateurs (pour l'admin)
+// Récupérer tous les utilisateurs (pour l'admin) — projection stricte :
+// les hashes de mots de passe et de réponses secrètes ne doivent jamais
+// voyager jusqu'au navigateur.
 export async function getAllUsers() {
   await requireAdmin();
-  return await db.select().from(users).orderBy(users.createdAt);
+  return await db
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(users.createdAt);
 }
 
 
@@ -152,9 +173,12 @@ export async function updateUserPassword(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const session = await auth();
-  
-  if (!session?.user) {
+  // requireSession (et non auth()) : revalide le rôle en base — un compte
+  // rétrogradé en GUEST ou supprimé ne doit plus rien pouvoir modifier
+  let session;
+  try {
+    session = await requireSession();
+  } catch {
     return { errors: { form: ['Vous devez être connecté pour changer votre mot de passe'] } };
   }
 
@@ -212,7 +236,13 @@ export async function updateUserSecurityQuestion(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const session = await auth();
+  // requireSession : cf. updateUserPassword
+  let session;
+  try {
+    session = await requireSession();
+  } catch {
+    return { errors: { form: ['Vous devez être connecté pour modifier votre question secrète'] } };
+  }
   
   if (!session?.user) {
     return { errors: { form: ['Vous devez être connecté pour mettre à jour votre question secrète'] } };

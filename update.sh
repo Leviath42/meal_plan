@@ -114,5 +114,14 @@ if [ -z "$CODE" ] || [ "$CODE" = "000" ]; then
   die "l'application ne répond pas sur le port $PORT (logs : pm2 logs $PM2_NAME). Retour arrière : bash update.sh rollback"
 fi
 
+# Un code d'erreur (500, 403…) n'est PAS un démarrage réussi : la mise à jour
+# ne doit pas être annoncée terminée sur un serveur qui plante.
+case "$CODE" in
+  [23]??) ;;
+  *)
+    die "healthcheck : HTTP $CODE (le serveur répond mais en erreur). Logs : pm2 logs $PM2_NAME. Retour arrière : bash update.sh rollback"
+    ;;
+esac
+
 log "healthcheck : HTTP $CODE"
 log "mise à jour $BEFORE -> $AFTER terminée"

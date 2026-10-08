@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { rateLimit } from '@/lib/rate-limit';
 import { db } from "./db";
 import { users } from "./db/schema";
 import Argon2 from "@node-rs/argon2";
@@ -76,6 +77,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        // 0. Limiter les tentatives AVANT tout calcul (Argon2 coûte ~40-100 ms
+        // par essai : sans limite, le login est un vecteur d'épuisement CPU)
+        const loginLimit = rateLimit(
+          `login:${String(credentials.email ?? '').trim().toLowerCase()}`,
+          10,
+          15 * 60 * 1000
+        );
+        if (!loginLimit.allowed) {
+          return null;
+        }
+
         // 1. Trouver l'utilisateur par email
         const [user] = await db
           .select({
@@ -92,7 +104,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .limit(1) as UserWithRole[];
 
         if (!user) {
-          console.log("Auth: User not found for email:", credentials.email);
+          console.log("Auth: échec de connexion (compte introuvable)");
           return null; // Email non trouvé
         }
 
@@ -103,13 +115,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!isValid) {
-          console.log("Auth: Invalid password for user:", user.email);
+          console.log("Auth: échec de connexion (mot de passe incorrect)");
           return null; // Mot de passe incorrect
         }
 
         // 3. Empêcher la connexion des utilisateurs GUEST (non validés)
         if (user.role === "GUEST") {
-          console.log("Auth: GUEST user cannot login, must be validated first:", user.email);
+          console.log("Auth: échec de connexion (compte non validé)");
           return null; // Empêcher la connexion des GUEST
         }
 

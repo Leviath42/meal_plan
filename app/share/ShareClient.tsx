@@ -54,6 +54,9 @@ function CopyButton({ url }: { url: string }) {
 export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[] }) {
   const router = useRouter();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  // Valeur claire du dernier jeton créé : montrée UNE fois puis oubliée
+  // (les jetons sont stockés hachés, elle n'est plus récupérable ensuite)
+  const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
@@ -68,10 +71,11 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
 
     const result = await createAccessToken(type, expiresInDays);
 
-    if (result.success) {
+    if (result.success && result.clearToken) {
+      setCreatedToken(result.clearToken);
       setMessage({
         type: 'success',
-        text: `Jeton créé — il expire dans ${expiresInDays} jour${expiresInDays > 1 ? 's' : ''}.`,
+        text: `Jeton créé — il expire dans ${expiresInDays} jour${expiresInDays > 1 ? 's' : ''}. Copiez les liens ci-dessous immédiatement : ils ne seront plus affichés.`,
       });
       router.refresh();
     } else {
@@ -142,6 +146,38 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
             }`}
           >
             {message.text}
+          </div>
+        )}
+
+        {/* Liens du dernier jeton créé : affichés une seule fois */}
+        {createdToken && (
+          <div className="mb-3 px-3 py-2 rounded border border-accent bg-accent-soft space-y-2 max-w-2xl mx-auto">
+            <p className="text-xs sm:text-sm font-medium text-gray-800">
+              Liens du nouveau jeton — affichés une seule fois, copiez-les maintenant.
+            </p>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-28 flex-shrink-0">Page publique</span>
+                <code className="text-xs text-gray-600 truncate flex-1 bg-gray-100 rounded px-2 py-1">
+                  {buildUrl('/public/calendar', createdToken)}
+                </code>
+                <CopyButton url={buildUrl('/public/calendar', createdToken)} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-28 flex-shrink-0">Export ICS</span>
+                <code className="text-xs text-gray-600 truncate flex-1 bg-gray-100 rounded px-2 py-1">
+                  {buildUrl('/api/calendar/ics', createdToken)}
+                </code>
+                <CopyButton url={buildUrl('/api/calendar/ics', createdToken)} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-28 flex-shrink-0">API JSON</span>
+                <code className="text-xs text-gray-600 truncate flex-1 bg-gray-100 rounded px-2 py-1">
+                  {buildUrl('/api/calendar/public', createdToken)}
+                </code>
+                <CopyButton url={buildUrl('/api/calendar/public', createdToken)} />
+              </div>
+            </div>
           </div>
         )}
 
@@ -238,31 +274,10 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
                     </div>
                   </div>
 
-                  {/* Liens prêts à copier pour les jetons actifs */}
                   {token.status === 'active' && (
-                    <div className="mt-2 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 w-28 flex-shrink-0">Page publique</span>
-                        <code className="text-xs text-gray-600 truncate flex-1 bg-gray-100 rounded px-2 py-1">
-                          /public/calendar?token={token.token.slice(0, 12)}…
-                        </code>
-                        <CopyButton url={buildUrl('/public/calendar', token.token)} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 w-28 flex-shrink-0">Export ICS</span>
-                        <code className="text-xs text-gray-600 truncate flex-1 bg-gray-100 rounded px-2 py-1">
-                          /api/calendar/ics?token={token.token.slice(0, 12)}…
-                        </code>
-                        <CopyButton url={buildUrl('/api/calendar/ics', token.token)} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 w-28 flex-shrink-0">API JSON</span>
-                        <code className="text-xs text-gray-600 truncate flex-1 bg-gray-100 rounded px-2 py-1">
-                          /api/calendar/public?token={token.token.slice(0, 12)}…
-                        </code>
-                        <CopyButton url={buildUrl('/api/calendar/public', token.token)} />
-                      </div>
-                    </div>
+                    <p className="mt-2 text-xs text-gray-400">
+                      Les jetons sont stockés hachés : les liens complets sont affichés uniquement à la création.
+                    </p>
                   )}
                 </div>
               ))}

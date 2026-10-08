@@ -17,7 +17,7 @@
 //   - deploy-exit.code    : code retour écrit à la fin du script
 
 import { execSync, spawn } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readFileSync, readSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { auth } from '@/lib/auth';
 import { requireAdmin } from '@/lib/auth-guards';
@@ -81,9 +81,21 @@ function pidAlive(pid: number): boolean {
 
 function tail(file: string, lines: number): string | null {
   try {
-    const content = readFileSync(file, 'utf8').trimEnd();
-    if (!content) return null;
-    return content.split('\n').slice(-lines).join('\n');
+    // Ne lire que les derniers 16 Ko : le log capte la sortie complète de
+    // npm ci + build (plusieurs Mo en cours de déploiement) — le lire en
+    // entier à chaque poll de 3 s bloquait l'event loop du serveur.
+    const size = statSync(file).size;
+    const start = Math.max(0, size - 16384);
+    const fd = openSync(file, 'r');
+    try {
+      const buffer = Buffer.alloc(size - start);
+      readSync(fd, buffer, 0, buffer.length, start);
+      const content = buffer.toString('utf8').trimEnd();
+      if (!content) return null;
+      return content.split('\n').slice(-lines).join('\n');
+    } finally {
+      closeSync(fd);
+    }
   } catch {
     return null;
   }
@@ -155,20 +167,32 @@ function readRecentCommits(count: number): CommitSummary[] {
   }
 }
 
-// État du déploiement : version chargée, exécution en cours, dernier journal.
-// Accessible à tout utilisateur connecté (la version n'est pas sensible) ;
-// les commandes, elles, restent réservées à l'ADMIN.
-export async function getDeployStatus(): Promise<DeployStatus> {
-  const session = await auth();
+// Cache des informations git : elles ne changent qu'au déploiement. Le
+// polling de /deploy appelle getDeployStatus toutes les 1,5-30 s : sans
+// cache, 3 execSync (spawns de processus bloquant l'event loop) tournaient
+// à chaque appel, gelant le serveur pour tous les utilisateurs.
+const GIT_INFO_TTL_MS = 30_000;
+let gitInfoCache: {
+  commit: string | null;
+  buildId: string | null;
+  headDetail: ReturnType<typeof readHeadDetail>;
+  recentCommits: CommitSummary[];
+  expiresAt: number;
+} | null = null;
 
-  let currentCommit: string | null = null;
+function getGitInfo() {
+  if (gitInfoCache && Date.now() < gitInfoCache.expiresAt) {
+    return gitInfoCache;
+  }
+
+  let commit: string | null = null;
   try {
-    currentCommit = execSync('git rev-parse --short HEAD', {
+    commit = execSync('git rev-parse --short HEAD', {
       cwd: process.cwd(),
       encoding: 'utf8',
     }).trim();
   } catch {
-    currentCommit = null;
+    commit = null;
   }
 
   let buildId: string | null = null;
@@ -178,6 +202,32 @@ export async function getDeployStatus(): Promise<DeployStatus> {
     buildId = null;
   }
 
+  gitInfoCache = {
+    commit,
+    buildId,
+    headDetail: readHeadDetail(),
+    recentCommits: readRecentCommits(5),
+    expiresAt: Date.now() + GIT_INFO_TTL_MS,
+  };
+  return gitInfoCache;
+}
+
+// État du déploiement : version chargée, exécution en cours, dernier journal.
+// Accessible à tout utilisateur connecté (la version n'est pas sensible) ;
+// les commandes, elles, restent réservées à l'ADMIN.
+export async function getDeployStatus(): Promise<DeployStatus> {
+  const session = await auth();
+  const isAdmin = session?.user?.role === 'ADMIN';
+
+  // Infos git en cache : elles ne changent qu'au déploiement — 3 execSync
+  // (spawn de processus bloquant l'event loop) à chaque poll de 3 s étaient
+  // 100 % de coût gaspillé.
+  const git = getGitInfo();
+
+  const currentCommit = git.commit;
+
+  const buildId = git.buildId;
+
   const statusFile = readStatusFile();
   const exitCode = readExitCode();
   // Priorité au pid écrit par le script lui-même (data/deploy.pid), plus fiable
@@ -185,8 +235,8 @@ export async function getDeployStatus(): Promise<DeployStatus> {
   const pid = readPid() ?? statusFile?.pid ?? null;
   const running = pid !== null && pidAlive(pid) && exitCode === null;
 
-  const headDetail = readHeadDetail();
-  const recentCommits = readRecentCommits(5);
+  const headDetail = git.headDetail;
+  const recentCommits = git.recentCommits;
 
   let finishedAt: string | null = null;
   if (statusFile && !running && exitCode !== null) {
@@ -199,7 +249,7 @@ export async function getDeployStatus(): Promise<DeployStatus> {
   }
 
   return {
-    isAdmin: session?.user?.role === 'ADMIN',
+    isAdmin,
     currentCommit,
     commitSubject: headDetail.subject,
     commitBody: headDetail.body,
@@ -212,7 +262,8 @@ export async function getDeployStatus(): Promise<DeployStatus> {
     startedAt: statusFile?.startedAt ?? null,
     exitCode,
     finishedAt,
-    logTail: tail(dataPath('deploy.log'), 60),
+    // Journal interne (chemins serveur, sortie npm) : réservé à l'ADMIN
+    logTail: isAdmin ? tail(dataPath('deploy.log'), 60) : null,
   };
 }
 
@@ -282,7 +333,7 @@ export async function triggerDeploy(mode: 'update' | 'rollback'): Promise<Trigge
       message:
         mode === 'update'
           ? 'Mise à jour lancée : le serveur va redémarrer pendant le build'
-          : 'Retour arrière lancé : la dernière sauvegarde de la base est restaurée',
+          : 'Retour arrière lancé : la dernière sauvegarde de la base est restaurée (le code reste à la version courante)',
     };
   } catch (error) {
     return {
