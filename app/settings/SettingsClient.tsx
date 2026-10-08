@@ -80,6 +80,23 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween }
         <span className="text-sm font-medium text-gray-800">{roleLabel}</span>
       </div>
 
+      {/* Liens vers les pages Utilisateurs, Partage et Profil (retirés du menu) */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-200 pt-3">
+        <Link href="/profile" className="text-sm text-accent hover:underline">
+          Profil
+        </Link>
+        {isAdmin && (
+          <Link href="/register" className="text-sm text-accent hover:underline">
+            Utilisateurs
+          </Link>
+        )}
+        {isAdmin && (
+          <Link href="/share" className="text-sm text-accent hover:underline">
+            Partage
+          </Link>
+        )}
+      </div>
+
       {/* Nombre de couverts par défaut */}
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>

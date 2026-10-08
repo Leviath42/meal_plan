@@ -49,19 +49,7 @@ export default function Nav({ session }: { session: Session | null }) {
                   Ingrédients
                 </Link>
                 <Link href="/shopping-list" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
-                {session.user?.role === "ADMIN" && (
-                  <Link href="/register" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/register') ? 'font-medium text-accent' : ''}`}>
-                    Utilisateurs
-                  </Link>
-                )}
-                {session.user?.role === "ADMIN" && (
-                  <Link href="/share" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/share') ? 'font-medium text-accent' : ''}`}>Partage</Link>
-                )}
                 <Link href="/settings" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
-
-                <Link href="/profile" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/profile') ? 'font-medium text-accent' : ''}`}>
-                  Profil
-                </Link>
                 <span className="text-gray-300 hidden lg:inline">|</span>
                 <button onClick={handleSignOut} className="text-xs sm:text-sm text-gray-600 hover:text-red-600 transition-colors whitespace-nowrap">
                   Déconnexion
@@ -109,19 +97,8 @@ export default function Nav({ session }: { session: Session | null }) {
                 Ingrédients
               </Link>
               <Link href="/shopping-list" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
-              {session.user?.role === "ADMIN" && (
-                <Link href="/register" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/register') ? 'font-medium text-accent' : ''}`}>
-                  Gérer les utilisateurs
-                </Link>
-              )}
-              {session.user?.role === "ADMIN" && (
-                <Link href="/share" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/share') ? 'font-medium text-accent' : ''}`}>Partage</Link>
-              )}
               <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
 
-              <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/profile') ? 'font-medium text-accent' : ''}`}>
-                Profil
-              </Link>
               <div className="border-t border-gray-200 pt-2 mt-1">
                 <button onClick={handleSignOut} className="w-full text-left text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors py-2">
                   Déconnexion
