@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Installation automatique de Meal Plan (branche beta) sur Proxmox
+# Installation automatique de Meal Plan sur Proxmox
 # =============================================================================
 # CE SCRIPT S'EXECUTE SUR L'HOTE PROXMOX (shell root), pas dans un conteneur.
 #
 # Il cree un conteneur LXC Debian 12 dedie, y installe Node.js, deploye la
-# branche beta de l'application, la configure (secret de session genere,
+# branche choisie de l'application, la configure (secret de session genere,
 # fuseau Europe/Paris, acces par IP), cree la base et le compte admin,
 # compile, et lance l'application sous PM2 (relancee au reboot).
 #
@@ -20,12 +20,18 @@
 # Variables d'environnement optionnelles (a definir avant d'appeler le script) :
 #   BRIDGE : pont reseau Proxmox (defaut : auto-detecte)
 #   ROOTFS : stockage disque du conteneur (defaut : auto-detecte, 5 Go)
+#   BRANCH : branche a installer et a suivre ensuite — beta (defaut, conteneur
+#            de test) ou main (production). La branche est memorisee dans
+#            /opt/meal_plan/.deploy-branch : update.sh (ligne de commande ou
+#            page /deploy) suivra toujours cette branche sur ce conteneur.
 #
-# Exemple :
+# Exemple (conteneur de test) :
 #   bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes
+# Exemple (production) :
+#   BRANCH=main bash proxmox-install.sh 121 famille@exemple.fr MonMotDePasse
 # =============================================================================
 
-SCRIPT_VERSION="v5"
+SCRIPT_VERSION="v6"
 
 set -eu
 # En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
@@ -41,6 +47,7 @@ SEED="${4:-no}"
 
 BRIDGE="${BRIDGE:-}"
 ROOTFS="${ROOTFS:-}"
+BRANCH="${BRANCH:-beta}"
 TZ="${TZ:-Europe/Paris}"
 PORT="${PORT:-3000}"
 APP_DIR="/opt/meal_plan"
@@ -53,7 +60,7 @@ die()  { printf '\033[1;31mERREUR: %s\033[0m\n' "$1" >&2; exit 1; }
 # ---------------------------------------------------------------------------
 # Verifications prealables
 # ---------------------------------------------------------------------------
-bold "Installation de Meal Plan (beta) sur Proxmox"
+bold "Installation de Meal Plan (branche $BRANCH) sur Proxmox"
 printf "Version du script : %s (toute erreur affiche un message ERREUR ligne N)\n" "$SCRIPT_VERSION"
 
 [ "$(id -u)" -eq 0 ] || die "Ce script doit etre lance en root sur l'hote Proxmox."
@@ -180,10 +187,13 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null
 apt-get install -y -qq nodejs
 node -v
 
-echo "[3/6] Code de la branche beta..."
+echo "[3/6] Code de la branche ${BRANCH}..."
 rm -rf "$APP_DIR"
-git clone -b beta --depth 1 https://github.com/Leviath42/meal_plan.git "$APP_DIR"
+git clone -b "${BRANCH}" --depth 1 https://github.com/Leviath42/meal_plan.git "$APP_DIR"
 cd "$APP_DIR"
+# Memoriser la branche suivie par ce conteneur : update.sh (ligne de commande
+# ou page /deploy) s'y refere a chaque mise a jour.
+echo "${BRANCH}" > "$APP_DIR/.deploy-branch"
 
 echo "[4/6] Dependances (peut prendre plusieurs minutes, modules natifs a compiler)..."
 npm ci --no-audit --no-fund
@@ -199,6 +209,7 @@ if [ ! -f .env.local ]; then
   } > .env.local
   echo "Fichier .env.local cree (secret genere automatiquement)."
 fi
+npm run db:ensure
 npm run db:migrate
 
 if [ "${SEED:-no}" = "yes" ]; then
@@ -218,9 +229,9 @@ pm2 start npm --name meal-plan -- start
 pm2 save
 pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 
-# Script de mise a jour pour la beta (a relancer a chaque nouvelle version)
-># Le update.sh versionné dans le dépôt (backup de base, db:ensure, healthcheck)
-# est déposé par le git clone ci-dessus : ne PAS l'écraser par une version naïve.
+# Le update.sh versionné dans le dépôt (sauvegarde de base, db:ensure,
+# healthcheck, branche depuis .deploy-branch) est déposé par le git clone
+# ci-dessus : ne PAS l'écraser par une version naïve.
 chmod +x "$APP_DIR/update.sh"
 
 echo "Installation terminee dans le conteneur."
@@ -240,6 +251,7 @@ pct exec "$CTID" -- env \
   SEED="$SEED" \
   TZ="$TZ" \
   PORT="$PORT" \
+  BRANCH="$BRANCH" \
   bash /root/install-app.sh
 
 # ---------------------------------------------------------------------------
@@ -255,12 +267,12 @@ step "7/7 Termine"
 
 printf '\n'
 bold "====================================================================="
-printf "Meal Plan (beta) est installe dans le conteneur %s.\n\n" "$CTID"
+printf "Meal Plan (branche %s) est installe dans le conteneur %s.\n\n" "$BRANCH" "$CTID"
 printf "  URL           : http://%s:%s\n" "${IP:-IP_DU_CONTENEUR}" "$PORT"
 printf "  Compte admin  : %s\n" "$ADMIN_EMAIL"
 printf "  Mot de passe  : %s\n" "$ADMIN_PASSWORD"
 printf "  Mdp root CT   : %s\n" "$CT_PASSWORD"
-printf "  Maj beta      : pct exec %s -- bash /opt/meal_plan/update.sh\n" "$CTID"
+printf "  Maj (%s) : pct exec %s -- bash /opt/meal_plan/update.sh\n" "$BRANCH" "$CTID"
 printf "  Logs          : pct exec %s -- pm2 logs meal-plan\n" "$CTID"
 bold "====================================================================="
 printf "Ouvre http://%s:%s depuis un telephone du meme reseau.\n" "${IP:-IP_DU_CONTENEUR}" "$PORT"

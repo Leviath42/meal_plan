@@ -23,7 +23,12 @@ set -euo pipefail
 
 APP_DIR="/opt/meal_plan"
 PM2_NAME="meal-plan"
-BRANCH="beta"
+# Branche suivie par ce serveur : override ponctuel via l'environnement
+# (ex. BRANCH=main bash update.sh), sinon fichier .deploy-branch déposé à
+# l'installation (scripts/proxmox-install.sh écrit la branche installée),
+# sinon beta par défaut (conteneur de test).
+BRANCH="${BRANCH:-$(cat "$APP_DIR/.deploy-branch" 2>/dev/null || true)}"
+BRANCH="${BRANCH:-beta}"
 PORT="${PORT:-3000}"
 BACKUP_DIR="$APP_DIR/data/backups"
 KEEP_BACKUPS=10

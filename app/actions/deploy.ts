@@ -1,8 +1,9 @@
 'use server';
 
 // app/actions/deploy.ts
-// Déclenchement du déploiement beta depuis l'application (page /deploy),
-// pour mettre à jour ou annuler la version sans se connecter au Proxmox.
+// Déclenchement du déploiement depuis l'application (page /deploy),
+// pour mettre à jour (branche configurée sur le serveur via
+// .deploy-branch) ou annuler la version sans se connecter au Proxmox.
 //
 // Sécurité : seul un ADMIN (rôle revalidé en base via requireAdmin) peut
 // déclencher. Les commandes sont figées (« update.sh » / « update.sh

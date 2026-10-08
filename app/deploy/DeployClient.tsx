@@ -1,8 +1,9 @@
 'use client';
 
 // app/deploy/DeployClient.tsx
-// Pilotage du déploiement beta depuis l'application : version chargée,
-// mise à jour (update.sh) et retour arrière (update.sh rollback).
+// Pilotage du déploiement depuis l'application : version chargée,
+// mise à jour (update.sh, branche configurée sur le serveur) et retour
+// arrière (update.sh rollback).
 // Le statut est rafraîchi par polling — pendant la mise à jour, le serveur
 // redémarre : les requêtes échouent temporairement, on continue de poller.
 
@@ -144,7 +145,7 @@ export default function DeployClient({ role }: DeployClientProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
-      <h1 className="text-lg font-bold text-gray-800">Déploiement (beta)</h1>
+      <h1 className="text-lg font-bold text-gray-800">Déploiement</h1>
 
       {/* Version chargée */}
       {status ? (
@@ -183,7 +184,7 @@ export default function DeployClient({ role }: DeployClientProps) {
             <div className="space-y-2 rounded border border-gray-300 p-3">
               <p className="text-sm text-gray-700">
                 {confirming === 'update'
-                  ? "Mettre à jour l'application depuis la branche beta de GitHub ? Une sauvegarde de la base est faite avant, le serveur redémarre pendant l'opération."
+                  ? "Mettre à jour l'application depuis GitHub (branche configurée sur ce serveur : beta pour le conteneur de test, main pour la production) ? Une sauvegarde de la base est faite avant, le serveur redémarre pendant l'opération."
                   : "Restaurer la dernière sauvegarde de la base ? Les données créées depuis cette sauvegarde seront perdues. Le code reste à la version courante (retour arrière des données uniquement)."}
               </p>
               <div className="flex gap-2">
