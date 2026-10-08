@@ -41,6 +41,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | 3 | **F09 - Antidoublon** | ✅ Complet | Fenêtre configurable par utilisateur — 10 tests runtime PASS |
 | 3 | **F03 - Suggestions** | ✅ Complet | 3 propositions excluant la fenêtre antidoublon — 9 tests runtime PASS |
 | - | Auth, recettes, ingrédients, profil, admin | ✅ Complet | Audits de sécurité passés |
+| - | **Navigation des catalogues** — sections repliables par catégorie (recettes par type de plat, ingrédients par rayon, liste de courses par rayon) + recherche texte sur recettes (titre/description/tags/type) et ingrédients (nom/rayon), via `CollapsibleSection` partagé | ✅ Livré | À valider sur téléphone |
 | - | **Maintenance intégrée** — page `/deploy` (version chargée, mise à jour, rollback) + `update.sh` + `db:ensure` | ✅ En service | Déployé et testé sur le CT beta |
 | 4 | **F12 (partie 1)** — PWA installable : manifest, icônes maskable, Service Worker (coquille hors-ligne) | ✅ Livré | À valider sur Android : installation + ouverture hors-ligne |
 
