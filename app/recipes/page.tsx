@@ -5,7 +5,15 @@ import Link from 'next/link';
 import DeleteRecipeButton from './DeleteRecipeButton';
 
 export default async function RecipesPage() {
-  const all = await db.select().from(recipes).orderBy(desc(recipes.createdAt));
+  const all = await db.select({
+    id: recipes.id,
+    title: recipes.title,
+    description: recipes.description,
+    prepTime: recipes.prepTime,
+    cookTime: recipes.cookTime,
+    defaultServings: recipes.defaultServings,
+    createdAt: recipes.createdAt,
+  }).from(recipes).orderBy(desc(recipes.createdAt));
 
   return (
     <main className="px-3 sm:px-6 py-4">

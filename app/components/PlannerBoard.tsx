@@ -261,6 +261,12 @@ function MealPlanCreationModal({
       return;
     }
 
+    const parsedServings = Number.parseInt(servings, 10);
+    if (Number.isNaN(parsedServings) || parsedServings < 1) {
+      setError("Le nombre de couverts doit être d'au moins 1");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -270,7 +276,7 @@ function MealPlanCreationModal({
         mealType: mealType as MealType,
         recipeId: recipeId || null,
         customNote: customNote || null,
-        servings: parseInt(servings, 10) || defaultServings,
+        servings: parsedServings,
       });
 
       // Réinitialiser le formulaire
@@ -569,11 +575,18 @@ function MealPlanActionsModal({
     setIsLoading(true);
     setError(null);
 
+    const parsedServings = Number.parseInt(newServings, 10);
+    if (Number.isNaN(parsedServings) || parsedServings < 1) {
+      setError("Le nombre de couverts doit être d'au moins 1");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const updates: Partial<MealPlan> = {
         recipeId: newRecipeId,
         customNote: newCustomNote || null,
-        servings: parseInt(newServings, 10) || 4,
+        servings: parsedServings,
         mealType: newMealType || mealPlan.mealType,
       };
 
@@ -905,7 +918,8 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
   const formatDate = (date: Date): string => toLocalDateStr(date);
 
   // Charger les repas planifiés pour la période affichée (J à J+daysCount-1)
-  const fetchMealPlans = useCallback(async () => {
+  // isStale : callback optionnel pour ignorer la réponse d'un chargement périmé
+  const fetchMealPlans = useCallback(async (isStale?: () => boolean) => {
     setLoading(true);
     setError(null);
 
@@ -917,17 +931,30 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       const endStr = formatDate(endDate);
 
       const result = await getMealPlans(startStr, endStr);
+      if (isStale?.()) return;
+      if (result.error) {
+        setMealPlans([]);
+        setError(result.error);
+        return;
+      }
       setMealPlans(result.mealPlans);
     } catch (err) {
+      if (isStale?.()) return;
       console.error('Erreur lors du chargement des repas:', err);
       setError('Impossible de charger les repas planifiés');
     } finally {
-      setLoading(false);
+      if (!isStale?.()) setLoading(false);
     }
   }, [startDate, daysCount]);
 
+  // Un changement de startDate relance le chargement : les réponses des
+  // chargements précédents (périmées) sont ignorées via le drapeau cancelled
   useEffect(() => {
-    fetchMealPlans();
+    let cancelled = false;
+    fetchMealPlans(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [fetchMealPlans, startDate]);
 
   // Navigation : jour suivant

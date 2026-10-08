@@ -2,7 +2,7 @@
 // Logique partagée de planification (F08 historique, F09 antidoublon,
 // F03 suggestions) : utilisée à la fois par les Server Actions et par les
 // tests d'exécution réelle (tmp/), qui rejouent exactement le même code.
-import { and, eq, gte, isNull, lt, lte, ne, notExists, or, sql, type SQL } from 'drizzle-orm';
+import { and, eq, gt, isNull, lt, ne, notExists, or, sql, type SQL } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { mealPlans, recipes, users } from '@/lib/db/schema';
 import type { SuggestedRecipe } from '@/app/types/meal-plan';
@@ -63,7 +63,9 @@ export async function getUserMinDaysBetween(userId: string): Promise<number> {
 }
 
 // F09 - antidoublon : plan existant de la même recette dans la fenêtre
-// [date - X, date + X] (comparaison lexicographique sur les dates ISO),
+// ]date - X, date + X[ (bornes EXCLUES : un intervalle d'exactement X
+// jours est autorisé, seul moins de X jours est refusé ; comparaison
+// lexicographique sur les dates ISO),
 // en ignorant le plan excludePlanId (mise à jour du plan lui-même).
 // Retourne le plan le plus proche de la date demandée, ou null.
 export async function findPlanInWindow(opts: {
@@ -74,8 +76,8 @@ export async function findPlanInWindow(opts: {
 }): Promise<{ id: string; date: string } | null> {
   const conditions = [
     eq(mealPlans.recipeId, opts.recipeId),
-    gte(mealPlans.date, addDaysToDateStr(opts.date, -opts.minDays)),
-    lte(mealPlans.date, addDaysToDateStr(opts.date, opts.minDays)),
+    gt(mealPlans.date, addDaysToDateStr(opts.date, -opts.minDays)),
+    lt(mealPlans.date, addDaysToDateStr(opts.date, opts.minDays)),
   ];
   if (opts.excludePlanId) {
     conditions.push(ne(mealPlans.id, opts.excludePlanId));
@@ -124,8 +126,8 @@ export async function findSuggestableRecipes(opts: {
           .where(
             and(
               eq(mealPlans.recipeId, recipes.id),
-              gte(mealPlans.date, addDaysToDateStr(opts.date, -opts.minDays)),
-              lte(mealPlans.date, addDaysToDateStr(opts.date, opts.minDays)),
+              gt(mealPlans.date, addDaysToDateStr(opts.date, -opts.minDays)),
+              lt(mealPlans.date, addDaysToDateStr(opts.date, opts.minDays)),
             ),
           ),
       ),

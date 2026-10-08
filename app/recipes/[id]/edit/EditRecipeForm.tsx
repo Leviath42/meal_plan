@@ -51,11 +51,17 @@ export default function EditRecipeForm({
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(updateRecipe, null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (confirm(`Voulez-vous vraiment supprimer la recette "${recipe.title}" ?`)) {
-      await deleteRecipe(recipe.id);
-      router.push('/recipes');
+      try {
+        setDeleteError(null);
+        await deleteRecipe(recipe.id);
+        router.push('/recipes');
+      } catch {
+        setDeleteError('Impossible de supprimer la recette');
+      }
     }
   };
 
@@ -80,6 +86,10 @@ export default function EditRecipeForm({
             </Link>
           </div>
         </div>
+
+        {deleteError && (
+          <p className="text-red-600 text-xs sm:text-sm">{deleteError}</p>
+        )}
 
         <form action={formAction} className="space-y-4" noValidate>
           <input type="hidden" name="id" value={recipe.id} />

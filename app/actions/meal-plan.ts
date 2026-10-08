@@ -163,6 +163,7 @@ export async function updateMealPlan(
     });
 
     revalidatePath('/calendar');
+    revalidatePath('/');
     return { errors: undefined, values: undefined };
   } catch (error) {
     console.error('Erreur lors de la mise à jour du repas planifié:', error);
@@ -182,6 +183,7 @@ export async function deleteMealPlan(id: string): Promise<{ error?: string }> {
       .where(eq(mealPlans.id, id));
 
     revalidatePath('/calendar');
+    revalidatePath('/');
     return {};
   } catch (error) {
     console.error('Erreur lors de la suppression du repas planifié:', error);
@@ -193,7 +195,7 @@ export async function deleteMealPlan(id: string): Promise<{ error?: string }> {
 export async function getMealPlans(
   startDate: string,
   endDate: string
-): Promise<{ mealPlans: MealPlan[] }> {
+): Promise<{ mealPlans: MealPlan[]; error?: string }> {
   // Les server actions sont des points d'entrée RPC invocables directement :
   // le middleware protège les pages, pas les actions — garde obligatoire.
   await requireSession();
@@ -212,7 +214,7 @@ export async function getMealPlans(
     return { mealPlans: mealPlansList as MealPlan[] };
   } catch (error) {
     console.error('Erreur lors de la récupération des repas planifiés:', error);
-    return { mealPlans: [] };
+    return { mealPlans: [], error: 'Impossible de charger les repas planifiés' };
   }
 }
 
@@ -301,6 +303,7 @@ export async function addMealPlan(
     });
 
     revalidatePath('/calendar');
+    revalidatePath('/');
 
     return {
       success: true,

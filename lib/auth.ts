@@ -33,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // Configuration de la session
   session: {
     strategy: "jwt", // Stockage dans JWT (alternative: "database" pour stocker en base)
-    maxAge: 30 * 24 * 60 * 60, // 30 jours
+    maxAge: 7 * 24 * 60 * 60, // 7 jours (sessions non révocables : durée courte pour limiter la persistance d'un cookie volé)
   },
 
   // Pages personnalisées

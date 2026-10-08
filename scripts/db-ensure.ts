@@ -90,6 +90,16 @@ function shouldRun(statement: string): boolean | string {
 try {
   sqlite.pragma('foreign_keys = ON');
   const run = sqlite.transaction(() => {
+    // 0. Déduplication préalable : des doublons (date, meal_type, recipe_id)
+    //    créés avant l'index unique 0003 empêcheraient sa création. On garde
+    //    le plan le plus ancien de chaque créneau (MIN(id)).
+    const dedup = sqlite.prepare(
+      'DELETE FROM meal_plans WHERE id NOT IN (SELECT MIN(id) FROM meal_plans GROUP BY date, meal_type, recipe_id)'
+    ).run();
+    if (dedup.changes > 0) {
+      applied.push(`doublons meal_plans : ${dedup.changes} plan(s) en doublon supprimé(s)`);
+    }
+
     // 1. Matérialisation du schéma, statement par statement
     for (const entry of journal.entries) {
       const sqlPath = path.join(migrationsFolder, `${entry.tag}.sql`);

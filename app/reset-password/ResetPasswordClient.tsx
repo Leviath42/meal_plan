@@ -73,8 +73,8 @@ export default function ResetPasswordClient({
       return;
     }
 
-    if (!newPassword || newPassword.length < 6) {
-      setFormState({ errors: { newPassword: ['Le mot de passe doit faire au moins 6 caractères'] } });
+    if (!newPassword || newPassword.length < 10) {
+      setFormState({ errors: { newPassword: ['Le mot de passe doit faire au moins 10 caractères'] } });
       setPending(false);
       return;
     }
@@ -214,8 +214,8 @@ export default function ResetPasswordClient({
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimum 6 caractères"
-                  minLength={6}
+                  placeholder="Minimum 10 caractères"
+                  minLength={10}
                   required
                   autoComplete="new-password"
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"

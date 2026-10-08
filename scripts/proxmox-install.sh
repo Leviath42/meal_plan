@@ -219,20 +219,8 @@ pm2 save
 pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 
 # Script de mise a jour pour la beta (a relancer a chaque nouvelle version)
-cat > "$APP_DIR/update.sh" <<'UPDATEEOF'
-#!/usr/bin/env bash
-# Mise a jour de la branche beta : bash /opt/meal_plan/update.sh
-set -e
-cd /opt/meal_plan
-pm2 stop meal-plan || true
-git pull origin beta
-npm ci --no-audit --no-fund
-npm run db:migrate
-npm run build
-pm2 start meal-plan || pm2 start npm --name meal-plan -- start
-pm2 save
-echo "Mise a jour terminee."
-UPDATEEOF
+># Le update.sh versionné dans le dépôt (backup de base, db:ensure, healthcheck)
+# est déposé par le git clone ci-dessus : ne PAS l'écraser par une version naïve.
 chmod +x "$APP_DIR/update.sh"
 
 echo "Installation terminee dans le conteneur."

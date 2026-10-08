@@ -186,6 +186,11 @@ export async function updateUserPassword(
   const currentPassword = formData.get('currentPassword') as string;
   const newPassword = formData.get('newPassword') as string;
 
+  // Validation serveur de la longueur (le contrôle client ne suffit pas)
+  if (!newPassword || newPassword.length < 10) {
+    return { errors: { newPassword: ['Le mot de passe doit faire au moins 10 caractères'] } };
+  }
+
   // Vérifier que l'ID correspond à l'utilisateur connecté
   if (userId !== session.user.id) {
     return { errors: { form: ['Vous ne pouvez changer que votre propre mot de passe'] } };
@@ -322,8 +327,8 @@ export async function resetPasswordWithSecurityQuestion(
     };
   }
 
-  if (!newPassword || newPassword.length < 6) {
-    return { errors: { newPassword: ['Le mot de passe doit faire au moins 6 caractères'] } };
+  if (!newPassword || newPassword.length < 10) {
+    return { errors: { newPassword: ['Le mot de passe doit faire au moins 10 caractères'] } };
   }
 
   if (newPassword !== confirmPassword) {

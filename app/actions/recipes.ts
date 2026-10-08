@@ -31,7 +31,15 @@ export async function createRecipe(
 ): Promise<RecipeFormState> {
   await requireSession();
   const rawData = formDataToRecord(formData);
-  const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
+  let ingredients: any;
+  try {
+    ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
+  } catch {
+    return {
+      errors: { ingredients: ["Données d'ingrédients invalides"] },
+      values: rawData
+    };
+  }
   const parsed = recipeInput.safeParse({
     ...rawData,
     ingredients: ingredients,
@@ -75,7 +83,15 @@ export async function updateRecipe(
   await requireSession();
   const id = String(formData.get('id'));
   const rawData = formDataToRecord(formData);
-  const ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
+  let ingredients: any;
+  try {
+    ingredients = JSON.parse(String(formData.get('ingredients') ?? '[]'));
+  } catch {
+    return {
+      errors: { ingredients: ["Données d'ingrédients invalides"] },
+      values: rawData
+    };
+  }
   
   const parsed = recipeInput.safeParse({
     ...rawData,
@@ -110,6 +126,8 @@ export async function updateRecipe(
 
   revalidatePath('/recipes');
   revalidatePath(`/recipes/${id}`);
+  revalidatePath('/');
+  revalidatePath('/calendar');
   redirect(`/recipes/${id}`);
 }
 
@@ -117,5 +135,7 @@ export async function deleteRecipe(id: string) {
   await requireSession();
   await db.delete(recipes).where(eq(recipes.id, id));
   revalidatePath('/recipes');
+  revalidatePath('/');
+  revalidatePath('/calendar');
   redirect('/recipes');
 }
