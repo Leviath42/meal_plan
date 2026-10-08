@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-07*
-*Version : 3.0 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-08*
+*Version : 3.1 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
 
 ---
@@ -41,6 +41,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | 3 | **F09 - Antidoublon** | ✅ Complet | Fenêtre configurable par utilisateur — 10 tests runtime PASS |
 | 3 | **F03 - Suggestions** | ✅ Complet | 3 propositions excluant la fenêtre antidoublon — 9 tests runtime PASS |
 | - | Auth, recettes, ingrédients, profil, admin | ✅ Complet | Audits de sécurité passés |
+| - | **Maintenance intégrée** — page `/deploy` (version chargée, mise à jour, rollback) + `update.sh` + `db:ensure` | ✅ En service | Déployé et testé sur le CT beta |
 
 ### 📌 Stack Technique
 
@@ -108,6 +109,10 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 | ID | Date | Fonctionnalité / Page | Description du problème (étapes → attendu → constaté) | Statut | Priorité |
 |----|------|------------------------|--------------------------------------------------------|--------|----------|
 | C-001 | 2026-10-07 | F05 - Liste de courses | Quantités affichées en décimales brutes (ex. « 2.667 filet », « 333.333 g ») — envisager arrondi d'affichage (2 décimales, virgule FR) ou arrondi métier | À corriger | Basse |
+| C-002 | 2026-10-08 | Nav mobile | Lien « Courses » sans `py-2` → espacement non uniforme entre les items (desktop ok) | Corrigé (commit en cours) | Basse |
+| C-003 | 2026-10-08 | Nav mobile | Menu resté ouvert au clic sur le logo « Meal Plan » | Corrigé (f551a2b) | Basse |
+| C-004 | 2026-10-08 | Base / migrations | Journal `__drizzle_migrations` hérité de l'ancien jeu de migrations : `db:migrate` silencieusement inopérant, colonnes `last_served_at` / `min_days_between` et tables `access_tokens` / `app_settings` absentes des bases restaurées | Corrigé (f31674e : `db:ensure` + réalignement du journal) | Haute |
+| C-005 | 2026-10-08 | Déploiement | Processus de mise à jour lancé depuis l'app tué au `pm2 stop` (tree-kill de pm2) → site laissé en 502 | Corrigé (3068e83 : double-fork, script reparenté à init) | Haute |
 | C-002 | | | | | |
 
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
@@ -165,7 +170,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 | Branche | Rôle |
 |---------|------|
 | `main` | Référence stable — tag `last-stable` sur la dernière version validée |
-| `beta` | Branche de test : déployée sur le conteneur Proxmox (CT 103), mise à jour via `pct exec 103 -- bash /opt/meal_plan/update.sh` |
+| `beta` | Branche de test : déployée sur le conteneur Proxmox (CT 103), mise à jour via `pct exec 103 -- bash /opt/meal_plan/update.sh` **ou depuis l'application** (Paramètres → Update) |
 | `feature/*` | Une branche par fonctionnalité (vagues IA) — conservées sur GitHub pour revue |
 
 Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.md](DEPLOYMENT.md)**
@@ -187,4 +192,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.
 |---------|---------|---------|
 | V1 (archivée) | - | Roadmap originale |
 | V2 (archivée) | 2026-10 | Planification des phases 1-3 du cahier des charges |
-| **V3 (ce document)** | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
+| V3 (archivée) | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
+| **V3.1 (ce document)** | 2026-10-08 | Maintenance intégrée (page `/deploy` + `update.sh` + `db:ensure`), corrections C-002 à C-005, liens Utilisateurs/Partage/Profil/Update regroupés dans Paramètres |
