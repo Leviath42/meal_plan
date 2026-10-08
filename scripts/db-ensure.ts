@@ -16,7 +16,7 @@
 
 import Database from 'better-sqlite3';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const migrationsFolder = process.argv[2] ?? path.join(process.cwd(), 'drizzle');
@@ -35,6 +35,11 @@ type JournalEntry = { idx: number; when: number; tag: string };
 const journal: { entries: JournalEntry[] } = JSON.parse(
   readFileSync(journalPath, 'utf8'),
 );
+
+// Installation fraiche : le dossier data/ est absent du clone (gitignore).
+// Le creer avant d'ouvrir la base, sinon better-sqlite3 plante
+// (« Cannot open database because the directory does not exist »).
+mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const sqlite = new Database(dbPath);
 
@@ -93,11 +98,15 @@ try {
     // 0. Déduplication préalable : des doublons (date, meal_type, recipe_id)
     //    créés avant l'index unique 0003 empêcheraient sa création. On garde
     //    le plan le plus ancien de chaque créneau (MIN(id)).
-    const dedup = sqlite.prepare(
-      'DELETE FROM meal_plans WHERE id NOT IN (SELECT MIN(id) FROM meal_plans GROUP BY date, meal_type, recipe_id)'
-    ).run();
-    if (dedup.changes > 0) {
-      applied.push(`doublons meal_plans : ${dedup.changes} plan(s) en doublon supprimé(s)`);
+    //    Base vierge : la table n'existe pas encore (matérialisée à l'étape 1),
+    //    sauter ce préalable — le schéma neuf porte déjà l'index unique.
+    if (tableExists('meal_plans')) {
+      const dedup = sqlite.prepare(
+        'DELETE FROM meal_plans WHERE id NOT IN (SELECT MIN(id) FROM meal_plans GROUP BY date, meal_type, recipe_id)'
+      ).run();
+      if (dedup.changes > 0) {
+        applied.push(`doublons meal_plans : ${dedup.changes} plan(s) en doublon supprimé(s)`);
+      }
     }
 
     // 1. Matérialisation du schéma, statement par statement

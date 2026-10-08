@@ -1,6 +1,7 @@
 // lib/db/index.ts
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
+import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import * as schema from './schema';
 
@@ -12,6 +13,9 @@ const dbPath = path.join(process.cwd(), 'data', 'sqlite.db');
 const globalForDb = globalThis as unknown as {
   sqlite: Database.Database | undefined;
 };
+
+// Installation fraiche : le dossier data/ est absent du clone (gitignore).
+mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const sqlite = globalForDb.sqlite ?? new Database(dbPath);
 

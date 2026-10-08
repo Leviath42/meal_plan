@@ -44,6 +44,7 @@
 | C-031 | 2026-10-08 | F01 - Calendrier | Changement de jour : le tableau entier était remplacé par « Chargement... » pendant le temps de la requête (`setLoading(true)` à chaque navigation) — rupture visuelle à chaque clic, boutons de navigation désactivés en attendant | Corrigé (premier chargement : squelette gris sans texte ; navigations suivantes : l'ancien contenu reste affiché, légèrement atténué (`opacity-60`) le temps de la requête ; navigation active pendant le rafraîchissement ; garde « dernier chargement gagnant » par numéro de séquence : une réponse périmée ne peut plus écraser un chargement plus récent lancé par une mutation ou une navigation) | Moyenne |
 | C-032 | 2026-10-08 | Installation (proxmox-install.sh) | Ligne parasite `># ...` dans le heredoc du script interne : l'installation plantait à l'étape 6/6 (« Le: command not found ») ; branche `beta` figée en dur dans le clone ET dans `update.sh` — impossible d'installer puis de suivre `main` sur un conteneur de production | Corrigé (ligne parasite retirée ; `BRANCH` paramétrable : `BRANCH=main bash proxmox-install.sh <CTID> …`, branche mémorisée dans `/opt/meal_plan/.deploy-branch` que `update.sh` lit à chaque mise à jour — la page /deploy suit donc la bonne branche sans modification ; `npm run db:ensure` ajouté avant la migration à l'installation ; syntaxe `bash -n` vérifiée) | Haute |
 | C-033 | 2026-10-08 | Installation (proxmox-install.sh) — trouvé en exécution réelle | `CT_HOSTNAME` utilisé dans le titre de l’étape 2/7 AVANT sa définition deux lignes plus bas : sous `set -eu`, « unbound variable » et arrêt immédiat du script à la création du conteneur (jamais vu avant : première exécution réelle du script) | Corrigé (définition déplacée avant le premier usage, v8 ; passage en revue des autres variables : uniquement des usages sûrs `${VAR:-}` — plus aucune variable utilisée avant assignation) | Haute |
+| C-034 | 2026-10-08 | Installation / db-ensure — trouvé en exécution réelle | Base vierge : le dossier data/ est absent du clone (gitignore) et db:ensure plantait à l’ouverture (« Cannot open database because the directory does not exist ») ; une fois corrigé, la déduplication préalable (étape 0) référençait meal_plans AVANT la matérialisation du schéma → « no such table: meal_plans » | Corrigé (mkdirSync du dossier de la base dans db-ensure ET dans lib/db/index.ts au démarrage de l’app ; étape 0 conditionnée à l’existence de la table) — testé en runtime : base vierge créée de zéro (schéma complet + journal réaligné), 2e passage no-op | Haute |
 
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
@@ -55,8 +56,8 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 33 (C-001 → C-033) |
-| Corrigées et déployées | 32 |
+| Corrections enregistrées | 34 (C-001 → C-034) |
+| Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
 | Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |
