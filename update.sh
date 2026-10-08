@@ -98,8 +98,12 @@ cp "$BACKUP_DIR/db-$STAMP.db" data/sqlite.db
 [ -f "$BACKUP_DIR/db-$STAMP.db-shm" ] && cp "$BACKUP_DIR/db-$STAMP.db-shm" data/sqlite.db-shm || true
 
 if ! git diff --quiet "$BEFORE" "$AFTER" -- package-lock.json; then
-  log "package-lock.json a changé : npm ci"
-  npm ci || die "npm ci a échoué"
+  log "package-lock.json a changé : npm ci (devDependencies incluses)"
+  # npm ci hérite de NODE_ENV du process appelant : déclenchée depuis
+  # l'application, la mise à jour tourne avec NODE_ENV=production et
+  # npm ci omet les devDependencies (tsx, drizzle-kit) → db:ensure
+  # échoue ensuite. Forcer l'installation complète (C-030).
+  NODE_ENV=development npm ci || die "npm ci a échoué"
 fi
 
 log "réconciliation du schéma de la base"
