@@ -150,11 +150,27 @@ export async function generateShoppingList(
       addedManually: false,
     }));
 
-    // Remplacement atomique des lignes générées (les manuelles sont préservées)
+    // Remplacement atomique des lignes générées (les manuelles sont
+    // préservées), en conservant les coches des articles déjà achetés :
+    // régénérer en plein supermarché ne doit pas effacer le progrès d'achat.
     db.transaction((tx) => {
+      const bought = tx
+        .select({ ingredientId: shoppingItems.ingredientId, unit: shoppingItems.unit })
+        .from(shoppingItems)
+        .where(and(eq(shoppingItems.addedManually, false), eq(shoppingItems.isBought, true)))
+        .all() as Array<{ ingredientId: string | null; unit: string }>;
+      const boughtKeys = new Set(bought.map((item) => `${item.ingredientId}|${item.unit}`));
+
       tx.delete(shoppingItems).where(eq(shoppingItems.addedManually, false)).run();
       if (rowsToInsert.length > 0) {
-        tx.insert(shoppingItems).values(rowsToInsert).run();
+        tx.insert(shoppingItems)
+          .values(
+            rowsToInsert.map((row) => ({
+              ...row,
+              isBought: boughtKeys.has(`${row.ingredientId}|${row.unit}`),
+            }))
+          )
+          .run();
       }
     });
 

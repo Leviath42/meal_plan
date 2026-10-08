@@ -15,6 +15,11 @@ const globalForDb = globalThis as unknown as {
 
 const sqlite = globalForDb.sqlite ?? new Database(dbPath);
 
+// SQLite laisse les clés étrangères DÉSACTIVÉES par défaut et par connexion :
+// sans ce pragma, toutes les clauses ON DELETE du schéma (cascade, set null)
+// sont inertes et les suppressions laissent des lignes orphelines.
+sqlite.pragma('foreign_keys = ON');
+
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.sqlite = sqlite;
 }

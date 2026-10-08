@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { appSettings, users } from '@/lib/db/schema';
 import { requireAdmin, requireSession } from '@/lib/auth-guards';
-import { auth } from '@/lib/auth';
 import { getUserMinDaysBetween } from '@/lib/meal-planning';
 
 // Paramètres de l'application (une seule ligne, id = 1, partagée par tous)
@@ -29,9 +28,11 @@ const defaultServingsInput = z.coerce
   .max(20, 'Maximum 20 couverts');
 
 // Lire les paramètres de l'application ; la ligne id=1 est créée avec les
-// défauts si elle est absente. Pas de garde d'auth : la page /settings est
-// derrière le middleware (utilisateur connecté).
+// défauts si elle est absente. Garde de session : les server actions sont
+// invocables directement (le middleware ne protège que les pages).
 export async function getAppSettings(): Promise<AppSettings> {
+  await requireSession();
+
   let [row] = await db
     .select()
     .from(appSettings)
@@ -39,10 +40,21 @@ export async function getAppSettings(): Promise<AppSettings> {
     .limit(1);
 
   if (!row) {
+    // onConflictDoNothing : deux requêtes concurrentes peuvent tenter la
+    // création de la ligne id=1 en même temps (contrainte PRIMARY KEY)
     [row] = await db
       .insert(appSettings)
       .values({ id: 1, defaultServings: 4 })
+      .onConflictDoNothing()
       .returning();
+
+    if (!row) {
+      [row] = await db
+        .select()
+        .from(appSettings)
+        .where(eq(appSettings.id, 1))
+        .limit(1);
+    }
   }
 
   return { defaultServings: row.defaultServings, updatedAt: row.updatedAt };
@@ -91,8 +103,8 @@ const minDaysBetweenInput = z.coerce
 // même recette, propre à l'utilisateur connecté (défaut : 7 jours, 0 = désactivé).
 // Utilisé par la page /settings pour afficher la préférence courante.
 export async function getCurrentUserMinDaysBetween(): Promise<number> {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const session = await requireSession();
+  const userId = session.user?.id;
   if (!userId) return 7;
   return await getUserMinDaysBetween(userId);
 }
