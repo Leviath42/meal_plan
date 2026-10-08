@@ -194,6 +194,9 @@ export async function getMealPlans(
   startDate: string,
   endDate: string
 ): Promise<{ mealPlans: MealPlan[] }> {
+  // Les server actions sont des points d'entrée RPC invocables directement :
+  // le middleware protège les pages, pas les actions — garde obligatoire.
+  await requireSession();
   try {
     const mealPlansList = await db
       .select()

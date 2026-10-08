@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
 import Argon2 from '@node-rs/argon2';
+import { rateLimit } from '@/lib/rate-limit';
 import { eq, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -274,6 +275,23 @@ export async function resetPasswordWithSecurityQuestion(
     return { errors: { email: ['Email requis'] } };
   }
 
+  // La réponse secrète est attaquable par dictionnaire : limiter les tentatives
+  // AVANT toute requête (la vérification Argon2 est coûteuse en CPU).
+  const limit = rateLimit(
+    `reset:${email.trim().toLowerCase()}`,
+    5,
+    60 * 60 * 1000
+  );
+  if (!limit.allowed) {
+    return {
+      errors: {
+        securityAnswer: [
+          `Trop de tentatives. Réessayez dans ${Math.ceil(limit.retryAfterSec / 60)} minute(s).`,
+        ],
+      },
+    };
+  }
+
   if (!newPassword || newPassword.length < 6) {
     return { errors: { newPassword: ['Le mot de passe doit faire au moins 6 caractères'] } };
   }
@@ -308,9 +326,14 @@ export async function resetPasswordWithSecurityQuestion(
 
   // Vérifier la réponse secrète
   const isValidAnswer = await Argon2.verify(user.securityAnswerHash, securityAnswer);
-  
+
+  // Même message générique que les autres branches d'échec : « Réponse
+  // incorrecte » confirmait que l'email existe ET a une question secrète.
   if (!isValidAnswer) {
-    return { errors: { securityAnswer: ['Réponse incorrecte'] } };
+    return { 
+      success: true,
+      message: 'Si cet email existe et a une question secrète configurée, la réinitialisation est en cours.'
+    };
   }
 
   try {
@@ -338,6 +361,20 @@ export async function resetPasswordWithSecurityQuestion(
 
 // Récupérer la question secrète d'un utilisateur (pour l'afficher dans la page de réinitialisation)
 export async function getUserSecurityQuestion(email: string) {
+  // Même limitation : cette entrée confirme l'existence d'un compte et révèle
+  // l'indice de la réponse secrète.
+  const limit = rateLimit(
+    `secq:${email.trim().toLowerCase()}`,
+    10,
+    60 * 60 * 1000
+  );
+  if (!limit.allowed) {
+    return {
+      securityQuestion: null,
+      message: 'Trop de tentatives. Réessayez plus tard.',
+    };
+  }
+
   const [user] = await db
     .select({
       securityQuestion: users.securityQuestion,

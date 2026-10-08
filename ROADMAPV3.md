@@ -115,6 +115,11 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 | C-004 | 2026-10-08 | Base / migrations | Journal `__drizzle_migrations` hérité de l'ancien jeu de migrations : `db:migrate` silencieusement inopérant, colonnes `last_served_at` / `min_days_between` et tables `access_tokens` / `app_settings` absentes des bases restaurées | Corrigé (f31674e : `db:ensure` + réalignement du journal) | Haute |
 | C-005 | 2026-10-08 | Déploiement | Processus de mise à jour lancé depuis l'app tué au `pm2 stop` (tree-kill de pm2) → site laissé en 502 | Corrigé (3068e83 : double-fork, script reparenté à init) | Haute |
 | C-006 | 2026-10-08 | F04 - Partage | Page /share basculait en mode clair à l'actualisation. Première piste (erreur d'hydratation dates) : correctifs conservés mais insuffisants — le bug persistait | Corrigé en solution 2 : thème rendu côté serveur depuis le cookie `meal-theme` (classe .dark dans le HTML initial, ThemeToggle écrit le cookie, script de secours uniquement sans cookie). Vérifié en prod locale : `class="dark"` servi avec le cookie. Aucun coût (layout déjà dynamique) | Haute |
+| C-007 | 2026-10-08 | Base | `PRAGMA foreign_keys` jamais activé : toutes les clauses ON DELETE du schéma inertes (suppression de recette → repas orphelins qui alimentent encore la liste de courses ; suppression d'ingrédient utilisé réussissait en silence) — trouvé indépendamment par 2 agents d'audit | Corrigé (pragma dans `lib/db/index.ts` + purge idempotente des orphelins dans `db-ensure`, testée en runtime : cascade, set null, 4 purges) | Critique |
+| C-008 | 2026-10-08 | F05 - Liste de courses | Régénération : toutes les cases cochées des articles générées étaient effacées | Corrigé (coches conservées par clé ingrédient+unité, testées en runtime) | Haute |
+| C-009 | 2026-10-08 | Sécurité | Server actions non gardées : `getMealPlans`, `getAppSettings` (+ course à l'insertion), `getCurrentUserMinDaysBetween` invocables anonymement (le middleware protège les pages, pas les actions) | Corrigé (`requireSession()` partout + `onConflictDoNothing`) | Haute |
+| C-010 | 2026-10-08 | Sécurité | Reset par question secrète : brute force illimité, message d'échec confirmant l'existence du compte, question révélée sans limite | Corrigé (`lib/rate-limit.ts` : 5 essais/h sur le reset, 10/h sur la question, message neutre unique — testé en runtime) | Haute |
+| C-011 | 2026-10-08 | Sécurité | `data/sqlite.db` suivie dans git (emails, hashes Argon2, questions secrètes, jetons en clair) | Corrigé pour l'avenir (`git rm --cached` + .gitignore) ; l'historique git conserve les versions passées — purge `git filter-repo` + révocation des jetons à décider | Critique |
 | C-002 | | | | | |
 
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
@@ -169,7 +174,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 - [ ] Uniformisation des tailles de composants, très petits écrans, accessibilité (contrastes, navigation clavier)
 - [ ] Statistiques de fréquence des recettes (F08, optionnel)
 - [ ] Headers de sécurité HTTP (CSP, X-Frame-Options) via `next.config`
-- [ ] Retrait de `data/sqlite.db` du suivi git si le repo devient public (contient des hash de mots de passe)
+- [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — reste au choix : purge de l'historique (`git filter-repo`, réécriture du dépôt) et révocation des jetons créés avant le retrait
 
 ---
 

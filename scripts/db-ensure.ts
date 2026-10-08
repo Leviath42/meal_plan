@@ -142,6 +142,25 @@ try {
         `journal __drizzle_migrations réaligné (${expected.length} entrées, ${currentRows.length} avant)`,
       );
     }
+
+    // 3. Purge des orphelins créés avant l'activation du pragma foreign_keys
+    //    (les clauses ON DELETE s'appliquent désormais à l'exécution, mais les
+    //    lignes créées avant restent tant qu'on ne les nettoie pas).
+    //    Les repas planifiés référençant une recette supprimée deviennent des
+    //    repas sans recette (note conservée) plutôt que des pointeurs morts.
+    const cleanups: Array<[string, string]> = [
+      ['recipe_ingredients → recipes', 'DELETE FROM recipe_ingredients WHERE recipe_id NOT IN (SELECT id FROM recipes)'],
+      ['recipe_ingredients → ingredients', 'DELETE FROM recipe_ingredients WHERE ingredient_id NOT IN (SELECT id FROM ingredients)'],
+      ['meal_plans → recipes', 'UPDATE meal_plans SET recipe_id = NULL WHERE recipe_id IS NOT NULL AND recipe_id NOT IN (SELECT id FROM recipes)'],
+      ['shopping_items → ingredients', 'DELETE FROM shopping_items WHERE ingredient_id IS NOT NULL AND ingredient_id NOT IN (SELECT id FROM ingredients)'],
+      ['access_tokens → users', 'UPDATE access_tokens SET created_by_user_id = NULL WHERE created_by_user_id IS NOT NULL AND created_by_user_id NOT IN (SELECT id FROM users)'],
+    ];
+    for (const [label, statement] of cleanups) {
+      const result = sqlite.prepare(statement).run();
+      if (result.changes > 0) {
+        applied.push(`orphelins ${label} : ${result.changes} ligne(s) nettoyée(s)`);
+      }
+    }
   });
   run();
 
