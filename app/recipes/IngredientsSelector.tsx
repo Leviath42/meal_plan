@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { quickCreateIngredient } from '@/app/actions/ingredients';
+import { formatQuantity } from '@/lib/format';
 
 interface Ingredient {
   id: string;
@@ -335,7 +336,7 @@ export default function IngredientsSelector({
                   <div>
                     <p className="text-xs sm:text-sm font-medium">{getIngredientName(ing.ingredientId)}</p>
                     <p className="text-xs text-gray-500">
-                      {ing.quantity} {ing.unit}
+                      {formatQuantity(ing.quantity)} {ing.unit}
                       {ing.note && ` - ${ing.note}`}
                     </p>
                   </div>

@@ -1,4 +1,5 @@
 'use client';
+import { formatQuantity } from '@/lib/format';
 
 import { useActionState, useEffect, useMemo, useState } from 'react';
 import {
@@ -28,9 +29,7 @@ function parseLocalDate(dateStr: string): Date {
 }
 
 // Quantité affichée sans résidus flottants (2.5, 3, 0.125)
-function formatQuantity(quantity: number): string {
-  return String(Math.round(quantity * 1000) / 1000);
-}
+
 
 export default function ShoppingListClient({ items: initialItems }: { items: ShoppingItemView[] }) {
   // Copie locale pour un retour immédiat (optimiste), resynchronisée à chaque

@@ -3,6 +3,7 @@ import { recipes, recipeIngredients, ingredients } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { formatQuantity } from '@/lib/format';
 
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -103,7 +104,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                       )}
                     </div>
                     <p className="text-xs text-gray-600 whitespace-nowrap">
-                      {item.quantity} {item.unit}
+                      {formatQuantity(item.quantity)} {item.unit}
                     </p>
                   </div>
                 </li>

@@ -27,8 +27,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     // suppressHydrationWarning : le script ci-dessous ajoute la classe .dark
-    // sur <html> avant l'hydratation React
-    <html lang="fr" className="h-full" suppressHydrationWarning>
+    // sur <html> avant l'hydratation React.
+    // PAS de className dans ce JSX : React ne doit pas gérer l'attribut class
+    // de <html>, sinon un re-rendu client complet (erreur d'hydratation sur
+    // n'importe quelle page) écraserait la classe .dark → bascule en clair.
+    // La hauteur (ex-utilitaire h-full) vit dans styles/globals.css.
+    <html lang="fr" suppressHydrationWarning>
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <SessionProvider session={session}>
