@@ -1,6 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import {
+  formatWeekdayDayMonth,
+  formatDayMonthYear,
+  formatWeekdayLongUpper,
+  formatShortWeekdayUpper,
+  formatMonthYear,
+  capitalize,
+} from '@/lib/format';
 import type { ReactNode } from 'react';
 import {
   DndContext,
@@ -315,9 +323,7 @@ function MealPlanCreationModal({
         <div className="p-4 border-b">
           <h3 className="font-bold text-lg">Créer un repas planifié</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {parseLocalDate(date).toLocaleDateString('fr-FR', {
-              weekday: 'long', day: 'numeric', month: 'long'
-            })}
+            {formatWeekdayDayMonth(parseLocalDate(date))}
           </p>
         </div>
 
@@ -602,9 +608,7 @@ function MealPlanActionsModal({
         <div className="p-4 border-b">
           <h3 className="font-bold text-lg">Actions pour ce repas</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {parseLocalDate(mealPlan.date).toLocaleDateString('fr-FR', {
-              weekday: 'long', day: 'numeric', month: 'long'
-            })} - {MEAL_TYPE_LABELS[mealPlan.mealType]}
+            {formatWeekdayDayMonth(parseLocalDate(mealPlan.date))} - {MEAL_TYPE_LABELS[mealPlan.mealType]}
           </p>
         </div>
 
@@ -1105,9 +1109,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       (parseLocalDate(plan.date).getTime() - parseLocalDate(recipe.lastServedAt).getTime()) / 86400000
     );
     if (days > 30) return null;
-    const servedOn = parseLocalDate(recipe.lastServedAt).toLocaleDateString('fr-FR', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
+    const servedOn = formatDayMonthYear(parseLocalDate(recipe.lastServedAt));
     return (
       <span className="ml-0.5 text-[10px] font-normal opacity-60" title={`Déjà servi le ${servedOn}`}>•</span>
     );
@@ -1246,7 +1248,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
           </svg>
         </button>
         <span className={`font-medium text-center ${mainDay.isToday ? 'text-accent' : 'text-gray-800'} text-lg font-bold`}>
-          {mainDay.date.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase()} {mainDay.date.getDate()}
+          {formatWeekdayLongUpper(mainDay.date)} {mainDay.date.getDate()}
         </span>
         <button
           onClick={goToNextDay}
@@ -1263,7 +1265,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       {/* Date complète en français et nombre de repas planifiés */}
       <p className="text-xs text-gray-500 mb-1">
         <span className="capitalize">
-          {mainDay.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {capitalize(formatWeekdayDayMonth(mainDay.date))}
         </span>
         {' · '}
         {mainDay.plans.length} repas
@@ -1327,7 +1329,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
 
     // Helper pour formater le jour court avec majuscules
     const formatShortDay = (date: Date) => {
-      return date.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
+      return formatShortWeekdayUpper(date);
     };
 
     // Découper les jours suivants en lignes de 3 jours
@@ -1448,7 +1450,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-3">
             <h2 className="text-base sm:text-lg font-bold text-gray-800 capitalize">
-              {startDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+              {formatMonthYear(startDate)}
             </h2>
             {enableMonthNavigation && (
               <div className="flex gap-1.5">

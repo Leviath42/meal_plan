@@ -3,7 +3,7 @@ import { recipes, recipeIngredients, ingredients } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { formatQuantity } from '@/lib/format';
+import { formatQuantity, formatNumericDate, formatDayMonthYear } from '@/lib/format';
 
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -144,15 +144,15 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
 
         <div className="text-xs text-gray-500 space-y-1">
           <p>
-            Créé le : {new Date(recipe.createdAt).toLocaleDateString('fr-FR')}
+            Créé le : {formatNumericDate(new Date(recipe.createdAt))}
           </p>
           <p>
-            Modifié le : {new Date(recipe.updatedAt).toLocaleDateString('fr-FR')}
+            Modifié le : {formatNumericDate(new Date(recipe.updatedAt))}
           </p>
           {recipe.lastServedAt && (
             <p>
               Dernier repas planifié :{' '}
-              {new Date(recipe.lastServedAt + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {formatDayMonthYear(new Date(recipe.lastServedAt + 'T00:00:00'))}
             </p>
           )}
         </div>

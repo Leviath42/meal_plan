@@ -1,5 +1,5 @@
 'use client';
-import { formatQuantity } from '@/lib/format';
+import { formatQuantity, formatWeekdayDayMonth } from '@/lib/format';
 
 import { useActionState, useEffect, useMemo, useState } from 'react';
 import {
@@ -82,11 +82,7 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
   }, [days]);
 
   const formatDateLabel = (dateStr: string): string =>
-    parseLocalDate(dateStr).toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    });
+    formatWeekdayDayMonth(parseLocalDate(dateStr));
 
   // Groupement par rayon (catégorie), rayons et articles triés alphabétiquement
   const groups = useMemo(() => {

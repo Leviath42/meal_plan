@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatNumericDate } from '@/lib/format';
 import { useRouter } from 'next/navigation';
 import { registerUser, updateUserRole, deleteUser } from '@/app/actions/auth';
 
@@ -298,7 +299,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                                 {user.email}
                               </p>
                               <p className="text-xs text-gray-400 mt-0.5">
-                                Créé le : {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                                Créé le : {formatNumericDate(new Date(user.createdAt))}
                               </p>
                             </div>
                           </div>
