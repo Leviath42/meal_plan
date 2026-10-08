@@ -29,9 +29,6 @@ function parseLocalDate(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
-// Quantité affichée sans résidus flottants (2.5, 3, 0.125)
-
-
 export default function ShoppingListClient({ items: initialItems }: { items: ShoppingItemView[] }) {
   // Copie locale pour un retour immédiat (optimiste), resynchronisée à chaque
   // revalidation serveur (les actions appellent revalidatePath('/shopping-list'))
@@ -47,6 +44,9 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
   const [allOpen, setAllOpen] = useState(true);
   // Masquer les articles déjà achetés (ils restent cochés en base)
   const [hideBought, setHideBought] = useState(false);
+  // Formulaire d'ajout manuel : révélé par « + Nouvel article »
+  // (même comportement que les pages Recettes et Ingrédients)
+  const [addOpen, setAddOpen] = useState(false);
 
   // Sélection précise : plage de dates libre (mode « personnalisé »)
   const [mode, setMode] = useState<'preset' | 'custom'>('preset');
@@ -186,15 +186,75 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
         </div>
       )}
 
-      {/* Génération depuis le planning */}
-      <div className="bg-white rounded-lg shadow-sm p-3">
-        <h2 className="font-medium text-sm sm:text-base mb-2">Générer depuis le planning</h2>
+      {/* Rangée titre + bouton : même structure que les pages Recettes
+          (« Mes recettes » / « + Nouvelle recette ») et Ingrédients */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h1 className="text-lg sm:text-xl font-bold">Liste de courses</h1>
+        <button
+          type="button"
+          onClick={() => setAddOpen((value) => !value)}
+          className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors whitespace-nowrap"
+        >
+          {addOpen ? 'Fermer' : '+ Nouvel article'}
+        </button>
+      </div>
+
+      {/* Ajout manuel : formulaire révélé au clic sur « + Nouvel article » */}
+      {addOpen && (
+        <form action={addAction} className="bg-white rounded-lg shadow-sm p-3 space-y-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <input
+              type="text"
+              name="name"
+              value={manualName}
+              onChange={(e) => setManualName(e.target.value)}
+              placeholder="Nom de l'article"
+              required
+              className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm"
+            />
+            <input
+              type="number"
+              name="quantity"
+              value={manualQuantity}
+              onChange={(e) => setManualQuantity(e.target.value)}
+              min="0.01"
+              step="any"
+              placeholder="Quantité"
+              required
+              className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm"
+            />
+            <input
+              type="text"
+              name="unit"
+              value={manualUnit}
+              onChange={(e) => setManualUnit(e.target.value)}
+              placeholder="Unité (ex: pièce)"
+              required
+              className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm"
+            />
+            <button
+              type="submit"
+              disabled={addPending}
+              className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-xs sm:text-sm disabled:opacity-50"
+            >
+              {addPending ? 'Ajout...' : 'Ajouter'}
+            </button>
+          </div>
+          {addState && !addState.success && (
+            <p className="text-red-500 text-xs sm:text-sm">{addState.message}</p>
+          )}
+        </form>
+      )}
+
+      {/* Génération depuis le planning + résumé, regroupés en une carte compacte */}
+      <div className="bg-white rounded-lg shadow-sm p-3 space-y-3">
         <form action={generateAction} className="space-y-2">
           <input type="hidden" name="mode" value={mode} />
           <input type="hidden" name="days" value={days} />
           <input type="hidden" name="startDate" value={mode === 'custom' ? customStart : ''} />
           <input type="hidden" name="endDate" value={mode === 'custom' ? customEnd : ''} />
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-sm sm:text-base">Générer depuis le planning</span>
             {SHOPPING_PERIOD_PRESETS.map((preset) => (
               <button
                 key={preset}
@@ -223,6 +283,16 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
             >
               Dates précises
             </button>
+            <button
+              type="submit"
+              disabled={generatePending}
+              className="px-4 py-1.5 bg-accent text-white rounded hover:bg-accent-hover text-xs sm:text-sm disabled:opacity-50 whitespace-nowrap"
+            >
+              {generatePending ? 'Génération...' : 'Générer'}
+            </button>
+            <span className="text-xs sm:text-sm text-gray-500">
+              Du {formatDateLabel(range.start)} au {formatDateLabel(range.end)}
+            </span>
           </div>
           {mode === 'custom' && (
             <div className="flex flex-wrap items-center gap-2">
@@ -248,16 +318,6 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
               </label>
             </div>
           )}
-          <p className="text-xs sm:text-sm text-gray-500">
-            Du {formatDateLabel(range.start)} au {formatDateLabel(range.end)}
-          </p>
-          <button
-            type="submit"
-            disabled={generatePending}
-            className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-xs sm:text-sm disabled:opacity-50"
-          >
-            {generatePending ? 'Génération...' : 'Générer la liste'}
-          </button>
           {generateState && !generateState.success && (
             <p className="text-red-500 text-xs sm:text-sm">{generateState.message}</p>
           )}
@@ -265,96 +325,50 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
             <p className="text-green-700 text-xs sm:text-sm">{generateState.message}</p>
           )}
         </form>
-      </div>
 
-      {/* Résumé + copie */}
-      <div className="bg-white rounded-lg shadow-sm p-3 flex items-center justify-between gap-2">
-        <p className="text-xs sm:text-sm text-gray-600 flex-shrink-0">
-          {items.length} article{items.length > 1 ? 's' : ''} — {boughtCount} acheté
-          {boughtCount > 1 ? 's' : ''}
-        </p>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {/* Masquer les articles achetés (utile en fin de courses) */}
-          <label className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-600 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={hideBought}
-              onChange={(e) => setHideBought(e.target.checked)}
-              className="w-4 h-4 accent-accent"
-            />
-            Masquer les achetés
-          </label>
-          {/* Plier/déplier tous les rayons d'un coup */}
-          <button
-            type="button"
-            onClick={() => setAllOpen((value) => !value)}
-            disabled={items.length === 0}
-            className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-xs sm:text-sm disabled:opacity-50"
-          >
-            {allOpen ? 'Tout plier' : 'Tout déplier'}
-          </button>
-          <button
-            onClick={handleCopy}
-            disabled={items.length === 0}
-            className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-xs sm:text-sm disabled:opacity-50"
-          >
-            Copier la liste
-          </button>
+        {/* Résumé + actions de consultation, dans la même carte */}
+        <div className="border-t border-gray-100 pt-3 flex items-center justify-between gap-2 flex-wrap">
+          <p className="text-xs sm:text-sm text-gray-600 flex-shrink-0">
+            {items.length} article{items.length > 1 ? 's' : ''} — {boughtCount} acheté
+            {boughtCount > 1 ? 's' : ''}
+          </p>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {/* Masquer les articles achetés (utile en fin de courses) */}
+            <label className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-600 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={hideBought}
+                onChange={(e) => setHideBought(e.target.checked)}
+                className="w-4 h-4 accent-accent"
+              />
+              Masquer les achetés
+            </label>
+            {/* Plier/déplier tous les rayons d'un coup */}
+            <button
+              type="button"
+              onClick={() => setAllOpen((value) => !value)}
+              disabled={items.length === 0}
+              className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-xs sm:text-sm disabled:opacity-50"
+            >
+              {allOpen ? 'Tout plier' : 'Tout déplier'}
+            </button>
+            <button
+              onClick={handleCopy}
+              disabled={items.length === 0}
+              className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-xs sm:text-sm disabled:opacity-50"
+            >
+              Copier la liste
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Ajout manuel */}
-      <form action={addAction} className="bg-white rounded-lg shadow-sm p-3 space-y-2">
-        <h2 className="font-medium text-sm sm:text-base">Ajouter un article</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <input
-            type="text"
-            name="name"
-            value={manualName}
-            onChange={(e) => setManualName(e.target.value)}
-            placeholder="Nom de l'article"
-            required
-            className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm"
-          />
-          <input
-            type="number"
-            name="quantity"
-            value={manualQuantity}
-            onChange={(e) => setManualQuantity(e.target.value)}
-            min="0.01"
-            step="any"
-            placeholder="Quantité"
-            required
-            className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm"
-          />
-          <input
-            type="text"
-            name="unit"
-            value={manualUnit}
-            onChange={(e) => setManualUnit(e.target.value)}
-            placeholder="Unité (ex: pièce)"
-            required
-            className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm"
-          />
-          <button
-            type="submit"
-            disabled={addPending}
-            className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-xs sm:text-sm disabled:opacity-50"
-          >
-            {addPending ? 'Ajout...' : 'Ajouter'}
-          </button>
-        </div>
-        {addState && !addState.success && (
-          <p className="text-red-500 text-xs sm:text-sm">{addState.message}</p>
-        )}
-      </form>
 
       {/* Articles groupés par rayon */}
       {visibleGroups.length === 0 ? (
         <p className="text-center text-gray-500 text-xs sm:text-sm py-6">
           {hideBought
             ? 'Tous les articles affichables sont achetés — démasquez-les pour les revoir.'
-            : 'Aucun article — générez la liste depuis le planning ou ajoutez-en un à la main.'}
+            : 'Aucun article — générez la liste depuis le planning ou ajoutez-en un via « + Nouvel article ».'}
         </p>
       ) : (
         <div className="space-y-3">
