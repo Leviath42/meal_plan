@@ -17,7 +17,13 @@ function getFieldValue(state: any, fieldName: string, defaultValue: string | num
   return state?.values?.[fieldName] ?? defaultValue;
 }
 
-export function NewRecipeForm({ availableIngredients }: { availableIngredients: Ingredient[] }) {
+export function NewRecipeForm({
+  availableIngredients,
+  categories = [],
+}: {
+  availableIngredients: Ingredient[];
+  categories?: string[];
+}) {
   const [state, formAction, pending] = useActionState(createRecipe, null);
 
   return (
@@ -151,6 +157,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
           <IngredientsSelector 
             availableIngredients={availableIngredients} 
             existingIngredients={state?.ingredients || []}
+            categories={categories}
           />
 
           {/* Instructions */}

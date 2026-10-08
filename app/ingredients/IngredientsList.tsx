@@ -65,7 +65,7 @@ export default function IngredientsList({ ingredients }: { ingredients: Ingredie
         </div>
       ) : (
         groups.map((group) => (
-          <CollapsibleSection key={group.category} title={group.category} count={group.items.length}>
+          <CollapsibleSection key={group.category} title={group.category} count={group.items.length} defaultOpen={false}>
             <ul className="divide-y divide-gray-100 px-1">
               {group.items.map((ingredient) => (
                 <IngredientRow key={ingredient.id} {...ingredient} />

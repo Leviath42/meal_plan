@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { quickCreateIngredient } from '@/app/actions/ingredients';
+import CategorySelect from '@/app/components/CategorySelect';
 import { formatQuantity } from '@/lib/format';
 
 interface Ingredient {
@@ -18,27 +19,15 @@ interface RecipeIngredient {
   note: string | null;
 }
 
-// Rayons standards du livre d'ingrédients (mêmes catégories que le seed)
-const INGREDIENT_CATEGORIES = [
-  'Fruits & Légumes',
-  'Boucherie/Volaille',
-  'Poissonnerie',
-  'Épicerie Salée',
-  'Épicerie Sucrée',
-  'Produits Laitiers',
-  'Boissons',
-  'Conserves',
-  'Condiments & Sauces',
-  'Matières Grasses',
-  'Boulangerie',
-];
-
 export default function IngredientsSelector({
   availableIngredients,
   existingIngredients = [],
+  categories = [],
 }: {
   availableIngredients: Ingredient[];
   existingIngredients?: RecipeIngredient[];
+  // Rayons existants (liste déroulante + création de nouveau rayon à la volée)
+  categories?: string[];
 }) {
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(existingIngredients);
   const [selectedIngredientId, setSelectedIngredientId] = useState('');
@@ -51,7 +40,7 @@ export default function IngredientsSelector({
   const [createdIngredients, setCreatedIngredients] = useState<Ingredient[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newCategory, setNewCategory] = useState(INGREDIENT_CATEGORIES[0]);
+  const [newCategory, setNewCategory] = useState('');
   const [newUnit, setNewUnit] = useState('pièce');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -115,6 +104,11 @@ export default function IngredientsSelector({
     setCreating(true);
     setCreateError(null);
     try {
+      if (!newCategory.trim()) {
+        setCreateError('Veuillez choisir un rayon (ou en créer un nouveau)');
+        setCreating(false);
+        return;
+      }
       const result = await quickCreateIngredient(newName, newCategory, newUnit);
       if (result.success && result.ingredient) {
         const created = result.ingredient;
@@ -186,18 +180,13 @@ export default function IngredientsSelector({
                 <label htmlFor="new-ingredient-category" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Rayon
                 </label>
-                <select
+                <CategorySelect
                   id="new-ingredient-category"
                   value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  {INGREDIENT_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setNewCategory}
+                  categories={categories}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-white text-gray-800"
+                />
               </div>
             </div>
             <div>
