@@ -37,6 +37,11 @@ const journal: { entries: JournalEntry[] } = JSON.parse(
 );
 
 const sqlite = new Database(dbPath);
+
+// Fonction SQL de hachage pour la migration des jetons (SQLite n'a pas de sha256 natif)
+sqlite.function('sha256_hex', { deterministic: true }, (value: string) =>
+  createHash('sha256').update(value).digest('hex')
+);
 const applied: string[] = [];
 
 function tableExists(name: string): boolean {
@@ -154,6 +159,9 @@ try {
       ['meal_plans → recipes', 'UPDATE meal_plans SET recipe_id = NULL WHERE recipe_id IS NOT NULL AND recipe_id NOT IN (SELECT id FROM recipes)'],
       ['shopping_items → ingredients', 'DELETE FROM shopping_items WHERE ingredient_id IS NOT NULL AND ingredient_id NOT IN (SELECT id FROM ingredients)'],
       ['access_tokens → users', 'UPDATE access_tokens SET created_by_user_id = NULL WHERE created_by_user_id IS NOT NULL AND created_by_user_id NOT IN (SELECT id FROM users)'],
+      // Jetons stockés hachés (sha256:...) depuis la vague P1 : migrer les
+      // jetons existants pour qu'ils continuent de fonctionner
+      ['access_tokens → hachage sha256', `UPDATE access_tokens SET token = 'sha256:' || sha256_hex(token) WHERE token NOT LIKE 'sha256:%'`],
     ];
     for (const [label, statement] of cleanups) {
       const result = sqlite.prepare(statement).run();

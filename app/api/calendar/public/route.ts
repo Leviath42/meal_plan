@@ -54,9 +54,11 @@ export async function GET(request: NextRequest) {
     .where(and(gte(mealPlans.date, start), lte(mealPlans.date, endStr)))
     .orderBy(asc(mealPlans.date));
 
-  // Tri chronologique du jour par type de repas
+  // Tri chronologique : date d'abord (comparaison ISO fiable), puis ordre
+  // des types de repas au sein de la journée
   const meals = rows
     .sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
       const orderA = MEAL_TYPE_ORDER.indexOf(a.mealType);
       const orderB = MEAL_TYPE_ORDER.indexOf(b.mealType);
       return (orderA === -1 ? 99 : orderA) - (orderB === -1 ? 99 : orderB);

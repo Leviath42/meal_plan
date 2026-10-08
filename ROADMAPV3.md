@@ -120,6 +120,13 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 | C-009 | 2026-10-08 | Sécurité | Server actions non gardées : `getMealPlans`, `getAppSettings` (+ course à l'insertion), `getCurrentUserMinDaysBetween` invocables anonymement (le middleware protège les pages, pas les actions) | Corrigé (`requireSession()` partout + `onConflictDoNothing`) | Haute |
 | C-010 | 2026-10-08 | Sécurité | Reset par question secrète : brute force illimité, message d'échec confirmant l'existence du compte, question révélée sans limite | Corrigé (`lib/rate-limit.ts` : 5 essais/h sur le reset, 10/h sur la question, message neutre unique — testé en runtime) | Haute |
 | C-011 | 2026-10-08 | Sécurité | `data/sqlite.db` suivie dans git (emails, hashes Argon2, questions secrètes, jetons en clair) | Corrigé pour l'avenir (`git rm --cached` + .gitignore) ; l'historique git conserve les versions passées — purge `git filter-repo` + révocation des jetons à décider | Critique |
+| C-012 | 2026-10-08 | F04 - Partage | Jetons d'accès stockés en clair en base (et renvoyés en clair à l'UI admin) : toute lecture de la base les rend utilisables | Corrigé (stockage `sha256:<hash>`, valeur claire montrée UNE fois à la création avec les liens, migration automatique des jetons existants via `db:ensure` — testée en runtime, `expiresInDays` validé Zod) | Haute |
+| C-013 | 2026-10-08 | Sécurité | Aucun en-tête de sécurité HTTP (clickjacking possible, `?token=` fugetant dans les Referer sortants) | Corrigé (`next.config.ts` : X-Frame-Options DENY, nosniff, Referrer-Policy no-referrer, Permissions-Policy — vérifiés en prod locale ; CSP différée : script inline du thème) | Moyenne |
+| C-014 | 2026-10-08 | Page /deploy | Polling toutes les 3 s : 3 `execSync` git + lecture du log complet bloquaient l'event loop du serveur pour tous les utilisateurs | Corrigé (infos git en cache 30 s, lecture bornée aux 16 derniers Ko, intervalle adaptatif 1,5 s en déploiement / 30 s au repos, journal réservé ADMIN) | Haute |
+| C-015 | 2026-10-08 | update.sh | Healthcheck : n'importe quel code HTTP ≠ 000 passait pour un succès (500 inclus) | Corrigé (codes 2xx/3xx explicites, sinon `die` avec consigne de rollback) | Moyenne |
+| C-016 | 2026-10-08 | Page Utilisateurs | `getAllUsers` envoyait les hashes Argon2 de mots de passe et de réponses secrètes jusqu'au navigateur | Corrigé (projection stricte : id, email, name, role, createdAt) | Moyenne |
+| C-017 | 2026-10-08 | F04 - ICS / API JSON | Tri par type de repas sur TOUTE la période : tous les petits-déjeuners des 90 jours arrivaient avant tous les déjeuners | Corrigé (tri par date puis type — export ICS et API JSON désormais chronologiques) | Basse |
+| C-018 | 2026-10-08 | Sécurité | Aucun rate limiting sur login/register (Argon2 ~40-100 ms/essai = DoS CPU) ; actions de profil avec `auth()` au lieu de `requireSession` | Corrigé (limites 10/15 min sur login par email, 5/h sur register par IP, `requireSession` sur updateUserPassword/updateUserSecurityQuestion, emails retirés des logs serveur) | Haute |
 | C-002 | | | | | |
 
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
@@ -173,7 +180,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 - [ ] Réglage de la taille des formulaires (barres de scroll non désirées dans certains modals)
 - [ ] Uniformisation des tailles de composants, très petits écrans, accessibilité (contrastes, navigation clavier)
 - [ ] Statistiques de fréquence des recettes (F08, optionnel)
-- [ ] Headers de sécurité HTTP (CSP, X-Frame-Options) via `next.config`
+- [x] ~~Headers de sécurité HTTP~~ faits (C-013) — reste en option : une CSP complète (nonce/hash à chaque build pour le script inline du thème)
 - [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — reste au choix : purge de l'historique (`git filter-repo`, réécriture du dépôt) et révocation des jetons créés avant le retrait
 
 ---

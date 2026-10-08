@@ -113,11 +113,14 @@ export default function DeployClient({ role }: DeployClientProps) {
     }
   }, []);
 
+  // Polling adaptatif : serré pendant un déploiement (le journal doit
+  // défiler), espacé au repos (l'état ne change pas) — chaque poll lit des
+  // fichiers et interroge git côté serveur, autant les économiser.
   useEffect(() => {
     poll();
-    const timer = setInterval(poll, 3000);
+    const timer = setInterval(poll, status?.running ? 1500 : 30000);
     return () => clearInterval(timer);
-  }, [poll]);
+  }, [poll, status?.running]);
 
   const handleTrigger = (mode: 'update' | 'rollback') => {
     setConfirming(null);
@@ -181,7 +184,7 @@ export default function DeployClient({ role }: DeployClientProps) {
               <p className="text-sm text-gray-700">
                 {confirming === 'update'
                   ? "Mettre à jour l'application depuis la branche beta de GitHub ? Une sauvegarde de la base est faite avant, le serveur redémarre pendant l'opération."
-                  : "Restaurer la dernière sauvegarde de la base ? Les données créées depuis cette sauvegarde seront perdues."}
+                  : "Restaurer la dernière sauvegarde de la base ? Les données créées depuis cette sauvegarde seront perdues. Le code reste à la version courante (retour arrière des données uniquement)."}
               </p>
               <div className="flex gap-2">
                 <button
