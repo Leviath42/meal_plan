@@ -42,6 +42,7 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | 3 | **F03 - Suggestions** | ✅ Complet | 3 propositions excluant la fenêtre antidoublon — 9 tests runtime PASS |
 | - | Auth, recettes, ingrédients, profil, admin | ✅ Complet | Audits de sécurité passés |
 | - | **Maintenance intégrée** — page `/deploy` (version chargée, mise à jour, rollback) + `update.sh` + `db:ensure` | ✅ En service | Déployé et testé sur le CT beta |
+| 4 | **F12 (partie 1)** — PWA installable : manifest, icônes maskable, Service Worker (coquille hors-ligne) | ✅ Livré | À valider sur Android : installation + ouverture hors-ligne |
 
 ### 📌 Stack Technique
 
@@ -141,10 +142,16 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 - Estimation : 2-3 jours
 
 ### F12 - Mode Hors-Ligne Partiel (PWA)
-- Service Worker : cache des recettes/ingrédients, consultation du calendrier hors ligne, synchro au retour en ligne
-- Manifest PWA complet (icônes, thème) pour installation
-- Fichiers : `public/manifest.json`, `app/sw.ts`, configuration Next.js
-- Estimation : 2-3 jours
+
+**Partie 1 livrée — PWA installable** : `public/manifest.json` (thème teal, icônes 192/512 maskable), `public/sw.js` (coquille hors-ligne : assets cache-first, navigations réseau-avec-repli, `/api/` jamais interceptée), enregistrement dans le layout (`app/ServiceWorkerRegister.tsx`). Installation depuis Chrome Android (menu → « Installer l'application ») ou Safari iOS (« Sur l'écran d'accueil »).
+
+- [x] Manifest PWA complet (icônes, thème) pour installation
+- [x] Service Worker — coquille : l'app s'ouvre et affiche l'accueil hors-ligne
+- [ ] Service Worker — données : cache des recettes/ingrédients, consultation du calendrier hors ligne
+- [ ] Synchronisation automatique au retour en ligne
+- Reste : ~1-2 jours
+
+*Notes : HTTPS requis pour le SW (fourni par le tunnel Cloudflare) ; icônes générées en aplats (fond teal + disque) — remplaçables par un vrai logo.*
 
 ### OAuth (Google, GitHub) — en attente de variables d'environnement
 - Providers, boutons de connexion alternatifs, comptes liés
