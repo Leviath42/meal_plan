@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
 *Dernière mise à jour : 2026-10-08*
-*Version : 3.2 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Version : 3.3 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
 
 ---
@@ -118,8 +118,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 31 (C-001 → C-031) |
-| Corrigées et déployées | 30 |
+| Corrections enregistrées | 32 (C-001 → C-032) |
+| Corrigées et déployées | 31 |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
 | Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |
@@ -182,9 +182,11 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Branche | Rôle |
 |---------|------|
-| `main` | Référence stable — tag `last-stable` sur la dernière version validée |
-| `beta` | Branche de test : déployée sur le conteneur Proxmox (CT 103), mise à jour via `pct exec 103 -- bash /opt/meal_plan/update.sh` **ou depuis l'application** (Paramètres → Update) |
+| `main` | Production — tag `last-stable` sur la dernière version validée ; le CT de production suit `main` (fichier `.deploy-branch`, lu par `update.sh` et la page /deploy) |
+| `beta` | Branche de test : déployée sur le CT de test, mise à jour via `pct exec <CT> -- bash /opt/meal_plan/update.sh` **ou depuis l'application** (Paramètres → Update) |
 | `feature/*` | Une branche par fonctionnalité (vagues IA) — conservées sur GitHub pour revue |
+
+Installation d'un conteneur (test ou production) : `bash scripts/proxmox-install.sh <CTID> <email> [mdp]` — ajouter `BRANCH=main` pour un conteneur de production (défaut : `beta`). La branche est mémorisée dans `/opt/meal_plan/.deploy-branch`. Procédure complète de promotion et d'installation prod : **[DEPLOYMENT.md](DEPLOYMENT.md)** (section Production).
 
 Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.md](DEPLOYMENT.md)**
 
@@ -208,4 +210,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.
 | V2 (archivée) | 2026-10 | Planification des phases 1-3 du cahier des charges |
 | V3 (archivée) | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
 | V3.1 (archivée) | 2026-10-08 | Maintenance intégrée (page `/deploy` + `update.sh` + `db:ensure`), corrections C-002 à C-005, liens Utilisateurs/Partage/Profil/Update regroupés dans Paramètres |
-| **V3.2 (ce document)** | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
+| V3.2 (archivée) | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
+| **V3.3 (ce document)** | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans DEPLOYMENT.md, correction C-031 (UX calendrier) |

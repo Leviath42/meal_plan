@@ -1,6 +1,6 @@
-# Guide de déploiement — Meal Plan en beta sur Proxmox
+# Guide de déploiement — Meal Plan sur Proxmox (beta et production)
 
-*Ce guide explique pas à pas, et avec les pourquoi, comment installer l'application sur ton serveur Proxmox pour la tester en beta depuis un téléphone.*
+*Ce guide explique pas à pas, et avec les pourquoi, comment installer l'application sur ton serveur Proxmox : un conteneur de test (branche `beta`) et/ou un conteneur de production (branche `main`).*
 
 ---
 
@@ -25,7 +25,7 @@ bash proxmox-install.sh 120 ton@email.fr 'TonMotDePasse' yes
 
 **Arguments** : `CTID` (numéro du conteneur à créer, ex. 120), `email admin`, `mot de passe admin` (si omis : généré aléatoirement et affiché), `yes/no` pour charger les 45 recettes de démonstration.
 
-**Variables optionnelles** (avant d'appeler le script) : `BRIDGE=vmbr0` par défaut (pont réseau), `ROOTFS=local-lvm:5` par défaut (stockage disque).
+**Variables optionnelles** (avant d'appeler le script) : `BRIDGE=vmbr0` par défaut (pont réseau), `ROOTFS=local-lvm:5` par défaut (stockage disque), `BRANCH=beta` par défaut (branche installée puis suivie ; `BRANCH=main` pour la production — voir la section Production ci-dessous).
 
 **Ce que le script ne fait pas** : ouvrir `http://IP_AFFICHÉE:3000` depuis le téléphone, et changer le mot de passe admin depuis la page Profil.
 
@@ -38,6 +38,52 @@ pct exec 120 -- bash /opt/meal_plan/update.sh
 **Limites assumées** : le script est vérifié syntaxiquement mais n'a pas encore été exécuté sur un Proxmox réel ; en cas d'échec, le message indique l'étape en cause, le conteneur reste en place pour inspection (`pct enter 120`), et le guide détaillé ci-dessous (Option B) décrit chaque étape manuelle équivalente. Installation prévue pour un usage familial : DHCP sur le pont par défaut, pas de HTTPS (voir plus bas).
 
 > Le reste du document reste la référence : il explique ce que fait chaque étape — utile pour comprendre, dépanner, ou installer à la main.
+
+---
+
+## Production — conteneur principal (branche `main`)
+
+Une fois la beta validée, la promotion et l'installation du conteneur de production réutilisent le même outillage.
+
+### 1. Promouvoir `beta` vers `main` (depuis le PC de développement)
+
+```bash
+git checkout main
+git pull origin main
+git merge beta
+git push origin main
+git tag -f last-stable main    # marque la version stable de référence
+git push origin last-stable
+git checkout beta
+```
+
+### 2. Installer le conteneur de production (sur l'hôte Proxmox)
+
+Même script d'installation, avec `BRANCH=main` :
+
+```bash
+BRANCH=main bash proxmox-install.sh <CTID_PROD> ton@email.fr 'TonMotDePasse'
+```
+
+La branche est mémorisée dans `/opt/meal_plan/.deploy-branch` : sur ce conteneur, `update.sh` — en ligne de commande **ou** depuis la page Paramètres → Update — suivra toujours `main`. Le conteneur de test continue de suivre `beta` ; les deux vivent leur vie indépendamment.
+
+### 3. Reprendre les données de la beta (optionnel — sinon base vierge)
+
+La base SQLite contient tout (comptes, recettes, planning, jetons). Pour la transférer du conteneur de test vers la production, applications arrêtées :
+
+```bash
+pct exec <CTID_BETA> -- pm2 stop meal-plan
+pct pull <CTID_BETA> /opt/meal_plan/data/sqlite.db /root/meal-plan.db
+pct push <CTID_PROD> /root/meal_plan.db /opt/meal_plan/data/sqlite.db
+pct exec <CTID_PROD> -- bash -c 'cd /opt/meal_plan && rm -f data/sqlite.db-wal data/sqlite.db-shm && npm run db:ensure && pm2 restart meal-plan'
+pct exec <CTID_BETA> -- pm2 start meal-plan
+```
+
+`db:ensure` réconcilie le schéma au cas où la base viendrait d'une version plus ancienne.
+
+### 4. Tunnel Cloudflare
+
+Brancher le domaine de production sur le nouveau conteneur (même méthode que pour la beta : `cloudflared` avec l'hostname pointant vers `http://<IP_PROD>:3000`). Penser à déplacer l'enregistrement DNS/tunnel du CT beta vers le CT prod si le domaine principal était porté par la beta.
 
 ---
 
@@ -306,7 +352,7 @@ bash /opt/meal_plan/update.sh
 ```bash
 apt update && apt install -y curl git build-essential python3
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt install -y nodejs
-cd /opt && git clone -b beta https://github.com/Leviath42/meal_plan.git && cd meal_plan
+cd /opt && git clone -b beta https://github.com/Leviath42/meal_plan.git && cd meal_plan   # production : -b main
 npm ci
 openssl rand -base64 32   # copier le résultat
 cat > .env.local <<EOF
