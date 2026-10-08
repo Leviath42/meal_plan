@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   formatWeekdayDayMonth,
   formatDayMonthYear,
@@ -37,6 +38,8 @@ interface PlannerBoardProps {
   // Panneau dépliable de recettes draggables : glisser une recette vers un
   // jour/créneau crée directement un repas planifié (page calendrier)
   enableRecipePalette?: boolean;
+  // Lien vers le générateur de menus (/calendar/generator) dans l'en-tête du mois
+  enableGenerator?: boolean;
   // Nombre de couverts par défaut (page de paramétrage) pour les créations
   defaultServings?: number;
 }
@@ -884,7 +887,7 @@ function MealPlanActionsModal({
 
 // Composant principal : calendrier de planification réutilisable
 // (page d'accueil : 7 jours en 1-3-3 ; page calendrier : 19 jours en 1-3-3-3-3-3-3)
-export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false, enableRecipePalette = false, defaultServings }: PlannerBoardProps) {
+export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false, enableRecipePalette = false, enableGenerator = false, defaultServings }: PlannerBoardProps) {
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1502,6 +1505,15 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                   </svg>
                 </button>
               </div>
+            )}
+            {enableGenerator && (
+              <Link
+                href="/calendar/generator"
+                className="px-3 py-1 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+                title="Générer un menu sur plusieurs jours"
+              >
+                Générer un menu…
+              </Link>
             )}
           </div>
           <button
