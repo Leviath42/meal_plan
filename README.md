@@ -35,6 +35,10 @@
 - Sessions revalidées en base à chaque action (rétrogradation/suppression effectives immédiatement)
 
 ### Interface
+### Maintenance intégrée
+- Page `/deploy` (ADMIN, lien depuis `/settings` → Update) : version chargée (commit + build), **mise à jour depuis GitHub** et **retour arrière** (dernière sauvegarde de la base) sans accéder au serveur, journal de déploiement en direct
+- `update.sh` : sauvegarde horodatée de la base (10 conservées), `git reset --hard origin/beta`, `db:ensure` + `db:migrate`, build, healthcheck HTTP, relance de l'app même en cas d'échec ; mode `rollback`
+
 - Mobile-first, mode sombre complet (bascule dans la navigation), thème teal unifié, formulaires qui conservent les champs en erreur
 
 ---
@@ -65,6 +69,7 @@ npm run build && npm start   # production
 | `dev` / `build` / `start` | Développement / build production / serveur production |
 | `db:generate` | Génère une migration depuis le schéma (après modification de `lib/db/schema.ts`) |
 | `db:migrate` | Applique les migrations (`drizzle/`) |
+| `db:ensure` | Réconciliation idempotente du schéma (crée ce qui manque, réaligne le journal des migrations — exécuté par `update.sh`) |
 | `seed` / `seed:clear` | Remplit / vide les données de démonstration |
 | `create-admin` | Crée un compte ADMIN (email et mot de passe en arguments, ou `ADMIN_EMAIL`/`ADMIN_PASSWORD`) |
 
@@ -110,6 +115,7 @@ meal_plan/
 │   ├── shopping-list/        # liste de courses
 │   ├── share/                 # gestion des jetons (ADMIN)
 │   ├── settings/              # page de paramétrage
+│   ├── deploy/                # page de déploiement (mise à jour / rollback, ADMIN)
 │   └── public/calendar/       # page publique (jeton)
 ├── lib/
 │   ├── auth.ts               # configuration NextAuth
@@ -119,8 +125,9 @@ meal_plan/
 │   └── db/                   # schema.ts, index.ts, seed.ts
 ├── drizzle/                  # migrations versionnées
 ├── data/sqlite.db            # base de données (suivie pour les données de test)
-├── scripts/                  # proxmox-install.sh (installation automatique), create-admin.ts
-├── DEPLOYMENT.md             # guide de déploiement Proxmox + Cloudflare
+├── scripts/                  # proxmox-install.sh, db-ensure.ts (réconciliation schéma), create-admin.ts
+├── DEPLOYMENT.md             # guide de déploiement Proxmox + Cloudflare├── update.sh                 # mise à jour robuste (backup, ensure, build, healthcheck, rollback)
+
 ├── ROADMAPV3.md              # roadmap courante (tests, corrections, phase 4)
 └── archives/                 # roadmaps précédentes
 ```
@@ -135,6 +142,7 @@ Tout est documenté dans **[DEPLOYMENT.md](DEPLOYMENT.md)** :
 - **Option B — manuelle pas à pas** (avec le pourquoi de chaque étape) ;
 - **Tunnel Cloudflare nommé** pour un accès extérieur HTTPS ;
 - Mise à jour de la beta : `pct exec <CTID> -- bash /opt/meal_plan/update.sh` ;
+- **Mise à jour depuis l'application** : Paramètres → Update (ADMIN) — version chargée, journal en direct, retour arrière ;
 - Tableau de dépannage (AUTH_SECRET, OOM du build, fuseau horaire, etc.).
 
 ---

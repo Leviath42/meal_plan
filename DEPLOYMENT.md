@@ -177,7 +177,7 @@ Ce fichier n'est **pas** dans Git (il contient un secret) : il vit uniquement da
 npm run db:migrate
 ```
 
-**Pourquoi** : applique la migration `drizzle/0000_*.sql` qui crée toutes les tables dans `data/sqlite.db`. Sur le PC de dev cette base existait déjà ; sur le conteneur elle part de zéro, il faut donc la créer. À refaire (réflexe) à chaque `git pull` si une nouvelle migration apparaît — mais la commande est idempotente : elle ne fait rien si tout est déjà appliqué.
+**Pourquoi** : applique les migrations du dossier `drizzle/` qui créent toutes les tables dans `data/sqlite.db`. Sur le PC de dev cette base existait déjà ; sur le conteneur elle part de zéro, il faut donc la créer. À refaire (réflexe) à chaque `git pull` si une nouvelle migration apparaît — mais la commande est idempotente : elle ne fait rien si tout est déjà appliqué. En cas de base désynchronisée (journal de migrations hérité d'une ancienne installation), `npm run db:ensure` répare le schéma et le journal avant la migration — c'est ce que fait `update.sh` à chaque mise à jour. Sur le PC de dev cette base existait déjà ; sur le conteneur elle part de zéro, il faut donc la créer. À refaire (réflexe) à chaque `git pull` si une nouvelle migration apparaît — mais la commande est idempotente : elle ne fait rien si tout est déjà appliqué.
 
 ---
 
@@ -253,17 +253,30 @@ pm2 restart meal-plan  # redémarrer après une mise à jour
 
 **Quand** : quand une nouvelle version de test est poussée sur la branche `beta`.
 
+### Option 1 — Depuis l'application (recommandé pour déboguer à distance)
+
+Page **Paramètres → Update** (lien visible par l'ADMIN) : la page `/deploy` affiche la version exacte chargée (commit + build), un bouton **« Mettre à jour depuis GitHub »** et un bouton **« Retour arrière »** (restaure la dernière sauvegarde de la base), avec le journal de déploiement en direct.
+
+- Pendant la mise à jour, l'application s'arrête **1 à 2 minutes** : le site renvoie alors une erreur **502** via Cloudflare, c'est normal. La page `/deploy` affiche « Serveur momentanément injoignable » et reprend le suivi dès le retour du serveur.
+- Journal complet : `/opt/meal_plan/data/deploy.log` ; code retour : `data/deploy-exit.code`.
+- Si une étape échoue, le script tente de relancer l'application avant de s'arrêter.
+
+### Option 2 — En ligne de commande
+
 ```bash
-cd /opt/meal_plan
-pm2 stop meal-plan          # on stoppe le temps de la mise à jour
-git pull origin beta
-npm ci                      # si package-lock.json a changé
-npm run db:migrate          # idempotent : applique les nouvelles migrations s'il y en a
-npm run build
-pm2 start meal-plan
+# depuis l'hôte Proxmox :
+pct exec <CTID> -- bash /opt/meal_plan/update.sh
+# ou depuis le conteneur :
+bash /opt/meal_plan/update.sh
 ```
 
-**Astuce** : avant une mise à jour, faire un **snapshot Proxmox** du conteneur (interface web → Snapshot → Take Snapshot). Retour arrière en un clic si la nouvelle version casse quelque chose. Les données sont dans `data/sqlite.db` — pour une sauvegarde hors Proxmox, copier ce fichier suffit :
+`update.sh` enchaîne : arrêt PM2 → **sauvegarde horodatée** de `data/sqlite.db` (10 dernières dans `data/backups/`) → `git fetch` + `reset --hard origin/beta` → **restauration de la base de prod** → `npm ci` (seulement si `package-lock.json` a changé) → `npm run db:ensure` (réconciliation idempotente du schéma : crée ce qui manque et réaligne le journal des migrations, même sur une sauvegarde ancienne) → `npm run db:migrate` → `npm run build` → relance PM2 → **healthcheck HTTP**.
+
+### Retour arrière
+
+`bash update.sh rollback` (ou le bouton de la page) restaure la **dernière sauvegarde de la base**. Attention : les données créées depuis cette sauvegarde sont perdues.
+
+**Astuce** : avant une mise à jour risquée, faire un **snapshot Proxmox** du conteneur (interface web → Snapshot → Take Snapshot). Retour arrière en un clic si la nouvelle version casse quelque chose. Les données sont dans `data/sqlite.db` — pour une sauvegarde hors Proxmox, copier ce fichier suffit :
 
 ```bash
 # depuis le conteneur, la base est déjà sauvegardée dans le snapshot Proxmox.
@@ -284,6 +297,7 @@ pm2 start meal-plan
 | Les repas du soir apparaissent "hier" ou l'app refuse un repas d'aujourd'hui | Fuseau horaire du conteneur | Étape 1 (timezone Proxmox) ou variable `TZ` dans `.env.local`, puis redémarrer |
 | « EADDRINUSE » au démarrage | Le port 3000 est déjà pris | Changer `PORT` dans `.env.local` |
 | `npm run build` s'arrête sur « Killed » | Mémoire insuffisante du conteneur (OOM) | `pct set <ID> --memory 2048 --swap 2048`, redémarrer le conteneur, relancer le build |
+| 502 Cloudflare après un clic « Mettre à jour » | Normal pendant l'arrêt + build (~1-2 min) ; si persistant, échec du script | Attendre 2 min ; sinon lire `data/deploy.log`, puis `pm2 status` |
 
 ---
 
