@@ -42,6 +42,12 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
 
   // Période sélectionnée pour la génération (à partir d'aujourd'hui)
   const [days, setDays] = useState<number>(7);
+  // Sections : toutes dépliées par défaut, bascule globale (la clé de
+  // remontage force CollapsibleSection à réinitialiser son état interne)
+  const [allOpen, setAllOpen] = useState(true);
+  // Masquer les articles déjà achetés (ils restent cochés en base)
+  const [hideBought, setHideBought] = useState(false);
+
   // Sélection précise : plage de dates libre (mode « personnalisé »)
   const [mode, setMode] = useState<'preset' | 'custom'>('preset');
   const [customStart, setCustomStart] = useState<string>(toLocalDateStr(new Date()));
@@ -111,6 +117,18 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
       }))
       .sort((a, b) => a.category.localeCompare(b.category, 'fr'));
   }, [items]);
+
+  // En mode « masquer les achetés » : articles cochés retirés de l'affichage
+  // (ils restent en base) et rayons devenus vides non affichés
+  const visibleGroups = useMemo(() => {
+    if (!hideBought) return groups;
+    return groups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !item.isBought),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [groups, hideBought]);
 
   const boughtCount = items.filter((item) => item.isBought).length;
 
@@ -251,17 +269,38 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
 
       {/* Résumé + copie */}
       <div className="bg-white rounded-lg shadow-sm p-3 flex items-center justify-between gap-2">
-        <p className="text-xs sm:text-sm text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600 flex-shrink-0">
           {items.length} article{items.length > 1 ? 's' : ''} — {boughtCount} acheté
           {boughtCount > 1 ? 's' : ''}
         </p>
-        <button
-          onClick={handleCopy}
-          disabled={items.length === 0}
-          className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-xs sm:text-sm disabled:opacity-50"
-        >
-          Copier la liste
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {/* Masquer les articles achetés (utile en fin de courses) */}
+          <label className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={hideBought}
+              onChange={(e) => setHideBought(e.target.checked)}
+              className="w-4 h-4 accent-accent"
+            />
+            Masquer les achetés
+          </label>
+          {/* Plier/déplier tous les rayons d'un coup */}
+          <button
+            type="button"
+            onClick={() => setAllOpen((value) => !value)}
+            disabled={items.length === 0}
+            className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-xs sm:text-sm disabled:opacity-50"
+          >
+            {allOpen ? 'Tout plier' : 'Tout déplier'}
+          </button>
+          <button
+            onClick={handleCopy}
+            disabled={items.length === 0}
+            className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 text-xs sm:text-sm disabled:opacity-50"
+          >
+            Copier la liste
+          </button>
+        </div>
       </div>
 
       {/* Ajout manuel */}
@@ -311,18 +350,20 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
       </form>
 
       {/* Articles groupés par rayon */}
-      {groups.length === 0 ? (
+      {visibleGroups.length === 0 ? (
         <p className="text-center text-gray-500 text-xs sm:text-sm py-6">
-          Aucun article — générez la liste depuis le planning ou ajoutez-en un à la main.
+          {hideBought
+            ? 'Tous les articles affichables sont achetés — démasquez-les pour les revoir.'
+            : 'Aucun article — générez la liste depuis le planning ou ajoutez-en un à la main.'}
         </p>
       ) : (
         <div className="space-y-3">
-          {groups.map((group) => (
+          {visibleGroups.map((group) => (
             <CollapsibleSection
-              key={group.category}
+              key={`${group.category}-${allOpen}`}
               title={group.category}
               count={group.items.filter((item) => !item.isBought).length}
-              defaultOpen={false}
+              defaultOpen={allOpen}
             >
               <ul className="divide-y divide-gray-100 px-1">
                 {group.items.map((item) => (
