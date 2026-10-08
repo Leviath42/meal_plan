@@ -31,7 +31,18 @@ KEEP_BACKUPS=10
 cd "$APP_DIR"
 
 log() { printf '[update] %s\n' "$*"; }
-die() { printf '[update] ERREUR : %s\n' "$*" >&2; exit 1; }
+die() {
+  printf '[update] ERREUR : %s\n' "$*" >&2
+  # Filet de sécurité : ne jamais laisser l'application arrêtée derrière une
+  # erreur. Le redémarrage peut échouer si le build est cassé (le pm2 crashera
+  # dessus), mais on tente : si le .next précédent est intact, le site revient.
+  printf "[update] tentative de relance de l'application...\n" >&2
+  pm2 restart "$PM2_NAME" >/dev/null 2>&1 \
+    || pm2 start npm --name "$PM2_NAME" -- start >/dev/null 2>&1 \
+    || true
+  pm2 save >/dev/null 2>&1 || true
+  exit 1
+}
 
 # ---------------------------------------------------------------------------
 # Mode rollback : restaurer la dernière sauvegarde de la base
