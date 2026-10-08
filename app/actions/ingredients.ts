@@ -81,3 +81,40 @@ export async function deleteIngredient(id: string): Promise<{ error?: string }> 
     return { error: 'Impossible de supprimer cet ingrédient (peut-être utilisé dans une recette)' };
   }
 }
+
+// Création rapide d'un ingrédient depuis le formulaire de recette : pas de
+// redirection, on renvoie l'ingrédient créé pour l'ajouter à la sélection.
+export interface QuickIngredientResult {
+  success: boolean;
+  message?: string;
+  ingredient?: { id: string; name: string; category: string; defaultUnit: string };
+}
+
+export async function quickCreateIngredient(
+  name: string,
+  category: string,
+  defaultUnit: string
+): Promise<QuickIngredientResult> {
+  await requireSession();
+  const parsed = ingredientInput.safeParse({ name, category, defaultUnit });
+  if (!parsed.success) {
+    return { success: false, message: parsed.error.issues[0]?.message ?? 'Valeur invalide' };
+  }
+
+  try {
+    const [created] = await db
+      .insert(ingredients)
+      .values(parsed.data)
+      .returning({
+        id: ingredients.id,
+        name: ingredients.name,
+        category: ingredients.category,
+        defaultUnit: ingredients.defaultUnit,
+      });
+    revalidatePath('/ingredients');
+    revalidatePath('/recipes/new');
+    return { success: true, ingredient: created };
+  } catch {
+    return { success: false, message: 'Cet ingrédient existe déjà' };
+  }
+}

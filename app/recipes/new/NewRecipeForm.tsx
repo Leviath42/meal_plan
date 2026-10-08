@@ -64,6 +64,29 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
             />
           </div>
 
+
+
+          {/* Type de plat */}
+          <div>
+            <label htmlFor="mealCourse" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              Type de plat
+            </label>
+            <select
+              id="mealCourse"
+              name="mealCourse"
+              defaultValue={getFieldValue(state, 'mealCourse', '')}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="apéritif">Apéritif</option>
+              <option value="entrée">Entrée</option>
+              <option value="plat">Plat principal</option>
+              <option value="accompagnement">Accompagnement</option>
+              <option value="dessert">Dessert</option>
+              <option value="boisson">Boisson</option>
+            </select>
+          </div>
+
           {/* Temps */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -106,7 +129,7 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               name="defaultServings"
               type="number"
               min="1"
-              defaultValue={getFieldValue(state, 'defaultServings', 3)}
+              defaultValue={getFieldValue(state, 'defaultServings', 4)}
               required
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
@@ -163,27 +186,6 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               defaultValue={getFieldValue(state, 'source', '')}
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
-          </div>
-
-          {/* Type de plat */}
-          <div>
-            <label htmlFor="mealCourse" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Type de plat
-            </label>
-            <select
-              id="mealCourse"
-              name="mealCourse"
-              defaultValue={getFieldValue(state, 'mealCourse', '')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="apéritif">Apéritif</option>
-              <option value="entrée">Entrée</option>
-              <option value="plat">Plat principal</option>
-              <option value="accompagnement">Accompagnement</option>
-              <option value="dessert">Dessert</option>
-              <option value="boisson">Boisson</option>
-            </select>
           </div>
 
           {/* Erreurs générales */}
