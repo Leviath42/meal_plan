@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatNumericDate } from '@/lib/format';
 import { useRouter } from 'next/navigation';
-import { registerUser, updateUserRole, deleteUser } from '@/app/actions/auth';
+import { registerUser, updateUserRole, deleteUser, getAllUsers } from '@/app/actions/auth';
 
 interface User {
   id: string;
@@ -34,6 +34,20 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     message?: string;
   } | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  // Liste vivante : les mutations rechargent explicitement via getAllUsers().
+  // router.refresh() seul est insuffisant — son re-fetch peut être servi
+  // depuis le cache du routeur et montrer des données périmées (C-028).
+  const [users, setUsers] = useState<User[]>(initialUsers);
+
+  const refreshUsers = async () => {
+    try {
+      const fresh = await getAllUsers();
+      if (Array.isArray(fresh)) setUsers(fresh);
+    } catch {
+      // repli si l'appel échoue (session expirée) : rechargement classique
+      router.refresh();
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,7 +62,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
       // Reset le formulaire avant le refresh
       formElement.reset();
       setShowCreateModal(false);
-      router.refresh();
+      refreshUsers();
     }
   };
 
@@ -57,7 +71,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     setFormState(result);
     
     if (result?.success) {
-      router.refresh();
+      refreshUsers();
     }
   };
 
@@ -72,7 +86,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
       setFormState(result);
       
       if (result?.success) {
-        router.refresh();
+        refreshUsers();
       }
     }
   };
@@ -257,27 +271,27 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
           <div className="bg-white rounded-lg shadow-sm p-3 max-w-2xl mx-auto">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Utilisateurs</h2>
             
-            {initialUsers.length === 0 ? (
+            {users.length === 0 ? (
               <p className="text-xs sm:text-sm text-gray-500">Aucun utilisateur en attente de validation.</p>
             ) : (
               <div className="space-y-3">
                 {/* Filtres par rôle */}
                 <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
                   <span className="text-xs font-medium text-gray-500 uppercase whitespace-nowrap py-1">Filtres :</span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${initialUsers.filter(u => u.role === 'GUEST').length > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-400'}`}>
-                    {initialUsers.filter(u => u.role === 'GUEST').length} en attente
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${users.filter(u => u.role === 'GUEST').length > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-400'}`}>
+                    {users.filter(u => u.role === 'GUEST').length} en attente
                   </span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${initialUsers.filter(u => u.role === 'MEMBER').length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'}`}>
-                    {initialUsers.filter(u => u.role === 'MEMBER').length} membres
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${users.filter(u => u.role === 'MEMBER').length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'}`}>
+                    {users.filter(u => u.role === 'MEMBER').length} membres
                   </span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${initialUsers.filter(u => u.role === 'ADMIN').length > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-400'}`}>
-                    {initialUsers.filter(u => u.role === 'ADMIN').length} admins
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${users.filter(u => u.role === 'ADMIN').length > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-400'}`}>
+                    {users.filter(u => u.role === 'ADMIN').length} admins
                   </span>
                 </div>
 
                 {/* Liste des utilisateurs sous forme de cartes */}
                 <div className="space-y-2">
-                  {initialUsers.map((user) => (
+                  {users.map((user) => (
                     <div
                       key={user.id}
                       className={`bg-gray-50 rounded-lg p-2 border border-gray-200 ${user.role === 'GUEST' ? 'border-yellow-200 bg-yellow-50' : ''}`}
