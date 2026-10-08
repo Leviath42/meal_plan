@@ -24,7 +24,7 @@ export default async function HomePage() {
       {/* Calendrier des repas de la semaine sur la page d'accueil */}
       <HomeCalendar recipes={allRecipes} defaultServings={settings.defaultServings} />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Link
           href="/recipes"
           className="block bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow hover:border-accent"
@@ -39,6 +39,14 @@ export default async function HomePage() {
         >
           <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-1">Ingrédients</h2>
           <p className="text-xs sm:text-sm text-gray-600">Gérez votre dictionnaire d'ingrédients par rayon.</p>
+        </Link>
+
+        <Link
+          href="/shopping-list"
+          className="block bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow hover:border-blue-300"
+        >
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-1">Courses</h2>
+          <p className="text-xs sm:text-sm text-gray-600">Générez et cochez votre liste de courses.</p>
         </Link>
       </div>
     </main>

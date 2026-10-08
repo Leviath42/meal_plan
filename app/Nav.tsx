@@ -32,7 +32,7 @@ export default function Nav({ session }: { session: Session | null }) {
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-12 sm:h-14">
-          <Link href="/" className="text-base sm:text-lg font-bold text-accent truncate">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-base sm:text-lg font-bold text-accent truncate">
             Meal Plan
           </Link>
 
