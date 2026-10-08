@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   formatWeekdayDayMonth,
@@ -890,8 +890,14 @@ function MealPlanActionsModal({
 export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false, enableRecipePalette = false, enableGenerator = false, defaultServings }: PlannerBoardProps) {
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  // loading : premier chargement uniquement (squelette) ; les chargements
+  // suivants (navigation, mutations) passent par refreshing, sans texte
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Numéro du dernier chargement lancé : une réponse périmée ne doit jamais
+  // écraser un chargement plus récent (dernier chargement gagnant)
+  const fetchSeqRef = useRef(0);
 
   // Le bandeau d'erreur se ferme tout seul apres 6 secondes
   useEffect(() => {
@@ -923,7 +929,10 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
   // Charger les repas planifiés pour la période affichée (J à J+daysCount-1)
   // isStale : callback optionnel pour ignorer la réponse d'un chargement périmé
   const fetchMealPlans = useCallback(async (isStale?: () => boolean) => {
-    setLoading(true);
+    // Dernier chargement gagnant : si un autre chargement a été lancé depuis
+    // (navigation rapide, mutation juste après), cette réponse est ignorée
+    const seq = ++fetchSeqRef.current;
+    setRefreshing(true);
     setError(null);
 
     try {
@@ -934,7 +943,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       const endStr = formatDate(endDate);
 
       const result = await getMealPlans(startStr, endStr);
-      if (isStale?.()) return;
+      if (isStale?.() || seq !== fetchSeqRef.current) return;
       if (result.error) {
         setMealPlans([]);
         setError(result.error);
@@ -942,11 +951,14 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       }
       setMealPlans(result.mealPlans);
     } catch (err) {
-      if (isStale?.()) return;
+      if (isStale?.() || seq !== fetchSeqRef.current) return;
       console.error('Erreur lors du chargement des repas:', err);
       setError('Impossible de charger les repas planifiés');
     } finally {
-      if (!isStale?.()) setLoading(false);
+      if (!isStale?.() && seq === fetchSeqRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [startDate, daysCount]);
 
@@ -1556,9 +1568,21 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
         )}
 
         {loading ? (
-          <div className="text-center py-4">Chargement...</div>
+          /* Premier chargement : squelette discret, sans texte de chargement */
+          <div className="py-2 space-y-2" aria-busy="true">
+            <div className="mx-auto w-full max-w-xs h-32 bg-gray-100 rounded-lg animate-pulse" />
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          </div>
         ) : (
-          renderDays()
+          /* Navigation : l'ancien contenu reste affiché, légèrement atténué
+             pendant le temps du chargement (pas de « Chargement... ») */
+          <div className={`transition-opacity duration-200 ${refreshing ? 'opacity-60' : 'opacity-100'}`}>
+            {renderDays()}
+          </div>
         )}
 
         {footer && (
