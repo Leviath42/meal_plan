@@ -24,14 +24,21 @@
 #            de test) ou main (production). La branche est memorisee dans
 #            /opt/meal_plan/.deploy-branch : update.sh (ligne de commande ou
 #            page /deploy) suivra toujours cette branche sur ce conteneur.
+#   CF_TUNNEL_TOKEN : (optionnel) jeton d'un tunnel Cloudflare cree au prealable
+#            dans le dashboard Zero Trust (Networks > Tunnels > Create tunnel,
+#            type "cloudflared", puis copier le jeton affiche). Si fourni,
+#            cloudflared est installe dans le conteneur et enregistre comme
+#            service systeme : le conteneur est joignable depuis l'exterieur
+#            en HTTPS via le hostname public configure dans le dashboard
+#            (service : http://localhost:3000). Voir DEPLOYMENT.md.
 #
 # Exemple (conteneur de test) :
 #   bash proxmox-install.sh 120 famille@exemple.fr MonMotDePasse yes
-# Exemple (production) :
-#   BRANCH=main bash proxmox-install.sh 121 famille@exemple.fr MonMotDePasse
+# Exemple (production, avec tunnel Cloudflare) :
+#   BRANCH=main CF_TUNNEL_TOKEN=eyJ... bash proxmox-install.sh 121 famille@exemple.fr MonMotDePasse
 # =============================================================================
 
-SCRIPT_VERSION="v6"
+SCRIPT_VERSION="v7"
 
 set -eu
 # En cas d'echec : afficher la commande fautive avant de sortir (jamais d'arret muet)
@@ -48,6 +55,7 @@ SEED="${4:-no}"
 BRIDGE="${BRIDGE:-}"
 ROOTFS="${ROOTFS:-}"
 BRANCH="${BRANCH:-beta}"
+CF_TUNNEL_TOKEN="${CF_TUNNEL_TOKEN:-}"
 TZ="${TZ:-Europe/Paris}"
 PORT="${PORT:-3000}"
 APP_DIR="/opt/meal_plan"
@@ -178,16 +186,16 @@ export DEBIAN_FRONTEND=noninteractive
 
 APP_DIR="/opt/meal_plan"
 
-echo "[1/6] Outils de base..."
+echo "[1/7] Outils de base..."
 apt-get update -qq
 apt-get install -y -qq curl git build-essential python3 openssl ca-certificates
 
-echo "[2/6] Node.js 22..."
+echo "[2/7] Node.js 22..."
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null
 apt-get install -y -qq nodejs
 node -v
 
-echo "[3/6] Code de la branche ${BRANCH}..."
+echo "[3/7] Code de la branche ${BRANCH}..."
 rm -rf "$APP_DIR"
 git clone -b "${BRANCH}" --depth 1 https://github.com/Leviath42/meal_plan.git "$APP_DIR"
 cd "$APP_DIR"
@@ -195,10 +203,10 @@ cd "$APP_DIR"
 # ou page /deploy) s'y refere a chaque mise a jour.
 echo "${BRANCH}" > "$APP_DIR/.deploy-branch"
 
-echo "[4/6] Dependances (peut prendre plusieurs minutes, modules natifs a compiler)..."
+echo "[4/7] Dependances (peut prendre plusieurs minutes, modules natifs a compiler)..."
 npm ci --no-audit --no-fund
 
-echo "[5/6] Configuration + base de donnees..."
+echo "[5/7] Configuration + base de donnees..."
 if [ ! -f .env.local ]; then
   AUTH_SECRET="$(openssl rand -base64 32)"
   {
@@ -222,7 +230,7 @@ if [ -n "${ADMIN_EMAIL:-}" ]; then
   npm run create-admin -- "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
 fi
 
-echo "[6/6] Build + PM2..."
+echo "[6/7] Build + PM2..."
 npm run build
 npm install -g pm2 --silent
 pm2 start npm --name meal-plan -- start
@@ -233,6 +241,23 @@ pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 # healthcheck, branche depuis .deploy-branch) est déposé par le git clone
 # ci-dessus : ne PAS l'écraser par une version naïve.
 chmod +x "$APP_DIR/update.sh"
+
+if [ -n "${CF_TUNNEL_TOKEN:-}" ]; then
+  echo "[7/7] Tunnel Cloudflare (cloudflared)..."
+  ARCH="$(dpkg --print-architecture)"
+  curl -fsSL -o /tmp/cloudflared.deb \
+    "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}.deb"
+  dpkg -i /tmp/cloudflared.deb
+  rm -f /tmp/cloudflared.deb
+  # Enregistrement comme service systeme : le tunnel redemarre au reboot.
+  # Le hostname public (ex. repas.tondomaine.fr -> http://localhost:3000)
+  # se configure dans le dashboard Zero Trust, pas ici.
+  cloudflared service install "$CF_TUNNEL_TOKEN"
+  systemctl enable cloudflared 2>/dev/null || true
+  echo "Tunnel Cloudflare installe (hostname public a configurer dans le dashboard)."
+else
+  echo "[7/7] Tunnel Cloudflare : non demande (CF_TUNNEL_TOKEN absent) — acces LAN uniquement."
+fi
 
 echo "Installation terminee dans le conteneur."
 INNEREOF
@@ -252,6 +277,7 @@ pct exec "$CTID" -- env \
   TZ="$TZ" \
   PORT="$PORT" \
   BRANCH="$BRANCH" \
+  CF_TUNNEL_TOKEN="$CF_TUNNEL_TOKEN" \
   bash /root/install-app.sh
 
 # ---------------------------------------------------------------------------
@@ -274,6 +300,11 @@ printf "  Mot de passe  : %s\n" "$ADMIN_PASSWORD"
 printf "  Mdp root CT   : %s\n" "$CT_PASSWORD"
 printf "  Maj (%s) : pct exec %s -- bash /opt/meal_plan/update.sh\n" "$BRANCH" "$CTID"
 printf "  Logs          : pct exec %s -- pm2 logs meal-plan\n" "$CTID"
+if [ -n "$CF_TUNNEL_TOKEN" ]; then
+  printf "  Tunnel CF     : installe — configure le hostname public dans Zero Trust (service http://localhost:3000)\n"
+else
+  printf "  Tunnel CF     : absent — acces LAN uniquement (CF_TUNNEL_TOKEN pour l'acces exterieur)\n"
+fi
 bold "====================================================================="
 printf "Ouvre http://%s:%s depuis un telephone du meme reseau.\n" "${IP:-IP_DU_CONTENEUR}" "$PORT"
 printf "Conserve le mot de passe admin, puis change-le depuis la page Profil.\n"
