@@ -21,9 +21,21 @@ import path from 'node:path';
 import { auth } from '@/lib/auth';
 import { requireAdmin } from '@/lib/auth-guards';
 
+export interface CommitSummary {
+  hash: string;
+  subject: string;
+  author: string;
+  date: string;
+}
+
 export interface DeployStatus {
   isAdmin: boolean;
   currentCommit: string | null;
+  commitSubject: string | null;
+  commitBody: string | null;
+  commitAuthor: string | null;
+  commitDate: string | null;
+  recentCommits: CommitSummary[];
   buildId: string | null;
   running: boolean;
   mode: 'update' | 'rollback' | null;
@@ -86,6 +98,52 @@ function readExitCode(): number | null {
   }
 }
 
+// Détail du commit HEAD : sujet, message complet, auteur, date.
+function readHeadDetail(): {
+  subject: string | null;
+  body: string | null;
+  author: string | null;
+  date: string | null;
+} {
+  try {
+    const out = execSync(
+      'git show -s --format=%s%x1f%b%x1f%an%x1f%aI HEAD',
+      { cwd: process.cwd(), encoding: 'utf8' },
+    ).trim();
+    const [subject, body, author, date] = out.split('\x1f');
+    return {
+      subject: subject?.trim() || null,
+      body: body?.trim() || null,
+      author: author?.trim() || null,
+      date: date?.trim() || null,
+    };
+  } catch {
+    return { subject: null, body: null, author: null, date: null };
+  }
+}
+
+// Derniers commits (du plus récent au plus ancien) pour se repérer
+function readRecentCommits(count: number): CommitSummary[] {
+  try {
+    const out = execSync(
+      `git log -${count} --format=%h%x1f%s%x1f%an%x1f%aI`,
+      { cwd: process.cwd(), encoding: 'utf8' },
+    ).trim();
+    if (!out) return [];
+    return out.split('\n').map((line) => {
+      const [hash, subject, author, date] = line.split('\x1f');
+      return {
+        hash: hash?.trim() ?? '',
+        subject: subject?.trim() ?? '',
+        author: author?.trim() ?? '',
+        date: date?.trim() ?? '',
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 // État du déploiement : version chargée, exécution en cours, dernier journal.
 // Accessible à tout utilisateur connecté (la version n'est pas sensible) ;
 // les commandes, elles, restent réservées à l'ADMIN.
@@ -113,6 +171,9 @@ export async function getDeployStatus(): Promise<DeployStatus> {
   const exitCode = readExitCode();
   const running = statusFile ? pidAlive(statusFile.pid) && exitCode === null : false;
 
+  const headDetail = readHeadDetail();
+  const recentCommits = readRecentCommits(5);
+
   let finishedAt: string | null = null;
   if (statusFile && !running && exitCode !== null) {
     try {
@@ -126,6 +187,11 @@ export async function getDeployStatus(): Promise<DeployStatus> {
   return {
     isAdmin: session?.user?.role === 'ADMIN',
     currentCommit,
+    commitSubject: headDetail.subject,
+    commitBody: headDetail.body,
+    commitAuthor: headDetail.author,
+    commitDate: headDetail.date,
+    recentCommits,
     buildId,
     running,
     mode: statusFile?.mode ?? null,

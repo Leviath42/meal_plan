@@ -10,8 +10,48 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   getDeployStatus,
   triggerDeploy,
+  type CommitSummary,
   type DeployStatus,
 } from '@/app/actions/deploy';
+
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleString('fr-FR', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function CommitHistory({ commits, current }: { commits: CommitSummary[]; current: string | null }) {
+  if (commits.length === 0) return null;
+  return (
+    <ul className="space-y-1">
+      {commits.map((commit) => {
+        const isCurrent = current !== null && commit.hash.startsWith(current);
+        return (
+          <li
+            key={commit.hash}
+            className={`flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs ${
+              isCurrent ? 'font-semibold text-gray-800' : 'text-gray-500'
+            }`}
+          >
+            <span className="font-mono">{commit.hash}</span>
+            <span className="max-w-full truncate">{commit.subject}</span>
+            {isCurrent && (
+              <span className="text-[10px] uppercase tracking-wide text-green-700">
+                (chargé)
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 interface DeployClientProps {
   role?: string | null;
@@ -24,6 +64,35 @@ function formatDate(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+function CommitDetail({ status }: { status: DeployStatus }) {
+  return (
+    <div className="space-y-2">
+      <div className="text-sm text-gray-600">
+        Commit :{' '}
+        <span className="font-mono font-medium text-gray-800">
+          {status.currentCommit ?? 'inconnu'}
+        </span>
+        {status.commitAuthor && <span> — {status.commitAuthor}</span>}
+      </div>
+      {status.commitSubject && (
+        <div className="text-sm font-medium text-gray-800 bg-gray-100 rounded p-2">
+          {status.commitSubject}
+        </div>
+      )}
+      {status.commitBody && (
+        <pre className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded p-2 whitespace-pre-wrap font-sans">
+          {status.commitBody}
+        </pre>
+      )}
+      {status.commitDate && (
+        <div className="text-xs text-gray-500">
+          Daté du {formatDateTime(status.commitDate)}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function DeployClient({ role }: DeployClientProps) {
@@ -75,17 +144,22 @@ export default function DeployClient({ role }: DeployClientProps) {
       <h1 className="text-lg font-bold text-gray-800">Déploiement (beta)</h1>
 
       {/* Version chargée */}
-      <div className="space-y-1">
-        <div className="text-sm text-gray-600">
-          Commit :{' '}
-          <span className="font-mono font-medium text-gray-800">
-            {status?.currentCommit ?? 'inconnu'}
-          </span>
-        </div>
-        <div className="text-sm text-gray-600">
-          Build : <span className="font-mono text-gray-800">{status?.buildId ?? 'inconnu'}</span>
-        </div>
-      </div>
+      {status ? (
+        <>
+          <CommitDetail status={status} />
+          <div className="text-sm text-gray-600">
+            Build : <span className="font-mono text-gray-800">{status.buildId ?? 'inconnu'}</span>
+          </div>
+          <div className="border-t border-gray-200 pt-3">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">
+              Historique récent (HEAD en haut)
+            </h2>
+            <CommitHistory commits={status.recentCommits} current={status.currentCommit} />
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">Chargement de l'état...</p>
+      )}
 
       {/* État d'exécution */}
       <div className="border-t border-gray-200 pt-3 space-y-1">
