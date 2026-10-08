@@ -114,7 +114,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 | C-003 | 2026-10-08 | Nav mobile | Menu resté ouvert au clic sur le logo « Meal Plan » | Corrigé (f551a2b) | Basse |
 | C-004 | 2026-10-08 | Base / migrations | Journal `__drizzle_migrations` hérité de l'ancien jeu de migrations : `db:migrate` silencieusement inopérant, colonnes `last_served_at` / `min_days_between` et tables `access_tokens` / `app_settings` absentes des bases restaurées | Corrigé (f31674e : `db:ensure` + réalignement du journal) | Haute |
 | C-005 | 2026-10-08 | Déploiement | Processus de mise à jour lancé depuis l'app tué au `pm2 stop` (tree-kill de pm2) → site laissé en 502 | Corrigé (3068e83 : double-fork, script reparenté à init) | Haute |
-| C-006 | 2026-10-08 | F04 - Partage | Page /share basculait en mode clair à l'actualisation : erreur d'hydratation (dates `toLocaleDateString` rendues différemment par Node et le navigateur) → re-rendu client complet qui écrasait la classe .dark de <html> | Corrigé (dates déterministes + <html> sans className géré par React — le thème survit à tout re-rendu) | Haute |
+| C-006 | 2026-10-08 | F04 - Partage | Page /share basculait en mode clair à l'actualisation. Première piste (erreur d'hydratation dates) : correctifs conservés mais insuffisants — le bug persistait | Corrigé en solution 2 : thème rendu côté serveur depuis le cookie `meal-theme` (classe .dark dans le HTML initial, ThemeToggle écrit le cookie, script de secours uniquement sans cookie). Vérifié en prod locale : `class="dark"` servi avec le cookie. Aucun coût (layout déjà dynamique) | Haute |
 | C-002 | | | | | |
 
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*

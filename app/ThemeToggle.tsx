@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-// Bascule clair/sombre : persistée dans localStorage, défaut = préférence système.
-// La classe .dark est posée sur <html> et remappe la palette (voir styles/globals.css).
+// Bascule clair/sombre : persistée dans le cookie meal-theme (lisible par le
+// serveur), la classe .dark est rendue dans le HTML initial par le layout.
+// La bascule ci-dessous change la classe immédiatement (retour visuel
+// instantané) et pose le cookie pour les rendus serveur suivants.
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -18,9 +20,9 @@ export default function ThemeToggle() {
     setIsDark(next);
     document.documentElement.classList.toggle('dark', next);
     try {
-      localStorage.setItem('theme', next ? 'dark' : 'light');
+      document.cookie = `meal-theme=${next ? 'dark' : 'light'};path=/;max-age=31536000;samesite=lax`;
     } catch (e) {
-      // localStorage indisponible : le thème ne sera pas persisté
+      // cookie indisponible : le thème ne sera pas persisté côté serveur
     }
   };
 
