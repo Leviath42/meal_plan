@@ -2,13 +2,25 @@ import { Inter } from 'next/font/google';
 import { auth } from '@/lib/auth';
 import { SessionProvider } from 'next-auth/react';
 import Nav from './Nav';
+import ServiceWorkerRegister from './ServiceWorkerRegister';
 import '../styles/globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Meal Plan App',
+  title: 'Meal Plan',
   description: 'Application de planification des repas familiale',
+  applicationName: 'Meal Plan',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/icons/icon-192.png',
+    apple: '/icons/icon-192.png',
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'Meal Plan',
+    statusBarStyle: 'default',
+  },
 };
 
 export const viewport = {
@@ -16,6 +28,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: '#0f766e',
 };
 
 // Applique le thème avant le premier rendu pour éviter un flash de mode clair :
@@ -38,6 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProvider session={session}>
           <Nav session={session} />
           <div>{children}</div>
+          <ServiceWorkerRegister />
         </SessionProvider>
       </body>
     </html>
