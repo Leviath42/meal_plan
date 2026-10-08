@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition, type FormEvent } from 'react';
+import Link from 'next/link';
 import { updateDefaultServings, updateMinDaysBetween } from '@/app/actions/settings';
 
 interface SettingsClientProps {
@@ -156,6 +157,19 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween }
           </p>
         )}
       </form>
+
+      {/* Déploiement beta : mise à jour et retour arrière (ADMIN) */}
+      {isAdmin && (
+        <div className="border-t border-gray-200 pt-3">
+          <h2 className="text-sm font-medium text-gray-700 mb-1">Déploiement</h2>
+          <p className="text-xs text-gray-500 mb-2">
+            Mettre à jour ou annuler la version beta sans accéder au serveur.
+          </p>
+          <Link href="/deploy" className="text-sm text-accent hover:underline">
+            Ouvrir la page de déploiement
+          </Link>
+        </div>
+      )}
 
       {/* Thème : simple mention, la bascule vit dans la barre de navigation */}
       <div className="border-t border-gray-200 pt-3">
