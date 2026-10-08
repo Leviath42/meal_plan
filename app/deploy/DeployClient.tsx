@@ -150,48 +150,6 @@ export default function DeployClient({ role }: DeployClientProps) {
           <div className="text-sm text-gray-600">
             Build : <span className="font-mono text-gray-800">{status.buildId ?? 'inconnu'}</span>
           </div>
-          <div className="border-t border-gray-200 pt-3">
-            <h2 className="text-sm font-medium text-gray-700 mb-2">
-              Historique récent (HEAD en haut)
-            </h2>
-            <CommitHistory commits={status.recentCommits} current={status.currentCommit} />
-          </div>
-        </>
-      ) : (
-        <p className="text-sm text-gray-500">Chargement de l'état...</p>
-      )}
-
-      {/* État d'exécution */}
-      <div className="border-t border-gray-200 pt-3 space-y-1">
-        <h2 className="text-sm font-medium text-gray-700">Dernier déploiement</h2>
-        <p className="text-xs text-gray-500">
-          {lastRunLabel} démarré le {formatDate(status?.startedAt ?? null)}
-          {status && !status.running && status.exitCode !== null
-            ? status.exitCode === 0
-              ? ' — terminé avec succès'
-              : ` — échec (code ${status.exitCode})`
-            : status?.running
-              ? ' — en cours'
-              : ''}
-        </p>
-        {connectionLost && (
-          <p className="text-xs text-amber-600">
-            Serveur momentanément injoignable (redémarrage en cours ?), nouvelle tentative en
-            cours...
-          </p>
-        )}
-      </div>
-
-      {/* Journal */}
-      {status?.logTail && (
-        <div className="border-t border-gray-200 pt-3">
-          <h2 className="text-sm font-medium text-gray-700 mb-2">Journal</h2>
-          <pre className="text-xs bg-gray-100 text-gray-700 rounded p-3 overflow-x-auto max-h-64 overflow-y-auto font-mono whitespace-pre-wrap">
-            {status.logTail}
-          </pre>
-        </div>
-      )}
-
       {/* Commandes : ADMIN uniquement */}
       {isAdmin ? (
         <div className="border-t border-gray-200 pt-3 space-y-3">
@@ -255,6 +213,49 @@ export default function DeployClient({ role }: DeployClientProps) {
           Seul un administrateur peut déclencher une mise à jour ou un retour arrière.
         </p>
       )}
+
+          <div className="border-t border-gray-200 pt-3">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">
+              Historique récent (HEAD en haut)
+            </h2>
+            <CommitHistory commits={status.recentCommits} current={status.currentCommit} />
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">Chargement de l'état...</p>
+      )}
+
+      {/* État d'exécution */}
+      <div className="border-t border-gray-200 pt-3 space-y-1">
+        <h2 className="text-sm font-medium text-gray-700">Dernier déploiement</h2>
+        <p className="text-xs text-gray-500">
+          {lastRunLabel} démarré le {formatDate(status?.startedAt ?? null)}
+          {status && !status.running && status.exitCode !== null
+            ? status.exitCode === 0
+              ? ' — terminé avec succès'
+              : ` — échec (code ${status.exitCode})`
+            : status?.running
+              ? ' — en cours'
+              : ''}
+        </p>
+        {connectionLost && (
+          <p className="text-xs text-amber-600">
+            Serveur momentanément injoignable (redémarrage en cours ?), nouvelle tentative en
+            cours...
+          </p>
+        )}
+      </div>
+
+      {/* Journal */}
+      {status?.logTail && (
+        <div className="border-t border-gray-200 pt-3">
+          <h2 className="text-sm font-medium text-gray-700 mb-2">Journal</h2>
+          <pre className="text-xs bg-gray-100 text-gray-700 rounded p-3 overflow-x-auto max-h-64 overflow-y-auto font-mono whitespace-pre-wrap">
+            {status.logTail}
+          </pre>
+        </div>
+      )}
+
     </div>
   );
 }
