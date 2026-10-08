@@ -100,7 +100,7 @@ export default function RecipesClient({ recipes }: { recipes: RecipeListItem[] }
         </div>
       ) : (
         groups.map((group) => (
-          <CollapsibleSection key={group.key} title={group.label} count={group.items.length}>
+          <CollapsibleSection key={group.key} title={group.label} count={group.items.length} defaultOpen={false}>
             <ul className="divide-y divide-gray-100">
               {group.items.map((r) => {
                 const totalTime = r.prepTime + r.cookTime;

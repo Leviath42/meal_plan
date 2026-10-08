@@ -4,16 +4,47 @@ import { z } from 'zod';
 export const SHOPPING_PERIOD_PRESETS = [7, 14, 30] as const;
 export type ShoppingPeriodPreset = (typeof SHOPPING_PERIOD_PRESETS)[number];
 
-// Sélection de période pour la génération de la liste
-export const shoppingPeriodInput = z.object({
-  days: z.coerce
-    .number()
-    .int('Période invalide')
-    .refine(
-      (value) => (SHOPPING_PERIOD_PRESETS as readonly number[]).includes(value),
-      'Période invalide (7, 14 ou 30 jours)'
-    ),
-});
+// Sélection de période pour la génération de la liste : soit un preset
+// (X jours à partir d'aujourd'hui), soit une plage de dates précise
+// (YYYY-MM-DD, début inclus, fin incluse).
+const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+export const shoppingPeriodInput = z
+  .object({
+    mode: z.enum(['preset', 'custom']),
+    days: z.coerce.number().int().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.mode === 'preset') {
+      if (!(SHOPPING_PERIOD_PRESETS as readonly number[]).includes(data.days ?? -1)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['days'],
+          message: 'Période invalide (7, 14 ou 30 jours)',
+        });
+      }
+      return;
+    }
+    if (!data.startDate || !ISO_DATE_REGEX.test(data.startDate)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['startDate'], message: 'Date de début invalide' });
+    }
+    if (!data.endDate || !ISO_DATE_REGEX.test(data.endDate)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['endDate'], message: 'Date de fin invalide' });
+    }
+    if (
+      data.startDate && data.endDate &&
+      ISO_DATE_REGEX.test(data.startDate) && ISO_DATE_REGEX.test(data.endDate) &&
+      data.startDate > data.endDate
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['endDate'],
+        message: 'La date de fin doit suivre la date de début',
+      });
+    }
+  });
 
 // Ajout manuel d'un article (nom libre, quantité, unité)
 export const manualShoppingItemInput = z.object({

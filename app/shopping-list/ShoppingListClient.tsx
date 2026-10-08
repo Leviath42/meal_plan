@@ -42,6 +42,12 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
 
   // Période sélectionnée pour la génération (à partir d'aujourd'hui)
   const [days, setDays] = useState<number>(7);
+  // Sélection précise : plage de dates libre (mode « personnalisé »)
+  const [mode, setMode] = useState<'preset' | 'custom'>('preset');
+  const [customStart, setCustomStart] = useState<string>(toLocalDateStr(new Date()));
+  const [customEnd, setCustomEnd] = useState<string>(
+    toLocalDateStr(new Date(new Date().setDate(new Date().getDate() + 7)))
+  );
 
   const [generateState, generateAction, generatePending] = useActionState<
     ShoppingFormState,
@@ -74,13 +80,17 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
     }
   }, [addState]);
 
-  // Bornes de la période sélectionnée (aujourd'hui → J+days-1)
+  // Bornes de la période sélectionnée : aujourd'hui → J+days-1, ou la
+  // plage de dates précises choisie par l'utilisateur
   const range = useMemo(() => {
+    if (mode === 'custom' && customStart && customEnd) {
+      return { start: customStart, end: customEnd };
+    }
     const start = new Date();
     const end = new Date();
     end.setDate(end.getDate() + days - 1);
     return { start: toLocalDateStr(start), end: toLocalDateStr(end) };
-  }, [days]);
+  }, [mode, days, customStart, customEnd]);
 
   const formatDateLabel = (dateStr: string): string =>
     formatWeekdayDayMonth(parseLocalDate(dateStr));
@@ -162,15 +172,21 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
       <div className="bg-white rounded-lg shadow-sm p-3">
         <h2 className="font-medium text-sm sm:text-base mb-2">Générer depuis le planning</h2>
         <form action={generateAction} className="space-y-2">
+          <input type="hidden" name="mode" value={mode} />
           <input type="hidden" name="days" value={days} />
+          <input type="hidden" name="startDate" value={mode === 'custom' ? customStart : ''} />
+          <input type="hidden" name="endDate" value={mode === 'custom' ? customEnd : ''} />
           <div className="flex flex-wrap gap-2">
             {SHOPPING_PERIOD_PRESETS.map((preset) => (
               <button
                 key={preset}
                 type="button"
-                onClick={() => setDays(preset)}
+                onClick={() => {
+                  setMode('preset');
+                  setDays(preset);
+                }}
                 className={`px-3 py-1.5 rounded border text-xs sm:text-sm ${
-                  days === preset
+                  mode === 'preset' && days === preset
                     ? 'bg-accent text-white border-accent'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
@@ -178,7 +194,42 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
                 {preset} jours
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setMode('custom')}
+              className={`px-3 py-1.5 rounded border text-xs sm:text-sm ${
+                mode === 'custom'
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              Dates précises
+            </button>
           </div>
+          {mode === 'custom' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-xs sm:text-sm text-gray-600">
+                Du
+                <input
+                  type="date"
+                  value={customStart}
+                  min={toLocalDateStr(new Date())}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="ml-2 border border-gray-300 rounded px-2 py-1 text-xs sm:text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </label>
+              <label className="text-xs sm:text-sm text-gray-600">
+                au
+                <input
+                  type="date"
+                  value={customEnd}
+                  min={customStart || toLocalDateStr(new Date())}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="ml-2 border border-gray-300 rounded px-2 py-1 text-xs sm:text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </label>
+            </div>
+          )}
           <p className="text-xs sm:text-sm text-gray-500">
             Du {formatDateLabel(range.start)} au {formatDateLabel(range.end)}
           </p>
@@ -271,6 +322,7 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
               key={group.category}
               title={group.category}
               count={group.items.filter((item) => !item.isBought).length}
+              defaultOpen={false}
             >
               <ul className="divide-y divide-gray-100 px-1">
                 {group.items.map((item) => (

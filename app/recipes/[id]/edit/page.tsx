@@ -20,6 +20,15 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
   // Récupérer tous les ingrédients pour le sélecteur
   const allIngredients = await db.select().from(ingredients).orderBy(ingredients.name);
 
+  // Rayons existants pour la création rapide d'ingrédient
+  const categoryRows = await db
+    .selectDistinct({ category: ingredients.category })
+    .from(ingredients)
+    .orderBy(ingredients.category);
+  const categories = categoryRows
+    .map((row) => row.category)
+    .filter((category) => category && category.trim() !== '');
+
   // Récupérer les ingrédients de la recette
   const recipeIngs = await db
     .select({
@@ -35,6 +44,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
     <EditRecipeForm
       recipe={recipe}
       availableIngredients={allIngredients}
+      categories={categories}
       existingIngredients={recipeIngs}
     />
   );

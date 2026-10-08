@@ -63,9 +63,15 @@ export async function generateShoppingList(
       };
     }
 
-    const days = parsed.data.days;
-    const startDate = toLocalDateStr(new Date());
-    const endDate = periodEndDateStr(days);
+    let startDate: string;
+    let endDate: string;
+    if (parsed.data.mode === 'custom') {
+      startDate = parsed.data.startDate as string;
+      endDate = parsed.data.endDate as string;
+    } else {
+      startDate = toLocalDateStr(new Date());
+      endDate = periodEndDateStr(parsed.data.days as number);
+    }
 
     // Repas planifiés avec recette sur la période (les notes seules sont ignorées)
     const plans = await db
@@ -185,7 +191,7 @@ export async function generateShoppingList(
 
     return {
       success: true,
-      message: `Liste générée : ${rowsToInsert.length} article${rowsToInsert.length > 1 ? 's' : ''} sur ${days} jours`,
+      message: `Liste générée : ${rowsToInsert.length} article${rowsToInsert.length > 1 ? 's' : ''} du ${startDate} au ${endDate}`,
     };
   } catch (error) {
     console.error('Erreur lors de la génération de la liste de courses:', error);

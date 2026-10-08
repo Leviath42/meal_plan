@@ -43,10 +43,13 @@ function getFieldValue(state: any, fieldName: string, recipe: Recipe, defaultVal
 export default function EditRecipeForm({
   recipe,
   availableIngredients,
+  categories = [],
   existingIngredients,
 }: {
   recipe: Recipe;
   availableIngredients: Ingredient[];
+  // Rayons existants pour la création rapide d'ingrédient
+  categories?: string[];
   existingIngredients: RecipeIngredient[];
 }) {
   const router = useRouter();
@@ -176,6 +179,7 @@ export default function EditRecipeForm({
           {/* Ingrédients */}
           <IngredientsSelector
             availableIngredients={availableIngredients}
+            categories={categories}
             existingIngredients={state?.ingredients || existingIngredients}
           />
 
