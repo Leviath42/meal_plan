@@ -41,6 +41,7 @@
 | C-028 | 2026-10-08 | Page Utilisateurs | Après promotion/rétrogradation (ou création/suppression), badges, couleurs et compteurs de filtres restaient périmés jusqu'à un rechargement manuel, de façon aléatoire | Corrigé (la liste vit dans l'état du composant et est rechargée explicitement via `getAllUsers()` après chaque mutation réussie ; `router.refresh()` seul est insuffisant — son re-fetch peut être servi depuis le cache du routeur, d'où l'aléa) | Moyenne |
 | C-029 | 2026-10-08 | PWA / SW — CAUSE RACINE de C-028 | Le service worker traitait les fetch de données RSC de Next.js (émis par router.refresh()) comme des ASSETS en cache-first → il renvoyait le payload serveur du premier passage, figé : listes périmées après mutation, aléatoire tant le cache se remplissait puis systématique une fois rempli. Apparu avec le déploiement de la PWA (sw.js v1/v2) | Corrigé (sw.js v3 : le SW n'intercepte PLUS QUE les navigations et les fichiers statiques explicites /_next/static/, /icons/, manifest — tout autre GET, notamment RSC, passe directement au navigateur ; caches v1/v2 purgés à l'activation ; syntaxe vérifiée, build OK). Le correctif client de C-028 (rechargement explicite via getAllUsers) est conservé | Haute |
 | C-030 | 2026-10-08 | Déploiement — CAUSE des correctifs « sans effet » | Mises à jour déclenchées depuis l'app : `npm ci` héritait de `NODE_ENV=production` et omettait les devDependencies → `db:ensure` échouait « tsx: not found » → le git avancait sur disque mais le build n'était jamais refait : depuis la vague P2 (changement de package-lock), AUCUNE mise à jour n'avait réellement abouti (C-028/C-029 jamais déployés, sections/recherche jamais déployées, BUILD_ID resté au build P1) | Corrigé (`NODE_ENV=development npm ci` dans update.sh — installation complète quel que soit l'appelant). Rattrapage CT requis : une seule commande `npm ci` + update depuis le CT | Haute |
+| C-031 | 2026-10-08 | F01 - Calendrier | Changement de jour : le tableau entier était remplacé par « Chargement... » pendant le temps de la requête (`setLoading(true)` à chaque navigation) — rupture visuelle à chaque clic, boutons de navigation désactivés en attendant | Corrigé (premier chargement : squelette gris sans texte ; navigations suivantes : l'ancien contenu reste affiché, légèrement atténué (`opacity-60`) le temps de la requête ; navigation active pendant le rafraîchissement ; garde « dernier chargement gagnant » par numéro de séquence : une réponse périmée ne peut plus écraser un chargement plus récent lancé par une mutation ou une navigation) | Moyenne |
 
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
@@ -52,8 +53,8 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 30 (C-001 → C-030) |
-| Corrigées et déployées | 29 |
+| Corrections enregistrées | 31 (C-001 → C-031) |
+| Corrigées et déployées | 30 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
 | Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |
