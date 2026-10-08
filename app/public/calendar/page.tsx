@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { formatWeekdayDayMonthYear } from '@/lib/format';
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { mealPlans, recipes } from '@/lib/db/schema';
@@ -104,12 +105,7 @@ export default async function PublicCalendarPage({ searchParams }: PublicCalenda
                 className="bg-white rounded-lg shadow-sm p-3 max-w-2xl mx-auto"
               >
                 <h2 className="text-sm sm:text-base font-semibold text-gray-800 mb-2 capitalize">
-                  {parseLocalDate(date).toLocaleDateString('fr-FR', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  {formatWeekdayDayMonthYear(parseLocalDate(date))}
                 </h2>
                 <ul className="space-y-1.5">
                   {[...meals]

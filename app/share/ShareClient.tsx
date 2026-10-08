@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatUtcDayShortMonthYear } from '@/lib/format';
 import { useRouter } from 'next/navigation';
 import {
   createAccessToken,
@@ -14,17 +15,14 @@ const TYPE_LABELS: Record<string, string> = {
   api: 'API (Home Assistant)',
 };
 
-// Mois abrégés en dur : Node et le navigateur (surtout iOS) peuvent formater
-// différemment avec toLocaleDateString — une différence de texte entre serveur
-// et client provoque une erreur d'hydratation React. Format déterministe ici.
-const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-
-// Formater une date stockée (ISO ou "YYYY-MM-DD HH:MM:SS" SQLite) en français
+// Formater une date stockée (ISO ou "YYYY-MM-DD HH:MM:SS" SQLite) en français.
+// Format déterministe (lib/format) : Node et le navigateur peuvent rendre
+// toLocaleDateString différemment — une différence de texte entre serveur et
+// client provoque une erreur d'hydratation React.
 function formatDate(value: string): string {
   // SQLite CURRENT_TIMESTAMP produit "YYYY-MM-DD HH:MM:SS" en UTC sans fuseau
   const normalized = value.includes('T') ? value : value.replace(' ', 'T') + 'Z';
-  const d = new Date(normalized);
-  return `${d.getUTCDate()} ${MONTHS_FR[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return formatUtcDayShortMonthYear(new Date(normalized));
 }
 
 // Bouton copier : copie l'URL complète dans le presse-papier et
