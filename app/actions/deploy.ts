@@ -12,8 +12,9 @@
 // redémarrage de l'application (pm2 relance le serveur pendant le build).
 // Son état vit dans data/ :
 //   - deploy-status.json : { mode, startedAt, pid } du dernier déclenchement
-//   - deploy.log         : sortie complète du script
-//   - deploy-exit.code   : code retour écrit à la fin du script
+//   - deploy.pid          : pid du processus en cours, écrit par le script
+//   - deploy.log          : sortie complète du script
+//   - deploy-exit.code    : code retour écrit à la fin du script
 
 import { execSync, spawn } from 'node:child_process';
 import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -53,7 +54,7 @@ export interface TriggerResult {
 interface StatusFile {
   mode: 'update' | 'rollback';
   startedAt: string;
-  pid: number;
+  pid?: number;
 }
 
 function dataPath(name: string): string {
@@ -83,6 +84,16 @@ function tail(file: string, lines: number): string | null {
     const content = readFileSync(file, 'utf8').trimEnd();
     if (!content) return null;
     return content.split('\n').slice(-lines).join('\n');
+  } catch {
+    return null;
+  }
+}
+
+function readPid(): number | null {
+  try {
+    const raw = readFileSync(dataPath('deploy.pid'), 'utf8').trim();
+    const pid = parseInt(raw, 10);
+    return Number.isNaN(pid) ? null : pid;
   } catch {
     return null;
   }
@@ -169,7 +180,10 @@ export async function getDeployStatus(): Promise<DeployStatus> {
 
   const statusFile = readStatusFile();
   const exitCode = readExitCode();
-  const running = statusFile ? pidAlive(statusFile.pid) && exitCode === null : false;
+  // Priorité au pid écrit par le script lui-même (data/deploy.pid), plus fiable
+  // que celui mémorisé au déclenchement.
+  const pid = readPid() ?? statusFile?.pid ?? null;
+  const running = pid !== null && pidAlive(pid) && exitCode === null;
 
   const headDetail = readHeadDetail();
   const recentCommits = readRecentCommits(5);
@@ -229,9 +243,16 @@ export async function triggerDeploy(mode: 'update' | 'rollback'): Promise<Trigge
   try {
     // Nettoyer l'état de la précédente exécution
     rmSync(dataPath('deploy-exit.code'), { force: true });
+    rmSync(dataPath('deploy.pid'), { force: true });
 
     const scriptArg = mode === 'rollback' ? ' rollback' : '';
-    const command = `bash update.sh${scriptArg} > data/deploy.log 2>&1; echo $? > data/deploy-exit.code`;
+    // Double-fork : le bash intermédiaire fork puis sort immédiatement, le
+    // processus réel est reparenté à init. C'est indispensable car pm2 tue
+    // l'arbre entier des processus descendants de l'application au moment du
+    // « pm2 stop » de update.sh : un simple spawn détaché meurt avec elle
+    // (constaté en production — le journal s'arrêtait net au pm2 stop).
+    const inner = `echo $$ > data/deploy.pid; bash update.sh${scriptArg} > data/deploy.log 2>&1; echo $? > data/deploy-exit.code`;
+    const command = `nohup setsid bash -c '${inner}' >/dev/null 2>&1 & disown`;
     const child = spawn('bash', ['-c', command], {
       cwd: process.cwd(),
       detached: true,
@@ -239,9 +260,21 @@ export async function triggerDeploy(mode: 'update' | 'rollback'): Promise<Trigge
     });
     child.unref();
 
+    // Le pid réel est écrit par le script lui-même (data/deploy.pid) ;
+    // on l'attend brièvement pour l'horodater correctement dans le statut.
+    let pid: number | null = null;
+    for (let i = 0; i < 30 && pid === null; i++) {
+      pid = readPid();
+      if (pid === null) await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     writeFileSync(
       dataPath('deploy-status.json'),
-      JSON.stringify({ mode, startedAt: new Date().toISOString(), pid: child.pid }),
+      JSON.stringify({
+        mode,
+        startedAt: new Date().toISOString(),
+        ...(pid !== null ? { pid } : {}),
+      }),
     );
 
     return {
