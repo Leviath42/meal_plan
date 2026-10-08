@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
 *Dernière mise à jour : 2026-10-08*
-*Version : 3.1 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Version : 3.2 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
 
 ---
@@ -41,8 +41,9 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | 3 | **F09 - Antidoublon** | ✅ Complet | Fenêtre configurable par utilisateur — 10 tests runtime PASS |
 | 3 | **F03 - Suggestions** | ✅ Complet | 3 propositions excluant la fenêtre antidoublon — 9 tests runtime PASS |
 | - | Auth, recettes, ingrédients, profil, admin | ✅ Complet | Audits de sécurité passés |
-| - | **Confort des catalogues** — sections repliées par défaut ; liste de courses : bouton « Dates précises » (plage libre du/au, min = aujourd'hui) en plus des presets 7/14/30 ; page ingrédients : bouton « + Nouvel ingrédient » (formulaire repliable) ; sélecteur « Rayon » avec liste des rayons existants + création à la volée (page ingrédients, création rapide des formulaires recette) via `CategorySelect` partagé | ✅ Livré | Validateur période testé en runtime (9 PASS) |
+| - | **Confort des catalogues** — sections repliées par défaut ; liste de courses : bouton « Dates précises » (plage libre du/au, min = aujourd'hui) en plus des presets 7/14/30 ; page ingrédients : bouton « + Nouvel ingrédient » aligné à droite du titre (cohérent avec « + Nouvelle recette », formulaire repliable) ; sélecteur « Rayon » avec liste des rayons existants + création à la volée (page ingrédients, création rapide des formulaires recette) via `CategorySelect` partagé ; liste de courses : sections dépliées par défaut, bouton « Tout plier / Tout déplier », masquage des articles achetés | ✅ Livré | Validateur période testé en runtime (9 PASS) |
 | - | **Navigation des catalogues** — sections repliables par catégorie (recettes par type de plat, ingrédients par rayon, liste de courses par rayon) + recherche texte sur recettes (titre/description/tags/type) et ingrédients (nom/rayon), via `CollapsibleSection` partagé | ✅ Livré | À valider sur téléphone |
+| 1 | **F01 — Générateur de menus** — page `/calendar/generator` accessible depuis le bouton « Générer un menu… » de /calendar : plage de 1 à 30 jours (min = aujourd'hui), jours de semaine, types de repas et types de plats autorisés par repas, couverts, tags exclus, mode combler (créneaux vides) / remplacer (supprime les repas existants, notes libres incluses) ; respecte l'antidoublon F09 (fenêtre exclusive) et met à jour l'historique F08 — server action testée en runtime (34 PASS) | ✅ Livré | À valider sur le CT beta |
 | - | **Maintenance intégrée** — page `/deploy` (version chargée, mise à jour, rollback) + `update.sh` + `db:ensure` | ✅ En service | Déployé et testé sur le CT beta |
 | 4 | **F12 (partie 1)** — PWA installable : manifest, icônes maskable, Service Worker (coquille hors-ligne) | ✅ Livré | À valider sur Android : installation + ouverture hors-ligne |
 
@@ -92,6 +93,12 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 - [ ] Info-bulles des badges (temps de préparation/cuisson) et suffixe type de plat
 - [ ] Menu mobile : clic extérieur, touche Échap, navigation par les liens
 - [ ] `/settings` : ADMIN modifie les couverts par défaut → pré-remplissage du modal de création ; MEMBER en lecture seule
+
+### Générateur de menus
+- [ ] Bouton « Générer un menu… » dans l'en-tête du mois de /calendar → page /calendar/generator
+- [ ] Mode « combler » : seuls les créneaux vides sont remplis ; mode « remplacer » : repas existants (y compris notes libres) supprimés avant génération
+- [ ] Fenêtre antidoublon respectée (X=7 : aucune recette replanifiée à moins de 7 jours, pendant le run et par rapport à l'existant)
+- [ ] Cas d'échec : petit catalogue / intervalle élevé → créneaux « sans recette compatible » comptés dans le résumé
 
 ### Phase 3 (F08 / F09 / F03)
 - [ ] Planifier une recette, tenter de la replanir à J+3 → refus ; à J+8 → accepté ; contrôle désactivé (0) → accepté *(fenêtre exclusive depuis C-023 : à X=7, J+7 exactement est aussi accepté)*
@@ -200,4 +207,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.
 | V1 (archivée) | - | Roadmap originale |
 | V2 (archivée) | 2026-10 | Planification des phases 1-3 du cahier des charges |
 | V3 (archivée) | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
-| **V3.1 (ce document)** | 2026-10-08 | Maintenance intégrée (page `/deploy` + `update.sh` + `db:ensure`), corrections C-002 à C-005, liens Utilisateurs/Partage/Profil/Update regroupés dans Paramètres |
+| V3.1 (archivée) | 2026-10-08 | Maintenance intégrée (page `/deploy` + `update.sh` + `db:ensure`), corrections C-002 à C-005, liens Utilisateurs/Partage/Profil/Update regroupés dans Paramètres |
+| **V3.2 (ce document)** | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
