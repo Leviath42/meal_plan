@@ -186,7 +186,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 | `beta` | Branche de test : déployée sur le CT de test, mise à jour via `pct exec <CT> -- bash /opt/meal_plan/update.sh` **ou depuis l'application** (Paramètres → Update) |
 | `feature/*` | Une branche par fonctionnalité (vagues IA) — conservées sur GitHub pour revue |
 
-Installation d'un conteneur (test ou production) : `bash scripts/proxmox-install.sh <CTID> <email> [mdp]` — ajouter `BRANCH=main` pour un conteneur de production (défaut : `beta`). La branche est mémorisée dans `/opt/meal_plan/.deploy-branch`. Procédure complète de promotion et d'installation prod : **[DEPLOYMENT.md](DEPLOYMENT.md)** (section Production).
+Installation d'un conteneur (test ou production) : `bash scripts/proxmox-install.sh <CTID> <email> [mdp]` — ajouter `BRANCH=main` pour un conteneur de production (défaut : `beta`) et `CF_TUNNEL_TOKEN=<jeton>` pour installer le tunnel Cloudflare (cloudflared en service système, HTTPS extérieur sans ouverture de port). La branche est mémorisée dans `/opt/meal_plan/.deploy-branch`. Procédure complète de promotion et d'installation prod : **[DEPLOYMENT.md](DEPLOYMENT.md)** (section Production).
 
 Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.md](DEPLOYMENT.md)**
 
@@ -211,4 +211,4 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.
 | V3 (archivée) | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
 | V3.1 (archivée) | 2026-10-08 | Maintenance intégrée (page `/deploy` + `update.sh` + `db:ensure`), corrections C-002 à C-005, liens Utilisateurs/Partage/Profil/Update regroupés dans Paramètres |
 | V3.2 (archivée) | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
-| **V3.3 (ce document)** | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans DEPLOYMENT.md, correction C-031 (UX calendrier) |
+| **V3.3 (ce document)** | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans DEPLOYMENT.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans DEPLOYMENT.md |

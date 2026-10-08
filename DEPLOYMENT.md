@@ -25,7 +25,7 @@ bash proxmox-install.sh 120 ton@email.fr 'TonMotDePasse' yes
 
 **Arguments** : `CTID` (numéro du conteneur à créer, ex. 120), `email admin`, `mot de passe admin` (si omis : généré aléatoirement et affiché), `yes/no` pour charger les 45 recettes de démonstration.
 
-**Variables optionnelles** (avant d'appeler le script) : `BRIDGE=vmbr0` par défaut (pont réseau), `ROOTFS=local-lvm:5` par défaut (stockage disque), `BRANCH=beta` par défaut (branche installée puis suivie ; `BRANCH=main` pour la production — voir la section Production ci-dessous).
+**Variables optionnelles** (avant d'appeler le script) : `BRIDGE=vmbr0` par défaut (pont réseau), `ROOTFS=local-lvm:5` par défaut (stockage disque), `BRANCH=beta` par défaut (branche installée puis suivie ; `BRANCH=main` pour la production — voir la section Production ci-dessous), `CF_TUNNEL_TOKEN=<jeton>` pour installer le tunnel Cloudflare dans le conteneur (accès extérieur en HTTPS — voir la section dédiée ci-dessous).
 
 **Ce que le script ne fait pas** : ouvrir `http://IP_AFFICHÉE:3000` depuis le téléphone, et changer le mot de passe admin depuis la page Profil.
 
@@ -83,7 +83,68 @@ pct exec <CTID_BETA> -- pm2 start meal-plan
 
 ### 4. Tunnel Cloudflare
 
-Brancher le domaine de production sur le nouveau conteneur (même méthode que pour la beta : `cloudflared` avec l'hostname pointant vers `http://<IP_PROD>:3000`). Penser à déplacer l'enregistrement DNS/tunnel du CT beta vers le CT prod si le domaine principal était porté par la beta.
+Brancher le domaine de production : créer un tunnel dédié dans Zero Trust et passer `CF_TUNNEL_TOKEN=...` à l'installation — procédure complète dans la section « Accès extérieur — tunnel Cloudflare » ci-dessous. Un tunnel par conteneur (beta et prod) avec des sous-domaines distincts : les deux restent joignables indépendamment.
+
+---
+
+---
+
+## Accès extérieur — tunnel Cloudflare (optionnel, recommandé)
+
+**Pourquoi un tunnel Cloudflare** : sans rien ouvrir sur la box (aucune redirection de port), l'application devient joignable en HTTPS depuis l'extérieur — liste de courses au supermarché, partage du planning avec la famille. C'est aussi ce HTTPS qui rend la PWA installable avec son mode hors-ligne (les Service Workers exigent un contexte sécurisé). Le tunnel est un reverse proxy **sortant** : c'est `cloudflared`, installé dans le conteneur, qui ouvre la connexion vers Cloudflare ; aucun flux entrant n'est ouvert sur le réseau maison.
+
+**Prérequis** : un compte Cloudflare gratuit et un domaine dont le DNS est géré par Cloudflare.
+
+### 1. Créer le tunnel dans le dashboard
+
+1. Ouvrir [one.dash.cloudflare.com](https://one.dash.cloudflare.com) → **Networks → Tunnels → Create a tunnel**.
+2. Choisir le type **cloudflared**, nommer le tunnel (ex. `meal-plan-prod`), puis **Save tunnel**.
+3. Le dashboard affiche la commande d'installation contenant un **jeton** (une longue chaîne `eyJ...`). Copier le jeton — pas besoin de la commande : le script d'installation ou les commandes ci-dessous font le travail.
+
+### 2. Installer cloudflared dans le conteneur
+
+**À l'installation du conteneur (recommandé)** :
+
+```bash
+BRANCH=main CF_TUNNEL_TOKEN=eyJ... bash proxmox-install.sh <CTID> ton@email.fr 'TonMotDePasse'
+```
+
+Le script installe `cloudflared` dans le conteneur et l'enregistre comme service système (relancé automatiquement au reboot). Sans `CF_TUNNEL_TOKEN`, l'installation saute simplement cette étape (accès LAN uniquement).
+
+**Sur un conteneur existant** (depuis l'hôte Proxmox) :
+
+```bash
+pct exec <CTID> -- bash -c '
+  ARCH=$(dpkg --print-architecture)
+  curl -fsSL -o /tmp/cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$ARCH.deb"
+  dpkg -i /tmp/cloudflared.deb && rm -f /tmp/cloudflared.deb
+  cloudflared service install <JETON>
+'
+```
+
+### 3. Configurer le hostname public
+
+Toujours dans le dashboard, onglet **Public Hostname** du tunnel → **Add a public hostname** :
+
+- **Subdomain** : `repas` (par exemple) et **Domain** : ton domaine
+- **Service** : type `HTTP`, URL `localhost:3000`
+
+Cloudflare crée l'enregistrement DNS tout seul. L'application est ensuite servie sur `https://repas.tondomaine.fr`, avec le certificat HTTPS géré par Cloudflare.
+
+### Vérifications et dépannage
+
+```bash
+pct exec <CTID> -- systemctl status cloudflared
+pct exec <CTID> -- journalctl -u cloudflared -n 50
+```
+
+| Symptôme | Cause probable | Solution |
+|---|---|---|
+| Erreur 5xx via le domaine, site OK en LAN | Le service cible du hostname est mal configuré | Public Hostname : type `HTTP`, URL `localhost:3000` |
+| 502 temporaire | Application arrêtée (mise à jour en cours — normal 1-2 min) | Attendre ; le healthcheck de update.sh relance tout seul |
+| Tunnel « DOWN » dans le dashboard | `cloudflared` arrêté dans le conteneur | `pct exec <CTID> -- systemctl restart cloudflared` |
+
+**Plusieurs conteneurs** (beta et production) : un tunnel chacun, avec des sous-domaines distincts (ex. `meal-beta` et `repas`). Les jetons sont indépendants ; le domaine reste unique.
 
 ---
 
@@ -291,7 +352,7 @@ pm2 restart meal-plan  # redémarrer après une mise à jour
 
 **Pourquoi http et pas https pour l'instant** : en réseau local, le trafic ne sort pas de chez toi ; le HTTPS sera nécessaire le jour où tu exposeras l'application à l'extérieur (via un reverse proxy — Nginx ou Traefik dans un autre conteneur, avec un nom DNS et un certificat ; hors scope de ce guide).
 
-**Tester depuis l'extérieur plus tard** : le cahier des charges prévoit la consultation de la liste de courses au supermarché — attendre la phase F04 (partage) ou monter un VPN (Tailscale/WireGuard) sur le téléphone, qui donne accès au LAN à distance de façon chiffrée. Ne jamais ouvrir le port 3000 directement sur Internet.
+**Tester depuis l'extérieur plus tard** : le tunnel Cloudflare (section « Accès extérieur — tunnel Cloudflare ») donne exactement ça — la liste de courses consultable au supermarché en HTTPS, sans ouvrir le moindre port. Ne jamais exposer le port 3000 directement sur Internet.
 
 ---
 
