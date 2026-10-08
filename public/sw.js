@@ -1,21 +1,23 @@
 // Service Worker — coquille applicative hors-ligne (F12, partie 1 : PWA installable)
 //
-// Stratégies :
-// - navigation : réseau d'abord (pages toujours à jour après une mise à jour),
-//   repli sur le cache, puis sur "/" si la page n'a jamais été visitée ;
-// - assets (JS/CSS/icônes) : cache d'abord, réseau en secours ;
-// - API (dont /api/auth/* de NextAuth) et requêtes non-GET : jamais interceptées.
+// RÈGLE ABSOLUE (bug C-028, v3) : ce service worker ne touche QUE
+//   1. les navigations (mode navigate) — réseau d'abord, cache en secours ;
+//   2. les fichiers statiques explicites (/_next/static/, /icons/, manifest) —
+//      cache d'abord.
+// TOUT le reste — en particulier les fetch de données de Next.js (payloads
+// RSC émis par router.refresh(), requêtes internes du routeur) — passe
+// directement au navigateur. Les mettre en cache-first présentait des données
+// serveur PÉRIMÉES : c'était la cause racine des listes qui ne se mettaient
+// pas à jour après une mutation.
 //
-// Croissance bornée : les navigations avec querystring ne sont pas cachées et
-// chaque cache est plafonné (FIFO) — les déploiements successifs ajoutent des
-// chunks hashés qui, sinon, s'accumuleraient sans limite côté client.
-//
-// Le mode "consultation hors-ligne complète" (cache des données, synchro au
-// retour en ligne) reste à faire — voir ROADMAPV3, phase 4.
+// Le mode "consultation hors-ligne complète" reste à faire — ROADMAPV3, phase 4.
 
-const CACHE = 'meal-plan-v2';
+const CACHE = 'meal-plan-v3';
 const PRECACHE = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 const MAX_ENTRIES = 60;
+
+// Seuls ces chemins sont considérés comme des assets cachables
+const ASSET_PATHS = ['/_next/static/', '/icons/', '/manifest.json', '/favicon.ico'];
 
 async function boundedPut(cache, request, response) {
   await cache.put(request, response);
@@ -41,6 +43,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
+      // Supprime aussi les caches v1/v2 : ils contiennent des payloads RSC
+      // périmés — la donnée re-cachée par la v3 est uniquement navigation/assets
       .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
@@ -53,23 +57,20 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/')) return;
 
-  // Navigation : réseau d'abord, cache en secours. Les URL avec querystring
-  // (/login?callbackUrl=…) ne sont jamais mises en cache : une clé par URL
-  // ferait exploser le cache et servirait des états périmés.
+  // 1. Navigations : réseau d'abord (pages toujours à jour après un
+  //    déploiement), cache en secours, puis "/" si la page n'a jamais été
+  //    visitée. Les URL avec querystring ne sont pas mises en cache.
   if (request.mode === 'navigate') {
     if (url.search) {
-      // Pas de cache possible : juste réseau, repli sur "/" hors-ligne
       event.respondWith(
-        fetch(request).catch(() =>
-          caches.match('/'))
+        fetch(request).catch(() => caches.match('/'))
       );
       return;
     }
     event.respondWith(
       fetch(request)
-        .then(async (response) => {
+        .then((response) => {
           const copy = response.clone();
           event.waitUntil(
             caches.open(CACHE).then((cache) => boundedPut(cache, request, copy))
@@ -85,7 +86,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets : cache d'abord, réseau en secours
+  // 2. Fichiers statiques explicites uniquement : cache d'abord.
+  //    TOUT autre GET — notamment les fetch RSC de Next.js (router.refresh,
+  //    navigations internes) — n'est PAS intercepté : les données serveur
+  //    ne doivent jamais être servies depuis un cache.
+  if (!ASSET_PATHS.some((path) => url.pathname.startsWith(path))) {
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then(
       (cached) =>
