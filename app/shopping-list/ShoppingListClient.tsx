@@ -1,5 +1,6 @@
 'use client';
 import { formatQuantity, formatWeekdayDayMonth } from '@/lib/format';
+import CollapsibleSection from '@/app/components/CollapsibleSection';
 
 import { useActionState, useEffect, useMemo, useState } from 'react';
 import {
@@ -266,9 +267,12 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
       ) : (
         <div className="space-y-3">
           {groups.map((group) => (
-            <div key={group.category} className="bg-white rounded-lg shadow-sm p-3">
-              <h3 className="font-medium text-sm sm:text-base mb-2">{group.category}</h3>
-              <ul className="divide-y divide-gray-100">
+            <CollapsibleSection
+              key={group.category}
+              title={group.category}
+              count={group.items.filter((item) => !item.isBought).length}
+            >
+              <ul className="divide-y divide-gray-100 px-1">
                 {group.items.map((item) => (
                   <li key={item.id} className="flex items-center gap-2 py-1.5">
                     <input
@@ -307,7 +311,7 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
                   </li>
                 ))}
               </ul>
-            </div>
+            </CollapsibleSection>
           ))}
         </div>
       )}
