@@ -118,8 +118,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 32 (C-001 → C-032) |
-| Corrigées et déployées | 31 |
+| Corrections enregistrées | 33 (C-001 → C-033) |
+| Corrigées et déployées | 32 |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
 | Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |
