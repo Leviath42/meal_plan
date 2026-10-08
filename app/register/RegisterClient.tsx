@@ -209,6 +209,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   id="email"
                   name="email"
                   type="email"
+                  autoComplete="username"
                   placeholder="votre@email.com"
                   required
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
@@ -226,6 +227,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   id="password"
                   name="password"
                   type="password"
+                  autoComplete="new-password"
                   placeholder="Minimum 10 caractères"
                   minLength={10}
                   required
@@ -370,6 +372,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                     id="admin-email"
                     name="email"
                     type="email"
+                    autoComplete="off"
                     placeholder="email@exemple.com"
                     required
                     className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
@@ -387,6 +390,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                     id="admin-password"
                     name="password"
                     type="password"
+                    autoComplete="new-password"
                     placeholder="Minimum 10 caractères"
                     minLength={10}
                     required

@@ -195,17 +195,17 @@ export default function ProfileClient({ session }: ProfileClientProps) {
             <form onSubmit={handlePasswordUpdate} className="space-y-4">
               <div>
                 <label htmlFor="currentPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Mot de passe actuel *</label>
-                <input id="currentPassword" name="currentPassword" type="password" placeholder="Votre mot de passe actuel" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" placeholder="Votre mot de passe actuel" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                 {formState?.errors?.currentPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.currentPassword[0]}</p>}
               </div>
               <div>
                 <label htmlFor="newPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe *</label>
-                <input id="newPassword" name="newPassword" type="password" placeholder="Minimum 10 caractères" minLength={10} required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input id="newPassword" name="newPassword" type="password" autoComplete="new-password" placeholder="Minimum 10 caractères" minLength={10} required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                 {formState?.errors?.newPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.newPassword[0]}</p>}
               </div>
               <div>
                 <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Confirmer le nouveau mot de passe *</label>
-                <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirmez votre nouveau mot de passe" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" placeholder="Confirmez votre nouveau mot de passe" required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                 {formState?.errors?.confirmPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.confirmPassword[0]}</p>}
               </div>
               <button type="submit" disabled={pending} className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50">
@@ -234,6 +234,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                   name="securityQuestion" 
                   type="text" 
                   placeholder="Ex: Quel était le nom de votre premier animal de compagnie ?"
+                  autoComplete="off"
                   required 
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -241,11 +242,19 @@ export default function ProfileClient({ session }: ProfileClientProps) {
               </div>
               <div>
                 <label htmlFor="securityAnswer" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Réponse secrète *</label>
+                {
+                    /* Champ TEXTE volontairement (pas type=password) : un champ
+                       password dans ce formulaire ferait que le gestionnaire de
+                       mots de passe remplit/sauvegarde la réponse comme un
+                       identifiant de connexion. Sans champ password, le
+                       formulaire est totalement ignoré. */
+                  }
                 <input 
                   id="securityAnswer" 
                   name="securityAnswer" 
-                  type="password" 
+                  type="text" 
                   placeholder="Votre réponse"
+                  autoComplete="off"
                   required 
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -256,8 +265,9 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                 <input 
                   id="confirmSecurityAnswer" 
                   name="confirmSecurityAnswer" 
-                  type="password" 
+                  type="text" 
                   placeholder="Confirmez votre réponse"
+                  autoComplete="off"
                   required 
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
