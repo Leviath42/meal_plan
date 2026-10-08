@@ -22,6 +22,13 @@
       "when": 1791406516459,
       "tag": "0002_wandering_senator_kelly",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791492982083,
+      "tag": "0003_flaky_jack_power",
+      "breakpoints": true
     }
   ]
 }

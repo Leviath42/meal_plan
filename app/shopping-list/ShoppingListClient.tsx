@@ -230,7 +230,7 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
             name="quantity"
             value={manualQuantity}
             onChange={(e) => setManualQuantity(e.target.value)}
-            min="0"
+            min="0.01"
             step="any"
             placeholder="Quantité"
             required

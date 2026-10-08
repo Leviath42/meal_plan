@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
   const day = String(now.getDate()).padStart(2, '0');
   const start = `${year}-${month}-${day}`;
 
-  const end = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const end = new Date(now);
+  end.setDate(end.getDate() + 90);
   const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
 
   const rows = await db

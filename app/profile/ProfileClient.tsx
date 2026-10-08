@@ -58,8 +58,8 @@ export default function ProfileClient({ session }: ProfileClientProps) {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setFormState({ errors: { newPassword: ['Le mot de passe doit faire au moins 6 caractères'] } });
+    if (newPassword.length < 10) {
+      setFormState({ errors: { newPassword: ['Le mot de passe doit faire au moins 10 caractères'] } });
       setPending(false);
       return;
     }
@@ -70,6 +70,11 @@ export default function ProfileClient({ session }: ProfileClientProps) {
     
     if (result?.success) {
       setFormState({ success: true, message: result.message || 'Mot de passe mis à jour avec succès. Veuillez vous reconnecter.' });
+      // Purger le cache du service worker : pages authentifiées en Cache Storage
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((key) => key.startsWith('meal-plan')).map((key) => caches.delete(key)));
+      }
       signOut({ callbackUrl: '/login' });
     } else {
       setFormState(result);
@@ -195,7 +200,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
               </div>
               <div>
                 <label htmlFor="newPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe *</label>
-                <input id="newPassword" name="newPassword" type="password" placeholder="Minimum 6 caractères" minLength={6} required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input id="newPassword" name="newPassword" type="password" placeholder="Minimum 10 caractères" minLength={10} required className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                 {formState?.errors?.newPassword && <p className="text-red-500 text-xs mt-1">{formState.errors.newPassword[0]}</p>}
               </div>
               <div>

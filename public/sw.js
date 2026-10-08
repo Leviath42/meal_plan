@@ -6,11 +6,27 @@
 // - assets (JS/CSS/icônes) : cache d'abord, réseau en secours ;
 // - API (dont /api/auth/* de NextAuth) et requêtes non-GET : jamais interceptées.
 //
+// Croissance bornée : les navigations avec querystring ne sont pas cachées et
+// chaque cache est plafonné (FIFO) — les déploiements successifs ajoutent des
+// chunks hashés qui, sinon, s'accumuleraient sans limite côté client.
+//
 // Le mode "consultation hors-ligne complète" (cache des données, synchro au
 // retour en ligne) reste à faire — voir ROADMAPV3, phase 4.
 
-const CACHE = 'meal-plan-v1';
+const CACHE = 'meal-plan-v2';
 const PRECACHE = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
+const MAX_ENTRIES = 60;
+
+async function boundedPut(cache, request, response) {
+  await cache.put(request, response);
+  const keys = await cache.keys();
+  if (keys.length > MAX_ENTRIES) {
+    // keys() suit l'ordre d'insertion : les plus anciennes d'abord
+    for (const key of keys.slice(0, keys.length - MAX_ENTRIES)) {
+      await cache.delete(key);
+    }
+  }
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -39,13 +55,25 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
 
-  // Navigation : réseau d'abord, cache en secours
+  // Navigation : réseau d'abord, cache en secours. Les URL avec querystring
+  // (/login?callbackUrl=…) ne sont jamais mises en cache : une clé par URL
+  // ferait exploser le cache et servirait des états périmés.
   if (request.mode === 'navigate') {
+    if (url.search) {
+      // Pas de cache possible : juste réseau, repli sur "/" hors-ligne
+      event.respondWith(
+        fetch(request).catch(() =>
+          caches.match('/'))
+      );
+      return;
+    }
     event.respondWith(
       fetch(request)
-        .then((response) => {
+        .then(async (response) => {
           const copy = response.clone();
-          event.waitUntil(caches.open(CACHE).then((cache) => cache.put(request, copy)));
+          event.waitUntil(
+            caches.open(CACHE).then((cache) => boundedPut(cache, request, copy))
+          );
           return response;
         })
         .catch(() =>
@@ -64,7 +92,9 @@ self.addEventListener('fetch', (event) => {
         cached ||
         fetch(request).then((response) => {
           const copy = response.clone();
-          event.waitUntil(caches.open(CACHE).then((cache) => cache.put(request, copy)));
+          event.waitUntil(
+            caches.open(CACHE).then((cache) => boundedPut(cache, request, copy))
+          );
           return response;
         })
     )

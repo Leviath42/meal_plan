@@ -85,6 +85,9 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               <option value="dessert">Dessert</option>
               <option value="boisson">Boisson</option>
             </select>
+            {state?.errors?.mealCourse && (
+              <p className="text-red-600 text-xs mt-1">{state.errors.mealCourse[0]}</p>
+            )}
           </div>
 
           {/* Temps */}
@@ -102,6 +105,9 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
                 required
                 className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
+            {state?.errors?.prepTime && (
+              <p className="text-red-600 text-xs mt-1">{state.errors.prepTime[0]}</p>
+            )}
             </div>
             <div>
               <label htmlFor="cookTime" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -116,6 +122,9 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
                 required
                 className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               />
+            {state?.errors?.cookTime && (
+              <p className="text-red-600 text-xs mt-1">{state.errors.cookTime[0]}</p>
+            )}
             </div>
           </div>
 
@@ -133,6 +142,9 @@ export function NewRecipeForm({ availableIngredients }: { availableIngredients: 
               required
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
+            {state?.errors?.defaultServings && (
+              <p className="text-red-600 text-xs mt-1">{state.errors.defaultServings[0]}</p>
+            )}
           </div>
 
           {/* Ingrédients */}

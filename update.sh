@@ -52,7 +52,11 @@ if [ "${1:-}" = "rollback" ]; then
   LATEST=$(ls -1t "$BACKUP_DIR"/db-*.db 2>/dev/null | head -1 || true)
   [ -n "$LATEST" ] || die "aucune sauvegarde dans $BACKUP_DIR"
   pm2 stop "$PM2_NAME" 2>/dev/null || true
+  rm -f data/sqlite.db-wal data/sqlite.db-shm
   cp "$LATEST" data/sqlite.db
+  STAMP2=$(basename "$LATEST" .db)
+  [ -f "$BACKUP_DIR/$STAMP2.db-wal" ] && cp "$BACKUP_DIR/$STAMP2.db-wal" data/sqlite.db-wal || true
+  [ -f "$BACKUP_DIR/$STAMP2.db-shm" ] && cp "$BACKUP_DIR/$STAMP2.db-shm" data/sqlite.db-shm || true
   npm run db:ensure || die "db:ensure a échoué après restauration"
   pm2 restart "$PM2_NAME" --update-env 2>/dev/null \
     || pm2 start npm --name "$PM2_NAME" -- start
@@ -69,10 +73,15 @@ BEFORE=$(git rev-parse --short HEAD)
 log "arrêt de l'application"
 pm2 stop "$PM2_NAME" 2>/dev/null || log "process pm2 absent, on continue"
 
-log "sauvegarde de la base"
+log "sauvegarde de la base (WAL : copie des fichiers annexes s'ils existent)"
 mkdir -p "$BACKUP_DIR"
 STAMP=$(date +%Y%m%d-%H%M%S)
+# L'app est arrêtée : la base est stable, mais en mode WAL les dernières
+# écritures peuvent vivre dans sqlite.db-wal — sauvegarder l'ensemble.
 cp data/sqlite.db "$BACKUP_DIR/db-$STAMP.db"
+[ -f data/sqlite.db-wal ] && cp data/sqlite.db-wal "$BACKUP_DIR/db-$STAMP.db-wal" || true
+[ -f data/sqlite.db-shm ] && cp data/sqlite.db-shm "$BACKUP_DIR/db-$STAMP.db-shm" || true
+chmod 600 "$BACKUP_DIR"/db-$STAMP.db*
 ls -1t "$BACKUP_DIR"/db-*.db | tail -n +$((KEEP_BACKUPS + 1)) | xargs -r rm --
 
 log "récupération du code ($BEFORE -> ?)"
@@ -81,7 +90,12 @@ git reset --hard "origin/$BRANCH"
 AFTER=$(git rev-parse --short HEAD)
 
 log "restauration de la base de production"
+# Supprimer d'éventuels fichiers WAL résiduels : un -wal orphelin d'une autre
+# base serait REJOUÉ par SQLite sur la base restaurée (corruption).
+rm -f data/sqlite.db-wal data/sqlite.db-shm
 cp "$BACKUP_DIR/db-$STAMP.db" data/sqlite.db
+[ -f "$BACKUP_DIR/db-$STAMP.db-wal" ] && cp "$BACKUP_DIR/db-$STAMP.db-wal" data/sqlite.db-wal || true
+[ -f "$BACKUP_DIR/db-$STAMP.db-shm" ] && cp "$BACKUP_DIR/db-$STAMP.db-shm" data/sqlite.db-shm || true
 
 if ! git diff --quiet "$BEFORE" "$AFTER" -- package-lock.json; then
   log "package-lock.json a changé : npm ci"

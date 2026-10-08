@@ -23,8 +23,10 @@ export default auth((req) => {
   }
   
   // Si non authentifié, rediriger vers /login sauf pour les routes publiques
-  const shouldRedirect = !publicRoutes.some(route => 
-    url === route || url.startsWith(route + '/') || url.startsWith(route)
+  // (correspondance exacte ou préfixe de chemin AVEC délimiteur : '/login'
+  // couvre '/login' et '/login/x', pas '/login-autre-chose')
+  const shouldRedirect = !publicRoutes.some(
+    (route) => url === route || url.startsWith(route + '/')
   );
   
   if (shouldRedirect) {
@@ -33,3 +35,10 @@ export default auth((req) => {
     );
   }
 });
+
+// Le middleware ne doit pas tourner sur les assets statiques ni les routes
+// d'authentification de NextAuth : chaque exécution décode le JWT (~1 ms par
+// requête) — inutile pour des fichiers immuables.
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|icons|manifest.json|sw.js|favicon.ico|api/auth).*)'],
+};

@@ -20,6 +20,12 @@ const sqlite = globalForDb.sqlite ?? new Database(dbPath);
 // sont inertes et les suppressions laissent des lignes orphelines.
 sqlite.pragma('foreign_keys = ON');
 
+// WAL : les lectures ne bloquent plus les écritures et vice-versa (utile quand
+// db:ensure / create-admin tournent pendant que l'app est lancée). busy_timeout :
+// au lieu d'échouer immédiatement en SQLITE_BUSY, on attend jusqu'à 5 s.
+sqlite.pragma('journal_mode = WAL');
+sqlite.pragma('busy_timeout = 5000');
+
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.sqlite = sqlite;
 }

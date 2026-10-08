@@ -23,6 +23,13 @@ export default function Nav({ session }: { session: Session | null }) {
   }, [isMobileMenuOpen]);
 
   const handleSignOut = async () => {
+    // Vider le cache du service worker : il contient des pages rendues avec
+    // les données familiales (planning, recettes) — un appareil partagé ne
+    // doit pas les garder après une déconnexion.
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key.startsWith('meal-plan')).map((key) => caches.delete(key)));
+    }
     await signOut({ redirect: false });
     router.push('/login');
     router.refresh();

@@ -91,7 +91,9 @@ export async function GET(request: NextRequest) {
   // Période : today -> today + 90 jours (comparaison lexicographique)
   const today = new Date();
   const start = toLocalDateStr(today);
-  const end = toLocalDateStr(new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000));
+  const endDate = new Date(today);
+  endDate.setDate(endDate.getDate() + 90);
+  const end = toLocalDateStr(endDate);
   const meals = await fetchSharedMeals(start, end);
 
   // Timestamp ICS de génération (UTC, format de base)

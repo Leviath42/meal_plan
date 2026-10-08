@@ -77,7 +77,8 @@ export default function IngredientsSelector({
       setError('Veuillez sélectionner un ingrédient');
       return;
     }
-    if (!quantity || parseFloat(quantity) <= 0) {
+    const parsedQuantity = Number.parseFloat(quantity);
+    if (!quantity || Number.isNaN(parsedQuantity) || parsedQuantity <= 0) {
       setError('Veuillez indiquer une quantité valide');
       return;
     }
@@ -90,7 +91,7 @@ export default function IngredientsSelector({
 
     const newIngredient: RecipeIngredient = {
       ingredientId: selectedIngredientId,
-      quantity: parseFloat(quantity) || 1,
+      quantity: parsedQuantity,
       unit: unit || selectedIngredient?.defaultUnit || 'unité',
       note: note || null,
     };
@@ -315,7 +316,7 @@ export default function IngredientsSelector({
             <button
               type="button"
               onClick={addIngredient}
-              disabled={!selectedIngredientId || !quantity || parseFloat(quantity) <= 0 || (!unit && !selectedIngredient?.defaultUnit)}
+              disabled={!selectedIngredientId || !quantity || Number.isNaN(Number.parseFloat(quantity)) || Number.parseFloat(quantity) <= 0 || (!unit && !selectedIngredient?.defaultUnit)}
               className="w-full bg-green-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + Ajouter l'ingrédient

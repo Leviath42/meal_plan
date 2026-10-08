@@ -1,5 +1,5 @@
 // lib/db/schema.ts
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 
 // ============================================================================
@@ -87,7 +87,10 @@ export const recipeIngredients = sqliteTable("recipe_ingredients", {
   
   // Lien vers le dictionnaire d'ingrédients
   ingredientId: text("ingredient_id").notNull().references(() => ingredients.id),
-});
+}, (table) => [
+  // Requêtes chaudes : détail/édition de recette, agrégation liste de courses
+  index('recipe_ingredients_recipe_idx').on(table.recipeId),
+]);
 
 
 // ============================================================================
@@ -119,7 +122,17 @@ export const mealPlans = sqliteTable("meal_plans", {
   // Timestamps pour le suivi
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
-});
+}, (table) => [
+  // Navigation du calendrier, liste de courses, exports ICS/API :
+  // toutes filtrent sur la date
+  index('meal_plans_date_idx').on(table.date),
+  // Antidoublon F09 : recherche par recette dans une fenêtre de dates
+  index('meal_plans_recipe_date_idx').on(table.recipeId, table.date),
+  // Un même repas (recette + créneau) ne peut pas être planifié deux fois :
+  // évite les doublons de quantités dans la liste de courses. Les repas sans
+  // recette (recipe_id NULL) restent multiples (NULL ignoré par UNIQUE).
+  uniqueIndex('meal_plans_slot_unique').on(table.date, table.mealType, table.recipeId),
+]);
 
 
 // ============================================================================

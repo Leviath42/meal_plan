@@ -1,7 +1,6 @@
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { SessionProvider } from 'next-auth/react';
 import Nav from './Nav';
 import ServiceWorkerRegister from './ServiceWorkerRegister';
 import '../styles/globals.css';
@@ -57,11 +56,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="fr" className={themeClass} suppressHydrationWarning>
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <SessionProvider session={session}>
-          <Nav session={session} />
-          <div>{children}</div>
-          <ServiceWorkerRegister />
-        </SessionProvider>
+        <Nav session={session} />
+        <div>{children}</div>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
