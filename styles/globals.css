@@ -4,6 +4,12 @@
    (bascule : app/ThemeToggle.tsx, initialisation anti-flash : app/layout.tsx) */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Hauteur totale (remplace l'utilitaire h-full sur <html>, retiré du JSX de
+   layout : React ne doit pas possérer l'attribut class de <html>, cf. layout) */
+html {
+  height: 100%;
+}
+
 /* Couleur d'accent (boutons, liens) : une valeur par thème.
    Teal - harmonisée pour le clair (texte blanc dessus) et le sombre. */
 @theme {
