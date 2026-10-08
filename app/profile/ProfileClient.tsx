@@ -28,6 +28,12 @@ export default function ProfileClient({ session }: ProfileClientProps) {
   } | null>(null);
   const [pending, setPending] = useState(false);
   const [activeTab, setActiveTab] = useState<'password' | 'security-question'>('password');
+  // Anti-remplissage automatique (C-027, renfort) : les champs question/réponse
+  // sont en lecture seule au chargement et deviennent éditables au premier
+  // focus. Les navigateurs ne remplissent pas les champs readonly, et le
+  // token autoComplete="new-password" interdit le remplissage des
+  // identifiants sauvegardés même une fois éditable.
+  const [securityFieldsEditable, setSecurityFieldsEditable] = useState(false);
 
   // Rediriger si pas de session — dans un effet, un push pendant le rendu
   // est un anti-pattern React
@@ -215,7 +221,8 @@ export default function ProfileClient({ session }: ProfileClientProps) {
           )}
 
           {activeTab === 'security-question' && (
-            <form onSubmit={handleSecurityQuestionUpdate} className="space-y-4">
+            <form
+                  autoComplete="off" onSubmit={handleSecurityQuestionUpdate} className="space-y-4">
               <div className="mb-4 p-3 bg-accent-soft border border-accent-soft rounded">
                 <p className="text-xs text-accent">
                   {session.user.securityQuestion ? (
@@ -234,7 +241,9 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                   name="securityQuestion" 
                   type="text" 
                   placeholder="Ex: Quel était le nom de votre premier animal de compagnie ?"
-                  autoComplete="off"
+                  autoComplete="new-password"
+                  readOnly={!securityFieldsEditable}
+                  onFocus={() => setSecurityFieldsEditable(true)}
                   required 
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -254,7 +263,9 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                   name="securityAnswer" 
                   type="text" 
                   placeholder="Votre réponse"
-                  autoComplete="off"
+                  autoComplete="new-password"
+                  readOnly={!securityFieldsEditable}
+                  onFocus={() => setSecurityFieldsEditable(true)}
                   required 
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -267,7 +278,9 @@ export default function ProfileClient({ session }: ProfileClientProps) {
                   name="confirmSecurityAnswer" 
                   type="text" 
                   placeholder="Confirmez votre réponse"
-                  autoComplete="off"
+                  autoComplete="new-password"
+                  readOnly={!securityFieldsEditable}
+                  onFocus={() => setSecurityFieldsEditable(true)}
                   required 
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
