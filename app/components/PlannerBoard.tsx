@@ -9,7 +9,15 @@ import {
   formatShortWeekdayUpper,
   formatMonthYear,
   capitalize,
+  toLocalDateStr,
+  parseLocalDate,
 } from '@/lib/format';
+import {
+  MEAL_TYPE_LABELS,
+  MEAL_TYPE_COLORS,
+  MEAL_TYPE_ORDER,
+  MEAL_COURSE_ORDER,
+} from '@/lib/meal-types';
 import type { ReactNode } from 'react';
 import {
   DndContext,
@@ -52,44 +60,6 @@ interface DayData {
   isPast: boolean;
   plans: MealPlan[];
 }
-
-// Formater une Date en YYYY-MM-DD selon le fuseau local.
-// toISOString() formaterait en UTC : minuit local (UTC+2) deviendrait la veille.
-function toLocalDateStr(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-// Parser une date YYYY-MM-DD en Date locale (minuit local, sans décalage UTC)
-function parseLocalDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-// Noms des types de repas en français
-const MEAL_TYPE_LABELS: Record<string, string> = {
-  breakfast: 'Petit-déj',
-  lunch: 'Déjeuner',
-  snack: 'Goûter',
-  dinner: 'Dîner',
-};
-
-// Couleurs pour chaque type de repas
-const MEAL_TYPE_COLORS: Record<string, string> = {
-  breakfast: 'bg-orange-100 text-orange-800',
-  // Couleur de catégorie (pas l'accent UI) : le Déjeuner reste bleu
-  lunch: 'bg-blue-100 text-blue-800',
-  snack: 'bg-green-100 text-green-800',
-  dinner: 'bg-purple-100 text-purple-800',
-};
-
-// Ordre chronologique des types de repas
-const MEAL_TYPE_ORDER: string[] = ['breakfast', 'lunch', 'snack', 'dinner'];
-
-// Types de plats pour l'ordre chronologique dans un repas
-const MEAL_COURSE_ORDER: string[] = ['apéritif', 'entrée', 'plat', 'accompagnement', 'dessert', 'boisson'];
 
 // ID de la zone de suppression (fixe en bas de l'écran pendant un drag)
 const DELETE_ZONE_ID = 'delete-meal-zone';
@@ -207,6 +177,40 @@ function RecipePaletteChip({ recipe }: { recipe: Recipe }) {
   );
 }
 
+// Recettes regroupées par type de plat pour les selects des modals :
+// optgroup par type (ordre chronologique), les non typées en dernier,
+// ordre alphabétique du titre à l'intérieur de chaque groupe.
+const MEAL_COURSE_SELECT_LABELS: Record<string, string> = {
+  'apéritif': 'Apéritif',
+  'entrée': 'Entrée',
+  'plat': 'Plat principal',
+  'accompagnement': 'Accompagnement',
+  'dessert': 'Dessert',
+  'boisson': 'Boisson',
+};
+
+function groupRecipesByCourse(recipes: Recipe[]): { key: string; label: string; items: Recipe[] }[] {
+  const byCourse = new Map<string, Recipe[]>();
+  for (const recipe of recipes) {
+    const key = recipe.mealCourse && MEAL_COURSE_SELECT_LABELS[recipe.mealCourse] ? recipe.mealCourse : '__untyped__';
+    const list = byCourse.get(key) ?? [];
+    list.push(recipe);
+    byCourse.set(key, list);
+  }
+  return [...byCourse.entries()]
+    .map(([key, items]) => ({
+      key,
+      label: key === '__untyped__' ? 'Sans type de plat' : MEAL_COURSE_SELECT_LABELS[key],
+      items: [...items].sort((a, b) => a.title.localeCompare(b.title, 'fr')),
+    }))
+    .sort((a, b) => {
+      const order = MEAL_COURSE_ORDER;
+      const orderA = order.indexOf(a.key) === -1 ? 99 : order.indexOf(a.key);
+      const orderB = order.indexOf(b.key) === -1 ? 99 : order.indexOf(b.key);
+      return orderA - orderB;
+    });
+}
+
 // Modal pour la création d'un repas planifié
 function MealPlanCreationModal({
   isOpen,
@@ -234,6 +238,26 @@ function MealPlanCreationModal({
   const [suggestions, setSuggestions] = useState<SuggestedRecipe[] | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState<boolean>(false);
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+
+  // Échap : fermer le modal (même comportement que le menu mobile)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Bloquer le scroll de fond tant que le modal est ouvert
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isOpen]);
 
   // Réinitialiser les états quand le modal s'ouvre ou se ferme
   useEffect(() => {
@@ -327,10 +351,13 @@ function MealPlanCreationModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div role="dialog"
+      aria-modal="true"
+      aria-labelledby="meal-modal-title"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
         <div className="p-4 border-b">
-          <h3 className="font-bold text-lg">Créer un repas planifié</h3>
+          <h3 id="meal-modal-title" className="font-bold text-lg">Créer un repas planifié</h3>
           <p className="text-sm text-gray-600 mt-1">
             {formatWeekdayDayMonth(parseLocalDate(date))}
           </p>
@@ -361,7 +388,7 @@ function MealPlanCreationModal({
                 >
                   {(Object.keys(MEAL_TYPE_LABELS) as MealType[]).map(type => (
                     <option key={type} value={type}>
-                      {MEAL_TYPE_LABELS[type]}
+                      {MEAL_TYPE_LABELS[type as MealType]}
                     </option>
                   ))}
                 </select>
@@ -379,10 +406,14 @@ function MealPlanCreationModal({
                   disabled={!mealType}
                 >
                   <option value="">-- Aucune recette --</option>
-                  {recipes.map(recipe => (
-                    <option key={recipe.id} value={recipe.id}>
-                      {recipe.title}
-                    </option>
+                  {groupRecipesByCourse(recipes).map(group => (
+                    <optgroup key={group.key} label={group.label}>
+                      {group.items.map(recipe => (
+                        <option key={recipe.id} value={recipe.id}>
+                          {recipe.title}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
@@ -507,6 +538,26 @@ function MealPlanActionsModal({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Échap : fermer le modal (même comportement que le menu mobile)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Bloquer le scroll de fond tant que le modal est ouvert
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isOpen]);
+
   // Réinitialiser les états quand le modal s'ouvre ou quand mealPlan change
   useEffect(() => {
     if (isOpen && mealPlan) {
@@ -619,12 +670,15 @@ function MealPlanActionsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div role="dialog"
+      aria-modal="true"
+      aria-labelledby="meal-modal-title"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
         <div className="p-4 border-b">
-          <h3 className="font-bold text-lg">Actions pour ce repas</h3>
+          <h3 id="meal-modal-title" className="font-bold text-lg">Actions pour ce repas</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {formatWeekdayDayMonth(parseLocalDate(mealPlan.date))} - {MEAL_TYPE_LABELS[mealPlan.mealType]}
+            {formatWeekdayDayMonth(parseLocalDate(mealPlan.date))} - {MEAL_TYPE_LABELS[mealPlan.mealType as MealType]}
           </p>
         </div>
 
@@ -637,7 +691,7 @@ function MealPlanActionsModal({
                 <div className="space-y-1 text-sm">
                   <div>
                     <span className="text-gray-500">Type: </span>
-                    <span className="font-medium">{MEAL_TYPE_LABELS[mealPlan.mealType]}</span>
+                    <span className="font-medium">{MEAL_TYPE_LABELS[mealPlan.mealType as MealType]}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Recette: </span>
@@ -759,7 +813,7 @@ function MealPlanActionsModal({
                     >
                       {mealTypeOptions.map(type => (
                         <option key={type} value={type}>
-                          {MEAL_TYPE_LABELS[type]}
+                          {MEAL_TYPE_LABELS[type as MealType]}
                         </option>
                       ))}
                     </select>
@@ -803,7 +857,7 @@ function MealPlanActionsModal({
                     >
                       {mealTypeOptions.map(type => (
                         <option key={type} value={type}>
-                          {MEAL_TYPE_LABELS[type]}
+                          {MEAL_TYPE_LABELS[type as MealType]}
                         </option>
                       ))}
                     </select>
@@ -819,10 +873,14 @@ function MealPlanActionsModal({
                       className="w-full p-2 border rounded bg-white text-gray-800"
                     >
                       <option value="">-- Aucune recette --</option>
-                      {recipes.map(recipe => (
-                        <option key={recipe.id} value={recipe.id}>
-                          {recipe.title}
-                        </option>
+                      {groupRecipesByCourse(recipes).map(group => (
+                        <optgroup key={group.key} label={group.label}>
+                          {group.items.map(recipe => (
+                            <option key={recipe.id} value={recipe.id}>
+                              {recipe.title}
+                            </option>
+                          ))}
+                        </optgroup>
                       ))}
                     </select>
                   </div>
@@ -1139,7 +1197,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
   // Suffixe gris discret sous le texte du badge : type de plat hérité de la recette
   const getBadgeCourseSuffix = (plan: MealPlan): ReactNode =>
     plan.mealCourse ? (
-      <span className="ml-1 text-[10px] font-normal opacity-70">{plan.mealCourse}</span>
+      <span className="ml-1 text-[11px] font-normal opacity-70">{plan.mealCourse}</span>
     ) : null;
 
   // Indicateur d'historique (F08) : petit point discret quand la recette a déjà
@@ -1153,7 +1211,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
     if (days > 30) return null;
     const servedOn = formatDayMonthYear(parseLocalDate(recipe.lastServedAt));
     return (
-      <span className="ml-0.5 text-[10px] font-normal opacity-60" title={`Déjà servi le ${servedOn}`}>•</span>
+      <span className="ml-0.5 text-[11px] font-normal opacity-60" title={`Déjà servi le ${servedOn}`}>•</span>
     );
   };
 
@@ -1326,7 +1384,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                 key={plan.id}
                 plan={plan}
                 displayText={getPlanDisplayText(plan)}
-                badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType as MealType]} text-sm truncate text-center w-full text-left`}
+                badgeClass={`px-2 py-0.5 rounded-full ${MEAL_TYPE_COLORS[plan.mealType]} text-sm truncate text-center w-full text-left`}
                 badgeTitle={getBadgeTooltip(plan)}
                 badgeSuffix={getBadgeSuffix(plan)}
                 onClick={() => openActionsModal(plan)}
@@ -1339,7 +1397,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       {/* Bouton de planification (+) */}
       <button
         onClick={() => openCreationModal(mainDay.dateStr)}
-        className={`w-14 text-xs py-1 rounded border transition-colors ${
+        className={`w-14 text-xs py-1.5 rounded border transition-colors ${
           mainDay.isPast
             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
             : 'bg-accent text-white hover:bg-accent-hover border-accent'
@@ -1460,7 +1518,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                 <div key={`plus-${dayData.dateStr}`} className="w-[92px] flex justify-center">
                   <button
                     onClick={() => openCreationModal(dayData.dateStr)}
-                    className={`w-14 text-xs py-1 rounded border transition-colors ${
+                    className={`w-14 text-xs py-1.5 rounded border transition-colors ${
                       dayData.isPast
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                         : 'bg-accent text-white hover:bg-accent-hover border-accent'
@@ -1530,7 +1588,9 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
           </div>
           <button
             onClick={goToToday}
-            className="px-3 py-1 bg-accent text-white rounded hover:bg-accent-hover text-xs"
+            disabled={loading}
+            title="Revenir à aujourd'hui"
+            className="px-3 py-1.5 bg-accent text-white rounded hover:bg-accent-hover text-xs disabled:opacity-50"
           >
             Aujourd'hui
           </button>
@@ -1592,10 +1652,11 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
         )}
       </div>
 
-      {/* Message d'erreur */}
+      {/* Message d'erreur : bandeau alerte, fermeture manuelle ou auto (6 s) */}
       {error && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg bg-red-100 border border-red-300 text-red-800 text-sm">
-          {error}
+        <div role="alert" className="fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg bg-red-100 border border-red-300 text-red-800 text-sm flex items-center gap-2">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} aria-label="Fermer le message" className="font-bold leading-none px-1">&times;</button>
         </div>
       )}
 

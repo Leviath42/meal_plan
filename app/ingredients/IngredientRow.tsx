@@ -2,11 +2,13 @@
 
 import { useState, useTransition } from 'react';
 import { updateIngredient, deleteIngredient } from '@/app/actions/ingredients';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 
 export default function IngredientRow({ id, name, category, defaultUnit }: {
   id: string; name: string; category: string; defaultUnit: string;
 }) {
   const [editing, setEditing] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [formValues, setFormValues] = useState({ name, category, defaultUnit });
@@ -57,19 +59,31 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
         <button onClick={() => setEditing(true)} className="text-accent underline text-xs sm:text-sm hover:text-accent transition-colors whitespace-nowrap">Modifier</button>
         <button
           disabled={pending}
-          onClick={() => {
-            if (confirm(`Supprimer « ${name} » ?`)) {
-              startTransition(async () => {
-                const res = await deleteIngredient(id);
-                if (res?.error) alert(res.error);
-              });
-            }
-          }}
+          onClick={() => setConfirmOpen(true)}
           className="text-red-600 underline text-xs sm:text-sm hover:text-red-800 transition-colors whitespace-nowrap"
         >
           Supprimer
         </button>
       </span>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Supprimer l'ingrédient"
+        message={
+          <>
+            Supprimer <strong>«&nbsp;{name}&nbsp;»</strong>&nbsp;?
+            Les recettes qui l'utilisent conserveront leur ligne d'ingrédient.
+          </>
+        }
+        pending={pending}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          startTransition(async () => {
+            const res = await deleteIngredient(id);
+            if (res?.error) setError(res.error);
+          });
+        }}
+      />
     </li>
   );
 }

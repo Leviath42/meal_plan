@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { MEAL_TYPE_LABELS_LONG, MEAL_COURSE_ORDER } from '@/lib/meal-types';
 import { generateMealPlans } from '@/app/actions/generator';
 import {
   GENERATOR_MEAL_TYPES,
@@ -21,14 +22,6 @@ const WEEKDAYS: { value: number; label: string }[] = [
   { value: 6, label: 'Sam' },
   { value: 0, label: 'Dim' },
 ];
-
-// Labels français des types de repas (mêmes valeurs que PlannerBoard)
-const MEAL_TYPE_LABELS: Record<string, string> = {
-  breakfast: 'Petit-déjeuner',
-  lunch: 'Déjeuner',
-  snack: 'Goûter',
-  dinner: 'Dîner',
-};
 
 // Défauts de types de plats par type de repas
 const DEFAULT_COURSES: Record<GeneratorMealType, GeneratorMealCourse[]> = {
@@ -109,7 +102,7 @@ export default function GeneratorClient({ defaultServings }: GeneratorClientProp
     }
     for (const mealType of mealTypes) {
       if (!courses[mealType] || courses[mealType].length === 0) {
-        setError(`Sélectionnez au moins un type de plat pour « ${MEAL_TYPE_LABELS[mealType]} »`);
+        setError(`Sélectionnez au moins un type de plat pour « ${MEAL_TYPE_LABELS_LONG[mealType]} »`);
         return;
       }
     }
@@ -221,7 +214,7 @@ export default function GeneratorClient({ defaultServings }: GeneratorClientProp
                     checked={checked}
                     onChange={() => setMealTypes(list => toggleInList(list, mealType))}
                   />
-                  {MEAL_TYPE_LABELS[mealType]}
+                  {MEAL_TYPE_LABELS_LONG[mealType]}
                 </label>
                 {checked && (
                   <div className="mt-1.5 ml-5 flex flex-wrap gap-1.5">

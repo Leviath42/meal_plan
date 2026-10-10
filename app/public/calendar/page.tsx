@@ -1,34 +1,10 @@
 import Link from 'next/link';
-import { formatWeekdayDayMonthYear } from '@/lib/format';
+import { formatWeekdayDayMonthYear, parseLocalDate } from '@/lib/format';
+import { MEAL_TYPE_LABELS_LONG, MEAL_TYPE_COLORS, MEAL_TYPE_ORDER } from '@/lib/meal-types';
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { mealPlans, recipes } from '@/lib/db/schema';
 import { validateAccessToken } from '@/app/actions/tokens';
-
-// Parser une date YYYY-MM-DD en Date locale (minuit local, sans décalage UTC)
-function parseLocalDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-// Libellés des types de repas en français
-const MEAL_TYPE_LABELS: Record<string, string> = {
-  breakfast: 'Petit-déjeuner',
-  lunch: 'Déjeuner',
-  snack: 'Goûter',
-  dinner: 'Dîner',
-};
-
-// Couleurs pour chaque type de repas
-const MEAL_TYPE_COLORS: Record<string, string> = {
-  breakfast: 'bg-orange-100 text-orange-800',
-  lunch: 'bg-blue-100 text-blue-800',
-  snack: 'bg-green-100 text-green-800',
-  dinner: 'bg-purple-100 text-purple-800',
-};
-
-// Ordre chronologique des types de repas
-const MEAL_TYPE_ORDER: string[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 
 interface PublicCalendarPageProps {
   searchParams: Promise<{ token?: string }>;
@@ -80,7 +56,7 @@ export default async function PublicCalendarPage({ searchParams }: PublicCalenda
   }
 
   const mealTypeRank = (mealType: string) => {
-    const index = MEAL_TYPE_ORDER.indexOf(mealType);
+    const index = MEAL_TYPE_ORDER.indexOf(mealType as never);
     return index === -1 ? 99 : index;
   };
 
@@ -116,10 +92,10 @@ export default async function PublicCalendarPage({ searchParams }: PublicCalenda
                         <span
                           className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${MEAL_TYPE_COLORS[meal.mealType] || 'bg-gray-100 text-gray-800'}`}
                         >
-                          {MEAL_TYPE_LABELS[meal.mealType] || meal.mealType}
+                          {MEAL_TYPE_LABELS_LONG[meal.mealType] || meal.mealType}
                         </span>
                         <span className="text-xs sm:text-sm text-gray-800 truncate">
-                          {meal.recipeTitle || meal.customNote || MEAL_TYPE_LABELS[meal.mealType] || meal.mealType}
+                          {meal.recipeTitle || meal.customNote || MEAL_TYPE_LABELS_LONG[meal.mealType] || meal.mealType}
                         </span>
                         <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">
                           {meal.servings} couverts

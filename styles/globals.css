@@ -77,6 +77,13 @@ html {
   color: #f3f4f6;
 }
 
+/* Focus visible au clavier : contour d'accent sur tous les éléments
+   interactifs (boutons, liens) — les champs ont déjà focus:ring-accent. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* Champs de formulaire natifs sans classe de fond : le navigateur les rend
    blancs par défaut, ce qui échappe au remappage ci-dessus — en mode sombre,
    le texte hérité clair y devient illisible. On leur applique les couleurs

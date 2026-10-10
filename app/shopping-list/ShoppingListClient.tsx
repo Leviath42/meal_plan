@@ -1,5 +1,5 @@
 'use client';
-import { formatQuantity, formatWeekdayDayMonth } from '@/lib/format';
+import { formatQuantity, formatWeekdayDayMonth, toLocalDateStr, parseLocalDate } from '@/lib/format';
 import CollapsibleSection from '@/app/components/CollapsibleSection';
 
 import { useActionState, useEffect, useMemo, useState } from 'react';
@@ -14,20 +14,6 @@ import {
   type ShoppingFormState,
   type ShoppingItemView,
 } from '@/lib/validators/shopping';
-
-// Formater une Date en YYYY-MM-DD selon le fuseau local (comme PlannerBoard)
-function toLocalDateStr(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-// Parser une date YYYY-MM-DD en Date locale (minuit local, sans décalage UTC)
-function parseLocalDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
 
 export default function ShoppingListClient({ items: initialItems }: { items: ShoppingItemView[] }) {
   // Copie locale pour un retour immédiat (optimiste), resynchronisée à chaque
