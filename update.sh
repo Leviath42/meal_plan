@@ -90,8 +90,11 @@ chmod 600 "$BACKUP_DIR"/db-$STAMP.db*
 ls -1t "$BACKUP_DIR"/db-*.db | tail -n +$((KEEP_BACKUPS + 1)) | xargs -r rm --
 
 log "récupération du code ($BEFORE -> ?)"
-git fetch origin "$BRANCH"
-git reset --hard "origin/$BRANCH"
+# git fetch/reset DOIVENT échouer via die() (relance de l'app), pas via
+# set -e : une panne DNS ou réseau ici laissait pm2 stopped après l'étape 1
+# -> 502 derrière le reverse proxy (C-035).
+git fetch origin "$BRANCH" || die "git fetch a échoué (réseau/DNS ?) — l'app est relancée sur le code actuel"
+git reset --hard "origin/$BRANCH" || die "git reset a échoué — l'app est relancée sur le code actuel"
 AFTER=$(git rev-parse --short HEAD)
 
 log "restauration de la base de production"
