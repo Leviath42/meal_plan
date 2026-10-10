@@ -115,14 +115,19 @@ export default function RecipesClient({ recipes }: { recipes: RecipeListItem[] }
                           {r.title}
                         </Link>
                         <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                          <span>{totalTime} min</span>
-                          {r.defaultServings > 0 && (
+                          {totalTime > 0 && <span>{totalTime} min</span>}
+                          {totalTime > 0 && r.defaultServings > 0 && <span className="mx-1">·</span>}
+                          {r.defaultServings > 0 && <span>{r.defaultServings} pers.</span>}
+                          {r.mealCourse && (
                             <>
                               <span className="mx-1">·</span>
-                              <span>{r.defaultServings} pers.</span>
+                              <span className="capitalize">{r.mealCourse}</span>
                             </>
                           )}
                         </div>
+                        {r.tags && (
+                          <p className="text-xs sm:text-sm text-gray-400 mt-0.5 truncate">{r.tags}</p>
+                        )}
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         <Link

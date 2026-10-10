@@ -8,6 +8,7 @@ import {
   revokeAccessToken,
   type AccessTokenWithStatus,
 } from '@/app/actions/tokens';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 
 // Libellés des types de jeton pour l'affichage
 const TYPE_LABELS: Record<string, string> = {
@@ -59,6 +60,7 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,9 +87,7 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
   };
 
   const handleRevoke = async (id: string) => {
-    if (!confirm('Révoquer ce jeton ? Les liens associés cesseront immédiatement de fonctionner.')) {
-      return;
-    }
+    setConfirmRevoke(null);
     setRevokingId(id);
     const result = await revokeAccessToken(id);
     if (result.success) {
@@ -228,9 +228,12 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
 
         {/* Liste des jetons */}
         <div className="bg-white rounded-lg shadow-sm p-3 max-w-2xl mx-auto">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-1">
             Jetons existants
           </h2>
+          <p className="text-xs text-gray-400 mb-2">
+            Les jetons sont stockés hachés : les liens complets ne sont affichés qu'à la création.
+          </p>
 
           {tokens.length === 0 ? (
             <p className="text-xs sm:text-sm text-gray-500">Aucun jeton créé pour le moment.</p>
@@ -264,7 +267,7 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
                     <div className="flex gap-2 sm:ml-4">
                       {token.status === 'active' && (
                         <button
-                          onClick={() => handleRevoke(token.id)}
+                          onClick={() => setConfirmRevoke(token.id)}
                           disabled={revokingId === token.id}
                           className="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded hover:bg-gray-100 transition-colors text-red-600 hover:text-red-800 disabled:opacity-50 whitespace-nowrap"
                         >
@@ -274,17 +277,20 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
                     </div>
                   </div>
 
-                  {token.status === 'active' && (
-                    <p className="mt-2 text-xs text-gray-400">
-                      Les jetons sont stockés hachés : les liens complets sont affichés uniquement à la création.
-                    </p>
-                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmRevoke !== null}
+        title="Révoquer ce jeton"
+        message={<>Les liens de partage associés à ce jeton cesseront immédiatement de fonctionner.</>}
+        confirmLabel="Révoquer"
+        onCancel={() => setConfirmRevoke(null)}
+        onConfirm={() => handleRevoke(confirmRevoke as string)}
+      />
     </main>
   );
 }

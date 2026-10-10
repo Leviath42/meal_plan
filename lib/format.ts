@@ -73,6 +73,25 @@ export function formatMonthYear(date: Date): string {
   return `${capitalize(MONTHS_FR[date.getMonth()])} ${date.getFullYear()}`;
 }
 
+// ============================================================================
+// Dates locales YYYY-MM-DD (fuseau du navigateur/serveur, sans décalage UTC :
+// toISOString() formaterait minuit local en UTC et décalerait d'un jour)
+// ============================================================================
+
+// Formater une Date en YYYY-MM-DD selon le fuseau local
+export function toLocalDateStr(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Parser une date YYYY-MM-DD en Date locale (minuit local)
+export function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 // « 03/10/2026 » (équivalent du toLocaleDateString('fr-FR') par défaut)
 export function formatNumericDate(date: Date): string {
   const dd = String(date.getDate()).padStart(2, '0');

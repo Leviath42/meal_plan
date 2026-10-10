@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { formatNumericDate } from '@/lib/format';
 import { useRouter } from 'next/navigation';
 import { registerUser, updateUserRole, deleteUser, getAllUsers } from '@/app/actions/auth';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 
 interface User {
   id: string;
@@ -28,6 +29,7 @@ interface RegisterClientProps {
 
 export default function RegisterClient({ session, users: initialUsers, currentUserId }: RegisterClientProps) {
   const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; userId: string | null }>({ open: false, userId: null });
   const [formState, setFormState] = useState<{
     errors?: Record<string, string[]>;
     success?: boolean;
@@ -81,14 +83,17 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
       return;
     }
     
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-      const result = await deleteUser(userId);
-      setFormState(result);
-      
-      if (result?.success) {
-        refreshUsers();
-      }
+    setConfirmDelete({ open: true, userId });
+  };
+  const confirmDeleteUser = async () => {
+    if (!confirmDelete.userId) return;
+    const result = await deleteUser(confirmDelete.userId);
+    setFormState(result);
+
+    if (result?.success) {
+      refreshUsers();
     }
+    setConfirmDelete({ open: false, userId: null });
   };
 
   const getRoleColor = (role: 'ADMIN' | 'MEMBER' | 'GUEST') => {
@@ -147,6 +152,16 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     
     return actions;
   };
+
+  // Échap : fermer le modal de création d'utilisateur
+  useEffect(() => {
+    if (!showCreateModal) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowCreateModal(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateModal]);
 
   // Rediriger les non-admin dans un effet : un push pendant le rendu
   // est un anti-pattern React
@@ -344,10 +359,13 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
         {/* Modal de création d'utilisateur (admin) */}
         {showCreateModal && session?.user?.role === 'ADMIN' && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-user-modal-title"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-lg max-w-lg w-full">
               <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="font-bold text-lg">Ajouter un utilisateur</h3>
+                <h3 id="create-user-modal-title" className="font-bold text-lg">Ajouter un utilisateur</h3>
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
@@ -425,7 +443,14 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
             </div>
           </div>
         )}
-      </div>
+            <ConfirmDialog
+        open={confirmDelete.open}
+        title="Supprimer cet utilisateur"
+        message={<>Êtes-vous sûr de vouloir supprimer ce compte utilisateur&nbsp;? Cette action est irréversible.</>}
+        onCancel={() => setConfirmDelete({ open: false, userId: null })}
+        onConfirm={confirmDeleteUser}
+      />
+    </div>
     </main>
   );
 }

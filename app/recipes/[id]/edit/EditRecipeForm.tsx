@@ -5,6 +5,7 @@ import { updateRecipe, deleteRecipe } from '@/app/actions/recipes';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import IngredientsSelector from '../../IngredientsSelector';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 
 interface Ingredient {
   id: string;
@@ -56,15 +57,18 @@ export default function EditRecipeForm({
   const [state, formAction, pending] = useActionState(updateRecipe, null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const handleDelete = async () => {
-    if (confirm(`Voulez-vous vraiment supprimer la recette "${recipe.title}" ?`)) {
-      try {
-        setDeleteError(null);
-        await deleteRecipe(recipe.id);
-        router.push('/recipes');
-      } catch {
-        setDeleteError('Impossible de supprimer la recette');
-      }
+    setDeleteConfirmOpen(false);
+    setDeleting(true);
+    try {
+      setDeleteError(null);
+      await deleteRecipe(recipe.id);
+      router.push('/recipes');
+    } catch {
+      setDeleteError('Impossible de supprimer la recette');
+      setDeleting(false);
     }
   };
 
@@ -75,8 +79,8 @@ export default function EditRecipeForm({
           <h1 className="text-lg sm:text-xl font-bold truncate">Modifier : {recipe.title}</h1>
           <div className="flex gap-2 flex-shrink-0">
             <button
-              onClick={handleDelete}
-              disabled={pending}
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={pending || deleting}
               className="bg-red-600 text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 whitespace-nowrap"
             >
               Supprimer
@@ -93,6 +97,20 @@ export default function EditRecipeForm({
         {deleteError && (
           <p className="text-red-600 text-xs sm:text-sm">{deleteError}</p>
         )}
+        <ConfirmDialog
+          open={deleteConfirmOpen}
+          title="Supprimer la recette"
+          message={
+            <>
+              Voulez-vous vraiment supprimer <strong>«&nbsp;{recipe.title}&nbsp;»</strong>&nbsp;?
+              Les repas planifiés qui l'utilisent seront conservés mais perdront
+              leur référence à la recette.
+            </>
+          }
+          pending={deleting}
+          onCancel={() => setDeleteConfirmOpen(false)}
+          onConfirm={handleDelete}
+        />
 
         <form action={formAction} className="space-y-4" noValidate>
           <input type="hidden" name="id" value={recipe.id} />
