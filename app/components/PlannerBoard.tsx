@@ -1547,8 +1547,8 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
     >
     <section className="w-full max-w-4xl mx-auto mb-3">
       <div className="bg-white rounded-lg shadow-sm p-3">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
             <h2 className="text-base sm:text-lg font-bold text-gray-800 capitalize">
               {formatMonthYear(startDate)}
             </h2>
@@ -1579,34 +1579,36 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
             {enableGenerator && (
               <Link
                 href="/calendar/generator"
-                className="px-3 py-1 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+                className="px-2.5 py-1 rounded text-xs border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 whitespace-nowrap"
                 title="Générer un menu sur plusieurs jours"
               >
-                Générer un menu…
+                Générer…
               </Link>
             )}
           </div>
-          <button
-            onClick={goToToday}
-            disabled={loading}
-            title="Revenir à aujourd'hui"
-            className="px-3 py-1.5 bg-accent text-white rounded hover:bg-accent-hover text-xs disabled:opacity-50"
-          >
-            Aujourd'hui
-          </button>
-          {enableRecipePalette && (
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => setShowRecipePalette(open => !open)}
-              className={`px-3 py-1 rounded text-xs border transition-colors ${
-                showRecipePalette
-                  ? 'bg-accent text-white border-accent hover:bg-accent-hover'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
-              aria-expanded={showRecipePalette}
+              onClick={goToToday}
+              disabled={loading}
+              title="Revenir à aujourd'hui"
+              className="px-3 py-1.5 bg-accent text-white rounded hover:bg-accent-hover text-xs whitespace-nowrap disabled:opacity-50"
             >
-              Recettes
+              Aujourd'hui
             </button>
-          )}
+            {enableRecipePalette && (
+              <button
+                onClick={() => setShowRecipePalette(open => !open)}
+                className={`px-3 py-1.5 rounded text-xs border transition-colors whitespace-nowrap ${
+                  showRecipePalette
+                    ? 'bg-accent text-white border-accent hover:bg-accent-hover'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+                aria-expanded={showRecipePalette}
+              >
+                Recettes
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Panneau de recettes draggables : déplier avec le bouton « Recettes » */}

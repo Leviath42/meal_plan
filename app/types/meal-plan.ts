@@ -11,6 +11,8 @@ export interface Recipe {
   defaultServings?: number;
   // Date (AAAA-MM-JJ) du dernier repas planifié avec cette recette (F08 - historique)
   lastServedAt?: string | null;
+  // Tags optionnels : indexés par la recherche par mots-clés du RecipePicker
+  tags?: string | null;
 }
 
 // Schéma de validation pour les repas planifiés

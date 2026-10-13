@@ -14,6 +14,7 @@ export default async function HomePage() {
     cookTime: recipes.cookTime,
     defaultServings: recipes.defaultServings,
     lastServedAt: recipes.lastServedAt,
+    tags: recipes.tags,
   }).from(recipes).orderBy(recipes.title);
 
   // Nombre de couverts par défaut (page de paramétrage)
