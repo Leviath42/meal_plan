@@ -6,18 +6,21 @@
 #   bash /opt/meal_plan/update.sh rollback   # restaure la dernière sauvegarde de la base
 #
 # Ordre des opérations (chaque étape s'arrête net en cas d'échec) :
-#   1. stop de l'app (la base ne doit pas être écrite pendant l'échange de fichier)
-#   2. sauvegarde horodatée de data/sqlite.db (10 dernières conservées)
-#   3. git fetch + reset --hard origin/beta (la base du dépôt écrase la prod,
+#   1. fetch du code AVANT l'arrêt de l'app : un échec réseau (DNS down,
+#      coupure) n'interrompt pas une seconde le service (C-036). Contournement
+#      DNS automatique via scripts/resolve-host.cjs si github.com ne résout pas.
+#   2. stop de l'app (la base ne doit pas être écrite pendant l'échange de fichier)
+#   3. sauvegarde horodatée de data/sqlite.db (10 dernières conservées)
+#   4. git reset --hard origin/beta (la base du dépôt écrase la prod,
 #      c'est voulu : elle est restaurée à l'étape suivante)
-#   4. restauration de la base de production
-#   5. npm ci (uniquement si package-lock.json a changé)
-#   6. npm run db:ensure  — réconciliation idempotente du schéma (crée ce qui
+#   5. restauration de la base de production
+#   6. npm ci (uniquement si package-lock.json a changé)
+#   7. npm run db:ensure  — réconciliation idempotente du schéma (crée ce qui
 #      manque, réaligne __drizzle_migrations) : converge TOUTE base vers le schéma
 #      courant, même une sauvegarde ancienne
-#   7. npm run db:migrate  — no-op normal, applique les nouvelles migrations
-#   8. npm run build
-#   9. relance pm2 + healthcheck HTTP
+#   8. npm run db:migrate  — no-op normal, applique les nouvelles migrations
+#   9. npm run build
+#  10. relance pm2 + healthcheck HTTP
 
 set -euo pipefail
 
@@ -49,6 +52,28 @@ die() {
   exit 1
 }
 
+# Contournement DNS (C-036) : le resolver du CT est la box (DHCP, pannes
+# récurrentes). Si github.com ne résout pas, on le résout via un DNS public
+# en IP directe (1.1.1.1 / 8.8.8.8, UDP sans resolver système) avec Node —
+# présent sur le CT pour l'app — et on l'écris dans /etc/hosts pour la
+# session. Silencieux et sans effet si le DNS fonctionne.
+ensure_github_dns() {
+  if getent hosts github.com >/dev/null 2>&1; then
+    return 0
+  fi
+  log "DNS cassé (github.com irrésolvable) — contournement via DNS public"
+  local ip
+  ip=$(node "$APP_DIR/scripts/resolve-host.cjs" github.com 2>/dev/null || true)
+  if [ -n "$ip" ]; then
+    # Retirer une éventuelle entrée périmée puis écrire l'IP fraîche
+    sed -i '/[[:space:]]github\.com$/d' /etc/hosts 2>/dev/null || true
+    echo "$ip github.com" >> /etc/hosts
+    log "contournement DNS : github.com -> $ip écrit dans /etc/hosts"
+  else
+    log "contournement DNS impossible (DNS publics injoignables ?)"
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Mode rollback : restaurer la dernière sauvegarde de la base
 # ---------------------------------------------------------------------------
@@ -75,6 +100,14 @@ fi
 # ---------------------------------------------------------------------------
 BEFORE=$(git rev-parse --short HEAD)
 
+# Récupération du code AVANT l'arrêt de l'app (C-036) : le fetch est la seule
+# étape réseau de la mise à jour — s'il échoue (DNS, coupure), l'application
+# n'a pas été arrêtée une seconde et continue de servir les requêtes.
+ensure_github_dns
+log "récupération du code ($BEFORE -> ?)"
+git fetch origin "$BRANCH" \
+  || die "git fetch a échoué (réseau/DNS ?) — l'application n'a PAS été arrêtée, elle continue de tourner"
+
 log "arrêt de l'application"
 pm2 stop "$PM2_NAME" 2>/dev/null || log "process pm2 absent, on continue"
 
@@ -89,11 +122,8 @@ cp data/sqlite.db "$BACKUP_DIR/db-$STAMP.db"
 chmod 600 "$BACKUP_DIR"/db-$STAMP.db*
 ls -1t "$BACKUP_DIR"/db-*.db | tail -n +$((KEEP_BACKUPS + 1)) | xargs -r rm --
 
-log "récupération du code ($BEFORE -> ?)"
-# git fetch/reset DOIVENT échouer via die() (relance de l'app), pas via
-# set -e : une panne DNS ou réseau ici laissait pm2 stopped après l'étape 1
-# -> 502 derrière le reverse proxy (C-035).
-git fetch origin "$BRANCH" || die "git fetch a échoué (réseau/DNS ?) — l'app est relancée sur le code actuel"
+# Le fetch a déjà eu lieu avant l'arrêt de l'app (C-036) : il ne reste que
+# la bascule du working tree, qui doit échouer via die() (relance de l'app).
 git reset --hard "origin/$BRANCH" || die "git reset a échoué — l'app est relancée sur le code actuel"
 AFTER=$(git rev-parse --short HEAD)
 
