@@ -34,6 +34,8 @@ export const metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // cover : le contenu s'étend sous la barre transparente (C-042)
+  viewportFit: 'cover',
 };
 
 // Filet de secours pour les visiteurs sans cookie de thème : le serveur ne
@@ -82,8 +84,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Barre d'application mobile (bandes PWA) : la couleur suit la palette
           ET le mode du cookie — la bascule clair/sombre la met à jour côté
           client (ThemeToggle) via l'id, sans recharger */}
-      <meta name="theme-color" id="theme-color-meta" content={themeClass === 'dark' ? themeAccentDark : themeAccent} data-light={themeAccent} data-dark={themeAccentDark} />
-      <meta name="theme-color" id="theme-color-meta-dark" content={themeAccentDark} media="(prefers-color-scheme: dark)" />
+      {/* Barre d'application transparente (C-042) : Android fige sa couleur
+          à l'installation (manifest) — toute couleur y posée devenait
+          obsolète au premier changement de palette. Transparent partout,
+          la barre laisse voir le contenu (viewport-fit cover + safe-area). */}
+      <meta name="theme-color" id="theme-color-meta" content="transparent" />
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Nav session={session} />

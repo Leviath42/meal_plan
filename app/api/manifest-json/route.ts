@@ -28,7 +28,11 @@ export async function GET() {
       display: 'standalone',
       orientation: 'portrait',
       background_color: themeAccent,
-      theme_color: themeAccent,
+      // Barre d'application Android/Chrome : TRANSPARENT — Android fige la
+      // couleur de la barre à l'INSTALLATION depuis ce champ (C-042) : une
+      // couleur y posée restait figée après tout changement de palette.
+      // Transparent : aucune couleur à gérer, le contenu s'affiche dessous.
+      theme_color: 'transparent',
       icons: [
         {
           src: '/icons/icon-192.png?v=3',
