@@ -26,30 +26,15 @@ export const metadata = {
   },
 };
 
-// Barre d'application PWA (« bandes » haut/bas en mode app) : la couleur
-// suit la palette choisie (F14). generateViewport est évalué à chaque
-// rendu — on lit le thème en base (variante publique : le layout rend
-// aussi login et la page de partage).
-export async function generateViewport(): Promise<Viewport> {
-  let themeAccent = '#0f766e';
-  let themeAccentDark = '#134e4a';
-  try {
-    const settings = await getPublicAppSettings();
-    const theme = getTheme(settings.theme);
-    themeAccent = theme.palette.accentLight;
-    themeAccentDark = theme.palette.accentSoftDark;
-  } catch {
-    // défauts teal
-  }
-  return {
-    width: 'device-width',
-    initialScale: 1,
-    themeColor: [
-      { media: '(prefers-color-scheme: light)', color: themeAccent },
-      { media: '(prefers-color-scheme: dark)', color: themeAccentDark },
-    ],
-  };
-}
+// Viewport : le themeColor n'est PAS géré ici mais par les balises <meta>
+// rendues dans RootLayout — la barre d'application mobile doit suivre la
+// palette choisie (F14) ET le mode clair/sombre du COOKIE (pas celui du
+// système) : generateViewport ne voit pas le cookie de façon fiable et
+// met en cache, ce qui laissait la barre figée en teal d'origine (C-041).
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 // Filet de secours pour les visiteurs sans cookie de thème : le serveur ne
 // connaît pas la préférence système, ce petit script la déduit avant le
@@ -74,9 +59,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // initial, aucun flash. Le clair ET le sombre sont injectés : la bascule
   // de mode change de bloc sans recharger.
   let themeStyle = '';
+  let themeAccent = '#0f766e';
+  let themeAccentDark = '#134e4a';
   try {
     const settings = await getPublicAppSettings();
     const theme = getTheme(settings.theme);
+    themeAccent = theme.palette.accentLight;
+    themeAccentDark = theme.palette.accentSoftDark;
     themeStyle = `
 :root{${themeCssVariables(theme, false)}}
 :root.dark{${themeCssVariables(theme, true)}}`;
@@ -90,6 +79,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // tolérée sur cet élément unique.
     <html lang="fr" className={themeClass} suppressHydrationWarning>
       {themeStyle && <style dangerouslySetInnerHTML={{ __html: themeStyle }} />}
+      {/* Barre d'application mobile (bandes PWA) : la couleur suit la palette
+          ET le mode du cookie — la bascule clair/sombre la met à jour côté
+          client (ThemeToggle) via l'id, sans recharger */}
+      <meta name="theme-color" id="theme-color-meta" content={themeClass === 'dark' ? themeAccentDark : themeAccent} data-light={themeAccent} data-dark={themeAccentDark} />
+      <meta name="theme-color" id="theme-color-meta-dark" content={themeAccentDark} media="(prefers-color-scheme: dark)" />
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Nav session={session} />

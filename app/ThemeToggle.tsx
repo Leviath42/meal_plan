@@ -19,6 +19,17 @@ export default function ThemeToggle() {
     const next = !isDark;
     setIsDark(next);
     document.documentElement.classList.toggle('dark', next);
+    // Barre d'application mobile : suivre la bascule clair/sombre (C-041).
+    // La meta sans media-query est celle du mode courant ; la couleur de la
+    // palette est portée par l'attribut data (posé par le layout).
+    const meta = document.querySelector('meta#theme-color-meta');
+    if (meta) {
+      const lightColor = meta.getAttribute('data-light');
+      const darkColor = meta.getAttribute('data-dark');
+      if (lightColor && darkColor) {
+        meta.setAttribute('content', next ? darkColor : lightColor);
+      }
+    }
     try {
       document.cookie = `meal-theme=${next ? 'dark' : 'light'};path=/;max-age=31536000;samesite=lax`;
     } catch (e) {
