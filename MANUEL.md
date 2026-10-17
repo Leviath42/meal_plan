@@ -103,6 +103,7 @@ Les statistiques portent sur **tous les repas planifiés, y compris passés** �
 
 - ADMIN : **couverts par défaut** (pré-remplit le champ du planning)
 - Chacun : **Mes préférences** → intervalle antidoublon (une même recette ne peut pas être replanifiée à moins de X jours — 0 = désactivé)
+- **Palette de couleurs** (ADMIN) : 5 thèmes — teal, indigo, rose, ambre, vert forêt. Chaque aperçu montre les étiquettes du calendrier. La palette teinte boutons, liens et étiquettes, en mode clair comme sombre
 - Thème clair/sombre : bascule dans la barre de navigation
 - ADMIN : liens vers Utilisateurs (créer/valider/promouvoir des comptes), Partage, et Update
 

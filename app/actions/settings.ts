@@ -11,6 +11,8 @@ import { getUserMinDaysBetween } from '@/lib/meal-planning';
 // Paramètres de l'application (une seule ligne, id = 1, partagée par tous)
 export interface AppSettings {
   defaultServings: number;
+  // Palette de couleurs (F14) : id du thème dans lib/themes.ts
+  theme: string;
   updatedAt: string | null;
 }
 
@@ -26,6 +28,21 @@ const defaultServingsInput = z.coerce
   .int('Le nombre de couverts doit être un entier')
   .min(1, 'Au moins 1 couvert requis')
   .max(20, 'Maximum 20 couverts');
+
+// Variante publique (sans garde de session) pour le layout : injecter la
+// palette sur les pages sans session (login, page publique de partage).
+// Lecture seule, aucune donnée sensible dans app_settings.
+export async function getPublicAppSettings(): Promise<AppSettings> {
+  let [row] = await db
+    .select()
+    .from(appSettings)
+    .where(eq(appSettings.id, 1))
+    .limit(1);
+  if (!row) {
+    return { defaultServings: 4, theme: 'teal', updatedAt: null };
+  }
+  return { defaultServings: row.defaultServings, theme: row.theme, updatedAt: row.updatedAt };
+}
 
 // Lire les paramètres de l'application ; la ligne id=1 est créée avec les
 // défauts si elle est absente. Garde de session : les server actions sont
@@ -57,7 +74,29 @@ export async function getAppSettings(): Promise<AppSettings> {
     }
   }
 
-  return { defaultServings: row.defaultServings, updatedAt: row.updatedAt };
+  return { defaultServings: row.defaultServings, theme: row.theme, updatedAt: row.updatedAt };
+}
+
+// Mettre à jour la palette de couleurs (F14, ADMIN uniquement)
+export async function updateTheme(themeId: string): Promise<UpdateSettingsResult> {
+  try {
+    await requireAdmin();
+    // Le thème doit exister dans lib/themes.ts
+    const { THEMES } = await import('@/lib/themes');
+    if (!THEMES.some((theme) => theme.id === themeId)) {
+      return { success: false, message: 'Thème inconnu' };
+    }
+    const updatedAt = new Date().toISOString();
+    await db
+      .insert(appSettings)
+      .values({ id: 1, theme: themeId, updatedAt })
+      .onConflictDoUpdate({ target: appSettings.id, set: { theme: themeId, updatedAt } });
+    revalidatePath('/', 'layout');
+    return { success: true, message: 'Thème enregistré' };
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du thème:', error);
+    return { success: false, message: "Une erreur est survenue lors de l'enregistrement" };
+  }
 }
 
 // Mettre à jour le nombre de couverts par défaut (ADMIN uniquement)

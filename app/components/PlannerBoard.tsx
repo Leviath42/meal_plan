@@ -14,10 +14,10 @@ import {
 } from '@/lib/format';
 import {
   MEAL_TYPE_LABELS,
-  MEAL_TYPE_COLORS,
   MEAL_TYPE_ORDER,
   MEAL_COURSE_ORDER,
 } from '@/lib/meal-types';
+import { themeMealColors, getTheme } from '@/lib/themes';
 import type { ReactNode } from 'react';
 import {
   DndContext,
@@ -51,6 +51,8 @@ interface PlannerBoardProps {
   enableGenerator?: boolean;
   // Nombre de couverts par défaut (page de paramétrage) pour les créations
   defaultServings?: number;
+  // Palette de couleurs (F14) : id du thème choisi dans les paramètres
+  themeId?: string;
 }
 
 // Données d'un jour affiché dans la grille
@@ -901,7 +903,18 @@ function MealPlanActionsModal({
 
 // Composant principal : calendrier de planification réutilisable
 // (page d'accueil : 7 jours en 1-3-3 ; page calendrier : 19 jours en 1-3-3-3-3-3-3)
-export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false, enableRecipePalette = false, enableGenerator = false, defaultServings }: PlannerBoardProps) {
+export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false, enableRecipePalette = false, enableGenerator = false, defaultServings, themeId }: PlannerBoardProps) {
+  // Couleurs des badges par type de repas, dérivées de la palette choisie
+  // (F14). La détection clair/sombre suit la classe .dark de <html>.
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const update = () => setIsDark(document.documentElement.classList.contains('dark'));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+  const MEAL_TYPE_COLORS: Record<string, string> = themeMealColors(getTheme(themeId), isDark);
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   // loading : premier chargement uniquement (squelette) ; les chargements

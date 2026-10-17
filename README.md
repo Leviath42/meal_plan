@@ -45,6 +45,7 @@
 - Sélecteurs par **recherche multi-mots** (insensible aux accents, navigation clavier) pour les recettes, ingrédients et rayons — adaptés aux grands catalogues
 - Confirmations in-app accessibles (focus piégé, Échap) pour toutes les actions destructrices
 - Icône PWA « chronomètre & couverts » ; icônes versionnées (`?v=N`) pour contourner les caches
+- **Palettes de couleurs (F14)** : 5 thèmes (teal, indigo, rose, ambre, vert forêt) dans les paramètres — accent UI et étiquettes du calendrier, contrastes WCAG AA, servies sans flash
 ### Maintenance intégrée
 - Page `/deploy` (ADMIN, lien depuis `/settings` → Update) : version chargée (commit + build), **mise à jour depuis GitHub** et **retour arrière** (dernière sauvegarde de la base) sans accéder au serveur, journal de déploiement en direct
 - `update.sh` : sauvegarde horodatée de la base (10 conservées), `git reset --hard origin/beta`, `db:ensure` + `db:migrate`, build, healthcheck HTTP, relance de l'app même en cas d'échec ; mode `rollback`

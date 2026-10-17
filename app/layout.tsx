@@ -1,6 +1,8 @@
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { auth } from '@/lib/auth';
+import { getPublicAppSettings } from '@/app/actions/settings';
+import { getTheme, themeCssVariables } from '@/lib/themes';
 import Nav from './Nav';
 import ServiceWorkerRegister from './ServiceWorkerRegister';
 import '../styles/globals.css';
@@ -47,11 +49,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const themeCookie = (await cookies()).get('meal-theme')?.value;
   const themeClass = themeCookie === 'dark' ? 'dark' : undefined;
 
+  // Palette de couleurs (F14) : les variables d'accent du thème choisi
+  // surchargent les défauts teal de globals.css — servies dans le HTML
+  // initial, aucun flash. Le clair ET le sombre sont injectés : la bascule
+  // de mode change de bloc sans recharger.
+  let themeStyle = '';
+  try {
+    const settings = await getPublicAppSettings();
+    const theme = getTheme(settings.theme);
+    themeStyle = `
+:root{${themeCssVariables(theme, false)}}
+:root.dark{${themeCssVariables(theme, true)}}`;
+  } catch {
+    // getAppSettings exige une session ; page publique/login : défauts teal
+  }
+
   return (
     // suppressHydrationWarning : pour les visiteurs sans cookie, le script
     // pose .dark après le rendu serveur (préférence système) — différence
     // tolérée sur cet élément unique.
     <html lang="fr" className={themeClass} suppressHydrationWarning>
+      {themeStyle && <style dangerouslySetInnerHTML={{ __html: themeStyle }} />}
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Nav session={session} />

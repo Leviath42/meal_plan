@@ -24,7 +24,7 @@ export default async function HomePage() {
     <main className="px-3 sm:px-6 py-2 sm:py-3 max-w-2xl mx-auto">
       <h1 className="sr-only">Planning des repas</h1>
       {/* Calendrier des repas de la semaine sur la page d'accueil */}
-      <HomeCalendar recipes={allRecipes} defaultServings={settings.defaultServings} />
+      <HomeCalendar recipes={allRecipes} defaultServings={settings.defaultServings} themeId={settings.theme} />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Link
