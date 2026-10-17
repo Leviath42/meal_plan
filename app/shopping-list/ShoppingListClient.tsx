@@ -54,6 +54,8 @@ export default function ShoppingListClient({
   // Formulaire d'ajout manuel : révélé par « + Nouvel article »
   // (même comportement que les pages Recettes et Ingrédients)
   const [addOpen, setAddOpen] = useState(false);
+  // Génération depuis le planning : ouverte via le bouton « Générer »
+  const [generateOpen, setGenerateOpen] = useState(false);
 
   // Sélection précise : plage de dates libre (mode « personnalisé »)
   const [mode, setMode] = useState<'preset' | 'custom'>('preset');
@@ -203,13 +205,22 @@ export default function ShoppingListClient({
           (« Mes recettes » / « + Nouvelle recette ») et Ingrédients */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h1 className="text-lg sm:text-xl font-bold">Liste de courses</h1>
-        <button
-          type="button"
-          onClick={() => setAddOpen((value) => !value)}
-          className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors whitespace-nowrap"
-        >
-          {addOpen ? 'Fermer' : '+ Nouvel article'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setGenerateOpen(true)}
+            className="border border-accent text-accent rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-soft transition-colors whitespace-nowrap"
+          >
+            Générer
+          </button>
+          <button
+            type="button"
+            onClick={() => setAddOpen((value) => !value)}
+            className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors whitespace-nowrap"
+          >
+            {addOpen ? 'Fermer' : '+ Nouvel article'}
+          </button>
+        </div>
       </div>
 
       {/* Ajout manuel : formulaire révélé au clic sur « + Nouvel article » */}
@@ -301,15 +312,38 @@ export default function ShoppingListClient({
         </form>
       )}
 
-      {/* Génération depuis le planning + résumé, regroupés en une carte compacte */}
-      <div className="bg-white rounded-lg shadow-sm p-3 space-y-3">
-        <form action={generateAction} className="space-y-2">
+      {/* Génération depuis le planning : modal (bouton « Générer » à côté du titre) */}
+      {generateOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="generate-modal-title"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setGenerateOpen(false); }}
+        >
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 id="generate-modal-title" className="font-bold text-lg text-gray-800">
+                Générer depuis le planning
+              </h3>
+              <button
+                type="button"
+                onClick={() => setGenerateOpen(false)}
+                aria-label="Fermer"
+                className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">
+              <form action={generateAction} className="space-y-3">
           <input type="hidden" name="mode" value={mode} />
           <input type="hidden" name="days" value={days} />
           <input type="hidden" name="startDate" value={mode === 'custom' ? customStart : ''} />
           <input type="hidden" name="endDate" value={mode === 'custom' ? customEnd : ''} />
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-sm sm:text-base">Générer depuis le planning</span>
             {SHOPPING_PERIOD_PRESETS.map((preset) => (
               <button
                 key={preset}
@@ -337,13 +371,6 @@ export default function ShoppingListClient({
               }`}
             >
               Dates précises
-            </button>
-            <button
-              type="submit"
-              disabled={generatePending}
-              className="px-4 py-1.5 bg-accent text-white rounded hover:bg-accent-hover text-xs sm:text-sm disabled:opacity-50 whitespace-nowrap"
-            >
-              {generatePending ? 'Génération...' : 'Générer'}
             </button>
             <span className="text-xs sm:text-sm text-gray-500">
               Du {formatDateLabel(range.start)} au {formatDateLabel(range.end)}
@@ -379,10 +406,32 @@ export default function ShoppingListClient({
           {generateState?.success && (
             <p className="text-green-700 text-xs sm:text-sm">{generateState.message}</p>
           )}
-        </form>
 
-        {/* Résumé + actions de consultation, dans la même carte */}
-        <div className="border-t border-gray-100 pt-3 flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setGenerateOpen(false)}
+                    className="px-4 py-2 border rounded hover:bg-gray-50 text-xs sm:text-sm"
+                  >
+                    Fermer
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={generatePending}
+                    className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-xs sm:text-sm disabled:opacity-50"
+                  >
+                    {generatePending ? 'Génération...' : 'Générer'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Résumé + actions de consultation */}
+      <div className="bg-white rounded-lg shadow-sm p-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <p className="text-xs sm:text-sm text-gray-600 flex-shrink-0">
             {items.length} article{items.length > 1 ? 's' : ''} — {boughtCount} acheté
             {boughtCount > 1 ? 's' : ''}
