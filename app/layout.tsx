@@ -84,11 +84,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Barre d'application mobile (bandes PWA) : la couleur suit la palette
           ET le mode du cookie — la bascule clair/sombre la met à jour côté
           client (ThemeToggle) via l'id, sans recharger */}
-      {/* Barre d'application transparente (C-042) : Android fige sa couleur
-          à l'installation (manifest) — toute couleur y posée devenait
-          obsolète au premier changement de palette. Transparent partout,
-          la barre laisse voir le contenu (viewport-fit cover + safe-area). */}
-      <meta name="theme-color" id="theme-color-meta" content="transparent" />
+      {/* Barre d'application neutre (C-043) : couleur figée à
+          l'installation par Android — neutre pour toutes les palettes.
+          Suit le mode du SYSTÈME via media-queries (le seul mécanisme
+          respecté par la PWA installée) : blanc cassé en clair, gris
+          anthracite en sombre. viewport-fit cover + safe-area conservés. */}
+      <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
+      <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)" />
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Nav session={session} />
