@@ -34,6 +34,7 @@ import {
 import { getMealPlans, addMealPlan, deleteMealPlan, updateMealPlan } from '@/app/actions/meal-plan';
 import { suggestRecipes } from '@/app/actions/suggestions';
 import type { MealPlan, MealType, Recipe, SuggestedRecipe } from '@/app/types/meal-plan';
+import RecipePicker from '@/app/components/RecipePicker';
 
 interface PlannerBoardProps {
   recipes: Recipe[];
@@ -175,40 +176,6 @@ function RecipePaletteChip({ recipe }: { recipe: Recipe }) {
       {recipe.title}
     </button>
   );
-}
-
-// Recettes regroupées par type de plat pour les selects des modals :
-// optgroup par type (ordre chronologique), les non typées en dernier,
-// ordre alphabétique du titre à l'intérieur de chaque groupe.
-const MEAL_COURSE_SELECT_LABELS: Record<string, string> = {
-  'apéritif': 'Apéritif',
-  'entrée': 'Entrée',
-  'plat': 'Plat principal',
-  'accompagnement': 'Accompagnement',
-  'dessert': 'Dessert',
-  'boisson': 'Boisson',
-};
-
-function groupRecipesByCourse(recipes: Recipe[]): { key: string; label: string; items: Recipe[] }[] {
-  const byCourse = new Map<string, Recipe[]>();
-  for (const recipe of recipes) {
-    const key = recipe.mealCourse && MEAL_COURSE_SELECT_LABELS[recipe.mealCourse] ? recipe.mealCourse : '__untyped__';
-    const list = byCourse.get(key) ?? [];
-    list.push(recipe);
-    byCourse.set(key, list);
-  }
-  return [...byCourse.entries()]
-    .map(([key, items]) => ({
-      key,
-      label: key === '__untyped__' ? 'Sans type de plat' : MEAL_COURSE_SELECT_LABELS[key],
-      items: [...items].sort((a, b) => a.title.localeCompare(b.title, 'fr')),
-    }))
-    .sort((a, b) => {
-      const order = MEAL_COURSE_ORDER;
-      const orderA = order.indexOf(a.key) === -1 ? 99 : order.indexOf(a.key);
-      const orderB = order.indexOf(b.key) === -1 ? 99 : order.indexOf(b.key);
-      return orderA - orderB;
-    });
 }
 
 // Modal pour la création d'un repas planifié
@@ -399,23 +366,14 @@ function MealPlanCreationModal({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Recette (optionnel)
                 </label>
-                <select
+                <RecipePicker
+                  id="creation-recipe-picker"
+                  recipes={recipes}
                   value={recipeId}
-                  onChange={(e) => setRecipeId(e.target.value)}
-                  className="w-full p-2 border rounded bg-white text-gray-800"
+                  onChange={setRecipeId}
                   disabled={!mealType}
-                >
-                  <option value="">-- Aucune recette --</option>
-                  {groupRecipesByCourse(recipes).map(group => (
-                    <optgroup key={group.key} label={group.label}>
-                      {group.items.map(recipe => (
-                        <option key={recipe.id} value={recipe.id}>
-                          {recipe.title}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
+                  placeholder="-- Aucune recette -- (recherchez par mots-clés)"
+                />
               </div>
 
               {/* Suggestions (F03) : 3 recettes au hasard, hors fenêtre antidoublon */}
@@ -874,22 +832,13 @@ function MealPlanActionsModal({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Recette (optionnel)
                     </label>
-                    <select
+                    <RecipePicker
+                      id="edit-recipe-picker"
+                      recipes={recipes}
                       value={newRecipeId ?? ''}
-                      onChange={(e) => setNewRecipeId(e.target.value || null)}
-                      className="w-full p-2 border rounded bg-white text-gray-800"
-                    >
-                      <option value="">-- Aucune recette --</option>
-                      {groupRecipesByCourse(recipes).map(group => (
-                        <optgroup key={group.key} label={group.label}>
-                          {group.items.map(recipe => (
-                            <option key={recipe.id} value={recipe.id}>
-                              {recipe.title}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
+                      onChange={(id) => setNewRecipeId(id || null)}
+                      placeholder="-- Aucune recette -- (recherchez par mots-clés)"
+                    />
                   </div>
 
                   <div>
