@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-10 (v3.7)*
-*Version : 3.7 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-10 (v3.8)*
+*Version : 3.8 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
 
 ---
@@ -41,7 +41,8 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | - | **Icône PWA chronomètre & couverts** (design du propriétaire) + règle anti-cache des icônes (`?v=N`, SW v5) | ✅ Livré (22af57, 6aec3a9) | C-038 |
 | - | **F13 - Statistiques d'usage** — page `/stats` (lecture seule, lien « Stats » dans la nav) : utilisation du catalogue (barre de progression, jamais planifiées, notes libres), top 10 des recettes les plus cuisinées, répartition par type de plat, volume mensuel (12 mois) — agrégation SQL pure, zéro migration | ✅ Livré (e9f281c) | Fusionné sur `main` |
 | - | **Bibliothèque d'ingrédients de référence** — `npm run db:seed-ingredients` : 568 ingrédients en 12 rayons, `INSERT OR IGNORE` idempotent et non destructif, applicable sur une base en service (beta et prod) sans toucher aux données existantes | ✅ Livré (e9f281c) | Testé : +490 sur base démo, 2ᵉ passage 100 % ignoré |
-| - | **F14 - Thèmes et palettes de couleurs** — 5 palettes (teal, indigo, rose, ambre, vert forêt) sélectionnables dans `/settings` (ADMIN), chacune déclinée clair + sombre ; contrastes vérifiés WCAG AA (4.9:1 à 8.8:1) ; teinte l'accent UI ET les étiquettes du calendrier par type de repas (avec aperçu dans le sélecteur, couleurs distinctes colorblind-safe) ; injection SSR sans flash (variables CSS `--color-accent*`, revalidation layout) ; page publique de partage suit le thème ; migration 0005 (`app_settings.theme`) ; bandes PWA (meta theme-color dynamique + manifest dynamique) et bascule sombre des badges corrigées (C-040) | ✅ Livré | Conception recherche Okabe-Ito/WCAG 2026-10 |
+| - | **F14 - Thèmes et palettes de couleurs** — 5 palettes (teal, indigo, rose, ambre, vert forêt) sélectionnables dans `/settings` (ADMIN), chacune déclinée clair + sombre ; contrastes vérifiés WCAG AA (4.9:1 à 8.8:1) ; teinte l'accent UI ET les étiquettes du calendrier par type de repas (avec aperçu dans le sélecteur, couleurs distinctes colorblind-safe) ; injection SSR sans flash (variables CSS `--color-accent*`, revalidation layout) ; page publique de partage suit le thème ; migration 0005 (`app_settings.theme`) | ✅ Livré | Conception recherche Okabe-Ito/WCAG 2026-10 |
+| - | **PWA — habillage neutre (C-040 → C-045)** — badges basculant proprement en mode sombre (remappage étendu aux familles amber/sky/rose) ; **icône neutre** (chronomètre & couverts sur fond noir, design du propriétaire) intégrée avec la règle anti-cache (`?v=4`, SW v6) ; barres d'application et splash **noir profond** (`#0c0c0e`) avec barre haute suivant le mode SYSTÈME (metas media-query) — connaissance plateforme documentée : Android fige les couleurs du manifest à l'installation, la palette ne peut pas y être suivie, seul le mode système est dynamique ; manifest 100 % statique via route dédiée (`/api/manifest-json` + rewrite) ; viewport-fit cover + safe-area | ✅ Livré | Épisode complet dans CORRECTIONS.md C-040→C-045 |
 | 2 | **F05 - Liste de courses** | ✅ Complet | Génération validée en réel (échelle des couverts, rayons, fusion) |
 | 2 | **F04 - Partage** | ✅ Complet | Jetons, page publique, ICS, API JSON HA — test partiel effectué (jeton actif) |
 | 3 | **F08 - Historique** | ✅ Complet | `lastServedAt`, indicateur dans le calendrier — 6 tests runtime PASS |

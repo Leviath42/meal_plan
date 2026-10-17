@@ -11,7 +11,7 @@ L'application s'installe comme une application native, sans passer par un store.
 **Android (Chrome)** : ouvre l'URL de l'application → menu ⋮ → **« Installer l'application »**.
 **iPhone/iPad (Safari)** : bouton Partager → **« Sur l'écran d'accueil »**.
 
-L'icône « chronomètre & couverts » apparaît alors sur ton écran d'accueil, et l'app s'ouvre en plein écran (sans barre de navigateur).
+L'icône neutre « chronomètre & couverts » apparaît alors sur ton écran d'accueil, et l'app s'ouvre en plein écran (sans barre de navigateur). Le lancement affiche un splash noir sobre avec l'icône centrée.
 
 > 💡 Après une mise à jour de l'icône par l'administrateur : elle se rafraîchit d'elle-même sous 1-2 jours sur Android ; sur iOS, désinstalle puis réinstalle l'app.
 
@@ -130,6 +130,10 @@ Les statistiques portent sur **tous les repas planifiés, y compris passés** �
 ## ❓ Questions fréquentes
 
 **L'icône ne change pas sur mon téléphone.** Voir le début du manuel — iOS exige une réinstallation, Android se met à jour seul en 1-2 jours.
+
+**Pourquoi les barres de l'application ne suivent pas ma palette de couleurs ?** Contrainte Android : les couleurs du splash et des barres sont figées au moment de l'INSTALLATION de la PWA — elles ne peuvent pas suivre un réglage modifiable. Elles sont donc neutres par design : splash et barre inférieure noir profond, barre supérieure suivant le mode clair/sombre de ton SYSTÈME. Seule l'interface dans l'application suit la palette choisie.
+
+**Le splash est noir alors que mon téléphone est en mode clair.** Le manifest ne permet qu'une valeur de fond unique — le noir profond a été retenu (usage principal en mode sombre, cohérent avec l'icône). La barre supérieure, elle, suit bien le mode système.
 
 **Je ne trouve pas un ingrédient dans le catalogue.** L'administrateur peut enrichir le catalogue d'un coup : `npm run db:seed-ingredients` ajoute 568 ingrédients courants sans jamais modifier les données existantes. Et tu peux toujours créer un ingrédient à la volée depuis le formulaire de recette (« + Nouveau »).
 
