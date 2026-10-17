@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-08*
-*Version : 3.3 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-10*
+*Version : 3.4 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
 
 ---
@@ -35,6 +35,8 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | 1 | **F01 - Planification** | ✅ Complet | CRUD, DnD, navigation jour/mois, modals — validé en usage réel |
 | 1 | F01 options — palette drag&drop, page `/settings`, correctifs menu/dates | ✅ Complet | À valider en campagne de tests |
 | 1 | F01 — version prod Proxmox + tunnel Cloudflare | ✅ En service | CT 103, `update.sh` pour les mises à jour |
+| - | **Audit UI/UX complet** — accessibilité (modals `role=dialog`/Échap/focus piégé, `ConfirmDialog` remplaçant les 5 `window.confirm()` natifs, `:focus-visible` global, `userScalable:false` retiré, toast `role=alert`), factorisation (`lib/meal-types.ts`, helpers de dates dans `lib/format.ts`), `RecipePicker` (recherche de recettes par mots-clés, insensible aux accents, navigation clavier) remplaçant les selects déroulants des modals, en-tête calendrier responsive (« Aujourd'hui » ne sort plus du cadre) | ✅ Livré (d29bb64, ae4e50f) | Fusionné sur `main` (4cbd520) — à valider dans la campagne de tests |
+| - | **Infrastructure CT beta stabilisée** — IP statique, DNS double resolver, `pm2 startup systemd` (reboot-proof) ; `update.sh` immunisé aux pannes réseau (C-035/C-036) | ✅ En service | Voir [CORRECTIONS.md](CORRECTIONS.md) C-035/C-036 |
 | 2 | **F05 - Liste de courses** | ✅ Complet | Génération validée en réel (échelle des couverts, rayons, fusion) |
 | 2 | **F04 - Partage** | ✅ Complet | Jetons, page publique, ICS, API JSON HA — test partiel effectué (jeton actif) |
 | 3 | **F08 - Historique** | ✅ Complet | `lastServedAt`, indicateur dans le calendrier — 6 tests runtime PASS |
@@ -94,6 +96,14 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 - [ ] Menu mobile : clic extérieur, touche Échap, navigation par les liens
 - [ ] `/settings` : ADMIN modifie les couverts par défaut → pré-remplissage du modal de création ; MEMBER en lecture seule
 
+### Audit UI/UX (nouveau — version auditée)
+- [ ] Modals de planification : fermeture par Échap, clic sur l'overlay, `role=dialog` annoncé ; focus dans le modal au clavier (Tab)
+- [ ] `RecipePicker` (modal création + édition) : recherche multi-mots (« poulet curry »), insensible aux accents (« gruyere » → « Gruyère »), flèches ↑↓ + Entrée, bouton ✕ pour retirer
+- [ ] `ConfirmDialog` : suppression d'une recette/ingrédient, révocation d'un jeton — message en français, focus sur Annuler, Échap annule
+- [ ] Zoom mobile réactivé (pinch-zoom fonctionne sur la page login)
+- [ ] En-tête `/calendar` : « Aujourd'hui » et « Recettes » visibles sans débordement, même sur petit écran
+- [ ] Navigation clavier : contour visible (accent) sur boutons/liens à la tabulation
+
 ### Générateur de menus
 - [ ] Bouton « Générer un menu… » dans l'en-tête du mois de /calendar → page /calendar/generator
 - [ ] Mode « combler » : seuls les créneaux vides sont remplis ; mode « remplacer » : repas existants (y compris notes libres) supprimés avant génération
@@ -118,8 +128,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 34 (C-001 → C-034) |
-| Corrigées et déployées | 33 |
+| Corrections enregistrées | 36 (C-001 → C-036) |
+| Corrigées et déployées | 35 |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
 | Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |
@@ -171,7 +181,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 - [ ] Export PDF de la liste de courses (F05, optionnel)
 - [ ] Partage de la liste de courses par lien (F05, optionnel)
 - [ ] Réglage de la taille des formulaires (barres de scroll non désirées dans certains modals)
-- [ ] Uniformisation des tailles de composants, très petits écrans, accessibilité (contrastes, navigation clavier)
+- [ ] Uniformisation des tailles de composants, très petits écrans
+- [x] ~~Accessibilité (contrastes, navigation clavier)~~ largement couvert par l'audit UI/UX (d29bb64) — reste en revue : la bump typo global (`text-xs` → `text-sm` en base), reporté volontairement
 - [ ] Statistiques de fréquence des recettes (F08, optionnel)
 - [x] ~~Headers de sécurité HTTP~~ faits (C-013) — reste en option : une CSP complète (nonce/hash à chaque build pour le script inline du thème)
 - [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — reste au choix : purge de l'historique (`git filter-repo`, réécriture du dépôt) et révocation des jetons créés avant le retrait
