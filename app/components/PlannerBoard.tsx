@@ -1359,10 +1359,10 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
       {/* Bouton de planification (+) */}
       <button
         onClick={() => openCreationModal(mainDay.dateStr)}
-        className={`w-14 text-xs py-1.5 rounded border transition-colors ${
+        className={`w-14 text-xs py-1 rounded border transition-colors ${
           mainDay.isPast
             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-            : 'bg-accent text-white hover:bg-accent-hover border-accent'
+            : 'bg-transparent text-accent border-gray-300 hover:border-accent hover:bg-accent-soft'
         }`}
         disabled={mainDay.isPast}
         title={mainDay.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
@@ -1480,10 +1480,10 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                 <div key={`plus-${dayData.dateStr}`} className="w-[92px] flex justify-center">
                   <button
                     onClick={() => openCreationModal(dayData.dateStr)}
-                    className={`w-14 text-xs py-1.5 rounded border transition-colors ${
+                    className={`w-14 text-xs py-1 rounded border transition-colors ${
                       dayData.isPast
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                        : 'bg-accent text-white hover:bg-accent-hover border-accent'
+                        : 'bg-transparent text-accent border-gray-300 hover:border-accent hover:bg-accent-soft'
                     }`}
                     disabled={dayData.isPast}
                     title={dayData.isPast ? 'Date dans le passé' : 'Ajouter un repas'}
