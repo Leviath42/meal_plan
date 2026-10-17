@@ -31,12 +31,12 @@ export interface ThemePalette {
   lunchLight: string;
   snackLight: string;
   dinnerLight: string;
-  // Badges — mode sombre (fond -50 sombre + texte clair -300)
-  breakfastDark: string;
-  lunchDark: string;
-  snackDark: string;
-  dinnerDark: string;
 }
+// NOTE : les badges utilisent les MÊMES classes dans les deux modes —
+// c'est le remappage sombre de styles/globals.css (famille par famille :
+// --color-amber-100 etc.) qui bascule les pastels clairs en fonds sombres
+// au mode sombre. Un thème ne change que la FAMILLE de teinte utilisée
+// (ex. ambre au lieu d'orange pour le petit-déjeuner).
 
 export interface ThemeDefinition {
   id: string;
@@ -63,10 +63,6 @@ export const THEMES: ThemeDefinition[] = [
       lunchLight: 'bg-blue-100 text-blue-800',
       snackLight: 'bg-green-100 text-green-800',
       dinnerLight: 'bg-purple-100 text-purple-800',
-      breakfastDark: 'bg-orange-50 text-orange-300',
-      lunchDark: 'bg-blue-50 text-blue-300',
-      snackDark: 'bg-green-50 text-green-300',
-      dinnerDark: 'bg-purple-50 text-purple-300',
     },
   },
   {
@@ -86,10 +82,6 @@ export const THEMES: ThemeDefinition[] = [
       lunchLight: 'bg-sky-100 text-sky-800',
       snackLight: 'bg-green-100 text-green-800',
       dinnerLight: 'bg-purple-100 text-purple-800',
-      breakfastDark: 'bg-amber-50 text-amber-300',
-      lunchDark: 'bg-sky-50 text-sky-300',
-      snackDark: 'bg-green-50 text-green-300',
-      dinnerDark: 'bg-purple-50 text-purple-300',
     },
   },
   {
@@ -108,10 +100,6 @@ export const THEMES: ThemeDefinition[] = [
       lunchLight: 'bg-blue-100 text-blue-800',
       snackLight: 'bg-green-100 text-green-800',
       dinnerLight: 'bg-purple-100 text-purple-800',
-      breakfastDark: 'bg-rose-50 text-rose-300',
-      lunchDark: 'bg-blue-50 text-blue-300',
-      snackDark: 'bg-green-50 text-green-300',
-      dinnerDark: 'bg-purple-50 text-purple-300',
     },
   },
   {
@@ -130,10 +118,6 @@ export const THEMES: ThemeDefinition[] = [
       lunchLight: 'bg-blue-100 text-blue-800',
       snackLight: 'bg-green-100 text-green-800',
       dinnerLight: 'bg-purple-100 text-purple-800',
-      breakfastDark: 'bg-amber-50 text-amber-300',
-      lunchDark: 'bg-blue-50 text-blue-300',
-      snackDark: 'bg-green-50 text-green-300',
-      dinnerDark: 'bg-purple-50 text-purple-300',
     },
   },
   {
@@ -153,10 +137,6 @@ export const THEMES: ThemeDefinition[] = [
       lunchLight: 'bg-blue-100 text-blue-800',
       snackLight: 'bg-green-100 text-green-800',
       dinnerLight: 'bg-purple-100 text-purple-800',
-      breakfastDark: 'bg-orange-50 text-orange-300',
-      lunchDark: 'bg-blue-50 text-blue-300',
-      snackDark: 'bg-green-50 text-green-300',
-      dinnerDark: 'bg-purple-50 text-purple-300',
     },
   },
 ];
@@ -178,17 +158,11 @@ export function themeCssVariables(theme: ThemeDefinition, isDark: boolean): stri
 }
 
 // Classes de badges par type de repas pour le thème courant (PlannerBoard,
-// page publique). Retourne un Record mealType -> classes.
-export function themeMealColors(theme: ThemeDefinition, isDark: boolean): Record<string, string> {
+// page publique, aperçu du sélecteur). Les MÊMES classes servent les deux
+// modes : le remappage sombre de globals.css bascule les couleurs familles
+// (bg-amber-100 : pastel clair en clair, fond sombre en sombre).
+export function themeMealColors(theme: ThemeDefinition): Record<string, string> {
   const p = theme.palette;
-  if (isDark) {
-    return {
-      breakfast: p.breakfastDark,
-      lunch: p.lunchDark,
-      snack: p.snackDark,
-      dinner: p.dinnerDark,
-    };
-  }
   return {
     breakfast: p.breakfastLight,
     lunch: p.lunchLight,

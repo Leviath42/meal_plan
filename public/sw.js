@@ -18,11 +18,13 @@
 // v5 : icône chronomètre + couverts (design perso, 22af57).
 
 const CACHE = 'meal-plan-v5';
-const PRECACHE = ['/', '/manifest.json', '/icons/icon-192.png?v=3', '/icons/icon-512.png?v=3'];
+const PRECACHE = ['/', '/icons/icon-192.png?v=3', '/icons/icon-512.png?v=3'];
 const MAX_ENTRIES = 60;
 
 // Seuls ces chemins sont considérés comme des assets cachables
-const ASSET_PATHS = ['/_next/static/', '/icons/', '/manifest.json', '/favicon.ico'];
+// manifest.json retiré : servi dynamiquement (couleurs du thème F14),
+// il ne doit jamais être servi depuis un cache périmé
+const ASSET_PATHS = ['/_next/static/', '/icons/', '/favicon.ico'];
 
 async function boundedPut(cache, request, response) {
   await cache.put(request, response);

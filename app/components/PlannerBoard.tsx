@@ -905,16 +905,9 @@ function MealPlanActionsModal({
 // (page d'accueil : 7 jours en 1-3-3 ; page calendrier : 19 jours en 1-3-3-3-3-3-3)
 export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enableMonthNavigation = false, enableRecipePalette = false, enableGenerator = false, defaultServings, themeId }: PlannerBoardProps) {
   // Couleurs des badges par type de repas, dérivées de la palette choisie
-  // (F14). La détection clair/sombre suit la classe .dark de <html>.
-  const [isDark, setIsDark] = useState(false);
-  useEffect(() => {
-    const update = () => setIsDark(document.documentElement.classList.contains('dark'));
-    update();
-    const observer = new MutationObserver(update);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-  const MEAL_TYPE_COLORS: Record<string, string> = themeMealColors(getTheme(themeId), isDark);
+  // (F14). Les MÊMES classes servent clair et sombre : le remappage sombre
+  // de globals.css bascule les familles de couleurs automatiquement.
+  const MEAL_TYPE_COLORS: Record<string, string> = themeMealColors(getTheme(themeId));
   const [startDate, setStartDate] = useState(new Date());
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   // loading : premier chargement uniquement (squelette) ; les chargements

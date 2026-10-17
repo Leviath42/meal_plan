@@ -218,7 +218,7 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
           </p>
           <div className="flex flex-wrap gap-2">
             {THEMES.map((themeDef) => {
-              const colors = themeMealColors(themeDef, false);
+              const colors = themeMealColors(themeDef);
               const isCurrent = themeId === themeDef.id;
               return (
                 <button
