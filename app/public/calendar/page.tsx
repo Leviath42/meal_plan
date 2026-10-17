@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { formatWeekdayDayMonthYear, parseLocalDate } from '@/lib/format';
-import { MEAL_TYPE_LABELS_LONG, MEAL_TYPE_COLORS, MEAL_TYPE_ORDER } from '@/lib/meal-types';
+import { MEAL_TYPE_LABELS_LONG, MEAL_TYPE_ORDER } from '@/lib/meal-types';
+import { getTheme, themeMealColors } from '@/lib/themes';
+import { getPublicAppSettings } from '@/app/actions/settings';
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { mealPlans, recipes } from '@/lib/db/schema';
@@ -25,6 +27,11 @@ export default async function PublicCalendarPage({ searchParams }: PublicCalenda
   if (!record) {
     return <InvalidLink />;
   }
+
+  // Palette de couleurs (F14) : la page publique suit le thème choisi.
+  // Mode clair uniquement (pas de bascule sombre sur cette page).
+  const appTheme = getTheme((await getPublicAppSettings()).theme);
+  const MEAL_TYPE_COLORS: Record<string, string> = themeMealColors(appTheme, false);
 
   // Période : today -> today + 30 jours (dates YYYY-MM-DD, fuseau local)
   const now = new Date();

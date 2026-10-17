@@ -2,13 +2,16 @@
 
 import { useState, useTransition, type FormEvent } from 'react';
 import Link from 'next/link';
-import { updateDefaultServings, updateMinDaysBetween } from '@/app/actions/settings';
+import { updateDefaultServings, updateMinDaysBetween, updateTheme } from '@/app/actions/settings';
+import { THEMES, getTheme, themeMealColors } from '@/lib/themes';
 
 interface SettingsClientProps {
   role?: string | null;
   defaultServings: number;
   // Antidoublon (F09) : intervalle minimum de l'utilisateur connecté
   minDaysBetween: number;
+  // Palette de couleurs (F14) : id du thème actif
+  theme: string;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -19,12 +22,16 @@ const ROLE_LABELS: Record<string, string> = {
 
 // Page de paramétrage : seul l'administrateur peut modifier les paramètres,
 // les autres membres les consultent en lecture seule.
-export default function SettingsClient({ role, defaultServings, minDaysBetween }: SettingsClientProps) {
+export default function SettingsClient({ role, defaultServings, minDaysBetween, theme }: SettingsClientProps) {
   const [servings, setServings] = useState<string>(String(defaultServings));
   const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
   // Antidoublon (F09) : préférence personnelle de l'utilisateur
   const [minDays, setMinDays] = useState<string>(String(minDaysBetween));
+  // Palette (F14) : ADMIN choisit, tous voient
+  const [themeId, setThemeId] = useState<string>(theme);
+  const [themeFeedback, setThemeFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [themePending, startThemeTransition] = useTransition();
   const [minDaysFeedback, setMinDaysFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [isMinDaysPending, startMinDaysTransition] = useTransition();
 
@@ -46,6 +53,19 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween }
         setFeedback({ success: result.success, message: result.message });
       } catch {
         setFeedback({ success: false, message: 'Une erreur est survenue lors de l\'enregistrement' });
+      }
+    });
+  };
+
+  // Enregistrer la palette de couleurs (F14)
+  const handleThemeChange = (id: string) => {
+    setThemeId(id);
+    startThemeTransition(async () => {
+      try {
+        const result = await updateTheme(id);
+        setThemeFeedback({ success: result.success, message: result.message });
+      } catch {
+        setThemeFeedback({ success: false, message: "Une erreur est survenue lors de l'enregistrement" });
       }
     });
   };
@@ -180,12 +200,65 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween }
         )}
       </form>
 
-      {/* Thème : simple mention, la bascule vit dans la barre de navigation */}
-      <div className="border-t border-gray-200 pt-3">
-        <h2 className="text-sm font-medium text-gray-700 mb-1">Thème</h2>
+      {/* Palette de couleurs (F14) + bascule clair/sombre */}
+      <div className="border-t border-gray-200 pt-3 space-y-3">
+        <h2 className="text-sm font-medium text-gray-700">Apparence</h2>
+
+        {/* Bascule clair/sombre : mention, la bascule vit dans la navigation */}
         <p className="text-xs text-gray-500">
-          Le thème clair ou sombre se règle via la bascule dans la barre de navigation.
+          Le mode clair ou sombre se règle via la bascule dans la barre de navigation.
         </p>
+
+        {/* Palette de couleurs */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-1">Palette de couleurs</h3>
+          <p className="text-xs text-gray-500 mb-2">
+            La palette teinte les boutons, liens et étiquettes du calendrier (mode clair et sombre).
+            {isAdmin ? '' : ' Seul un administrateur peut la changer.'}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {THEMES.map((themeDef) => {
+              const colors = themeMealColors(themeDef, false);
+              const isCurrent = themeId === themeDef.id;
+              return (
+                <button
+                  key={themeDef.id}
+                  type="button"
+                  onClick={() => isAdmin && handleThemeChange(themeDef.id)}
+                  disabled={!isAdmin || themePending}
+                  aria-pressed={isCurrent}
+                  className={`rounded-lg border-2 p-2 text-left transition-colors ${
+                    isCurrent ? 'border-accent' : 'border-gray-200 hover:border-gray-300'
+                  } ${!isAdmin ? 'cursor-default' : ''}`}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span
+                      className="w-5 h-5 rounded-full border border-gray-300"
+                      style={{ backgroundColor: themeDef.swatch }}
+                      aria-hidden="true"
+                    />
+                    <span className={`text-xs font-medium ${isCurrent ? 'text-accent' : 'text-gray-700'}`}>
+                      {themeDef.label}
+                    </span>
+                  </div>
+                  {/* Aperçu des étiquettes de repas du calendrier */}
+                  <div className="flex gap-1 flex-wrap max-w-[220px]">
+                    {(['breakfast', 'lunch', 'snack', 'dinner'] as const).map((mealType) => (
+                      <span key={mealType} className={`px-1.5 py-0.5 rounded-full text-[10px] ${colors[mealType]}`}>
+                        {{ breakfast: 'Petit-déj', lunch: 'Déjeuner', snack: 'Goûter', dinner: 'Dîner' }[mealType]}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {themeFeedback && (
+            <p className={`text-sm mt-2 ${themeFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
+              {themeFeedback.message}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

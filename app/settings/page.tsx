@@ -15,6 +15,7 @@ export default async function SettingsPage() {
         role={session?.user?.role ?? null}
         defaultServings={settings.defaultServings}
         minDaysBetween={minDaysBetween}
+        theme={settings.theme}
       />
     </main>
   );

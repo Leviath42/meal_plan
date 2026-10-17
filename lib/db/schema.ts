@@ -288,6 +288,9 @@ export const appSettings = sqliteTable("app_settings", {
   // Nombre de couverts pré-remplis dans le modal de création de repas
   defaultServings: integer("default_servings").notNull().default(4),
 
+  // Palette de couleurs (F14) : id du thème dans lib/themes.ts ('teal' par défaut)
+  theme: text("theme").notNull().default('teal'),
+
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
