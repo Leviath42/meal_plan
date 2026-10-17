@@ -36,7 +36,7 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
             setEditing(false);
             setError(null);
           }
-        }} className="flex flex-col sm:flex-row gap-2" onSubmit={(e) => e.preventDefault()}>
+        }} className="flex flex-col sm:flex-row gap-2">
           <input name="name" value={formValues.name} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-accent" />
           <input name="category" value={formValues.category} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-36 focus:outline-none focus:ring-2 focus:ring-accent" />
           <input name="defaultUnit" value={formValues.defaultUnit} onChange={handleChange} className="border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm w-full sm:w-24 focus:outline-none focus:ring-2 focus:ring-accent" />
