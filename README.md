@@ -16,6 +16,7 @@
 - CRUD complet, association recettes-ingrédients avec quantités, type de plat (`mealCourse`), tags, temps de préparation/cuisson
 - Étapes de préparation **optionnelles** (assemblages simples), créateur de la recette mémorisé à la création et affiché sur le détail
 - Ingrédients organisés par rayons de supermarché, unités par défaut
+- **Bibliothèque de référence** : `npm run db:seed-ingredients` ajoute 568 ingrédients courants (12 rayons) — idempotent, sans toucher aux données existantes
 
 ### Liste de courses (F05)
 - Génération depuis le planning en **modal** (7/14/30 jours ou dates précises) : extraction, mise à l'échelle par couverts, fusion des doublons ; le modal se ferme tout seul en cas de succès
@@ -26,6 +27,9 @@
 ### Partage (F04)
 - Jetons d'accès cryptographiques (création/révocation/expiration) gérés par l'ADMIN (`/share`)
 - Page publique en lecture seule `/public/calendar?token=…`, export **ICS** (90 jours), API JSON pour Home Assistant (`/api/calendar/public?token=…`)
+
+### Statistiques (F13)
+- Page `/stats` : utilisation du catalogue, top des recettes les plus cuisinées, répartition par type de plat, volume mensuel — agrégation en lecture seule sur l'historique
 
 ### Intelligence (F03 / F08 / F09)
 - **Suggestions** : 3 recettes proposées dans le modal de création, excluant celles déjà planifiées dans la fenêtre antidoublon
@@ -51,7 +55,7 @@
 
 ## 📖 Documentation
 
-- **[MANUEL.md](MANUEL.md)** — guide utilisateur (installation PWA, planification, courses, partage, FAQ)
+- **[MANUEL.md](MANUEL.md)** — guide utilisateur (installation PWA, planification, courses, statistiques, partage, FAQ)
 - [ROADMAPV3.md](ROADMAPV3.md) — état du projet et suite du développement
 - [CORRECTIONS.md](CORRECTIONS.md) — journal des corrections (C-001 → C-038)
 - [REQUIREMENTS.md](REQUIREMENTS.md) — cahier des charges

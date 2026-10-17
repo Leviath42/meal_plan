@@ -77,6 +77,18 @@ Bouton **Purger** : avec confirmation obligatoire. Par défaut, seuls les **arti
 
 ---
 
+## 📊 Statistiques (/stats)
+
+La page **Stats** (barre de navigation) donne un aperçu de vos habitudes :
+- **Utilisation du catalogue** : combien de vos recettes ont déjà été cuisinées au moins une fois, et lesquelles n'ont jamais été planifiées (des idées à ressortir !)
+- **Recettes les plus cuisinées** : votre top 10 — et les valeurs sûres de la maison
+- **Répartition par type de plat** : équilibre entrées/plats/desserts dans votre planning
+- **Repas par mois** : le volume de planification mois par mois
+
+Les statistiques portent sur **tous les repas planifiés, y compris passés** — c'est l'intérêt de figer l'historique.
+
+---
+
 ## 🔗 Partager le planning (/share — ADMIN)
 
 1. Crée un **jeton** (durée 7/30/90 jours) — deux types : « Calendrier » (page publique à partager) ou « API » (Home Assistant)
@@ -117,6 +129,8 @@ Bouton **Purger** : avec confirmation obligatoire. Par défaut, seuls les **arti
 ## ❓ Questions fréquentes
 
 **L'icône ne change pas sur mon téléphone.** Voir le début du manuel — iOS exige une réinstallation, Android se met à jour seul en 1-2 jours.
+
+**Je ne trouve pas un ingrédient dans le catalogue.** L'administrateur peut enrichir le catalogue d'un coup : `npm run db:seed-ingredients` ajoute 568 ingrédients courants sans jamais modifier les données existantes. Et tu peux toujours créer un ingrédient à la volée depuis le formulaire de recette (« + Nouveau »).
 
 **Je ne trouve pas une recette dans le sélecteur du planning.** La recherche filtre au fur et à mesure de la saisie et ignore les accents : « poulet roti » trouve « Poulet rôti ». Maximum 30 résultats affichés — affinis ta recherche.
 
