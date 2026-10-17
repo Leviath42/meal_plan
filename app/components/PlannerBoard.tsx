@@ -738,13 +738,20 @@ function MealPlanActionsModal({
                   <p className="text-sm text-gray-500">Changer la date ou le type de repas</p>
                 </button>
 
-                <button
-                  onClick={() => setAction('delete')}
-                  className="w-full text-left p-3 hover:bg-gray-50"
-                >
-                  <span className="font-medium text-red-600">Supprimer</span>
-                  <p className="text-sm text-gray-500">Retirer ce repas du calendrier</p>
-                </button>
+                {mealPlan.date >= toLocalDateStr(new Date()) ? (
+                  <button
+                    onClick={() => setAction('delete')}
+                    className="w-full text-left p-3 hover:bg-gray-50"
+                  >
+                    <span className="font-medium text-red-600">Supprimer</span>
+                    <p className="text-sm text-gray-500">Retirer ce repas du calendrier</p>
+                  </button>
+                ) : (
+                  <div className="w-full text-left p-3 opacity-50" title="Les repas passés ne sont pas supprimables (historique)">
+                    <span className="font-medium text-gray-400">Supprimer</span>
+                    <p className="text-sm text-gray-400">Impossible : date passée — l'historique est conservé</p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4">

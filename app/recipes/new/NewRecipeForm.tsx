@@ -163,14 +163,13 @@ export function NewRecipeForm({
           {/* Instructions */}
           <div>
             <label htmlFor="instructions" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Étapes de préparation *
+              Étapes de préparation
             </label>
             <textarea
               id="instructions"
               name="instructions"
-              placeholder="Ex: 1. Faire revenir les oignons..."
+              placeholder="Ex: 1. Faire revenir les oignons... (optionnel)"
               rows={4}
-              required
               defaultValue={getFieldValue(state, 'instructions', '')}
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />

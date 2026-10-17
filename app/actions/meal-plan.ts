@@ -2,6 +2,7 @@
 
 import { db } from '@/lib/db';
 import { requireSession } from '@/lib/auth-guards';
+import { toLocalDateStr } from '@/lib/format';
 import { mealPlans, recipes } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq, and, gte, lte } from 'drizzle-orm';
@@ -178,6 +179,17 @@ export async function updateMealPlan(
 export async function deleteMealPlan(id: string): Promise<{ error?: string }> {
   try {
     await requireSession();
+    // Historique maîtrisé : un repas dont la date est passée ne peut plus
+    // être supprimé (l'historique F08 « dernier repas » doit rester fiable)
+    const [plan] = await db
+      .select({ date: mealPlans.date })
+      .from(mealPlans)
+      .where(eq(mealPlans.id, id))
+      .limit(1);
+    const today = toLocalDateStr(new Date());
+    if (plan && plan.date < today) {
+      return { error: "Impossible de supprimer un repas passé — l'historique est conservé" };
+    }
     await db
       .delete(mealPlans)
       .where(eq(mealPlans.id, id));

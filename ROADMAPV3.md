@@ -168,6 +168,13 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 *Notes : HTTPS requis pour le SW (fourni par le tunnel Cloudflare) ; icônes générées en aplats (fond teal + disque) — remplaçables par un vrai logo.*
 
+### F13 - Statistiques d'usage
+- Page `/stats` : fréquence des recettes (top N), plats les plus cuisinés, répartition par type de plat, taux d'utilisation du catalogue, historique de planification mensuel
+- Basé sur les données existantes (`meal_plans`, `last_served_at`) — aucune donnée nouvelle à collecter
+- Fichiers : `app/stats/page.tsx`, requêtes SQL d'agrégation
+- Estimation : 1-2 jours
+- Ajouté au cahier des charges (REQUIREMENTS.md)
+
 ### OAuth (Google, GitHub) — en attente de variables d'environnement
 - Providers, boutons de connexion alternatifs, comptes liés
 - Estimation : 1 jour
@@ -183,7 +190,6 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 - [ ] Réglage de la taille des formulaires (barres de scroll non désirées dans certains modals)
 - [ ] Uniformisation des tailles de composants, très petits écrans
 - [x] ~~Accessibilité (contrastes, navigation clavier)~~ largement couvert par l'audit UI/UX (d29bb64) — reste en revue : la bump typo global (`text-xs` → `text-sm` en base), reporté volontairement
-- [ ] Statistiques de fréquence des recettes (F08, optionnel)
 - [x] ~~Headers de sécurité HTTP~~ faits (C-013) — reste en option : une CSP complète (nonce/hash à chaque build pour le script inline du thème)
 - [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — reste au choix : purge de l'historique (`git filter-repo`, réécriture du dépôt) et révocation des jetons créés avant le retrait
 

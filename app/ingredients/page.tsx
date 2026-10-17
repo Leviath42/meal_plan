@@ -17,7 +17,7 @@ export default async function IngredientsPage() {
 
   return (
     <main className="px-3 sm:px-6 py-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <NewIngredientPanel categories={categories} />
         <IngredientsList ingredients={all} />
       </div>

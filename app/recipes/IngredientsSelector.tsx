@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { quickCreateIngredient } from '@/app/actions/ingredients';
 import CategorySelect from '@/app/components/CategorySelect';
+import SearchSelect from '@/app/components/SearchSelect';
 import { formatQuantity } from '@/lib/format';
 
 interface Ingredient {
@@ -235,22 +236,21 @@ export default function IngredientsSelector({
               <label htmlFor="ingredient" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Ingrédient
               </label>
-              <select
+              <SearchSelect
                 id="ingredient"
+                items={allIngredients.map((ingredient) => ({
+                  value: ingredient.id,
+                  label: ingredient.name,
+                  hint: ingredient.category,
+                }))}
                 value={selectedIngredientId}
-                onChange={(e) => {
-                  setSelectedIngredientId(e.target.value);
+                onChange={(value) => {
+                  setSelectedIngredientId(value);
                   setError(null);
                 }}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="">Sélectionnez un ingrédient...</option>
-                {allIngredients.map((ingredient) => (
-                  <option key={ingredient.id} value={ingredient.id}>
-                    {ingredient.name} ({ingredient.category})
-                  </option>
-                ))}
-              </select>
+                placeholder="Recherchez un ingrédient…"
+                emptyLabel="Aucun ingrédient ne correspond"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
