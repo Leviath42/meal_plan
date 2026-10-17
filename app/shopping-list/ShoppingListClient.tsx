@@ -2,6 +2,11 @@
 import { formatQuantity, formatWeekdayDayMonth, toLocalDateStr, parseLocalDate } from '@/lib/format';
 import CollapsibleSection from '@/app/components/CollapsibleSection';
 
+// Normalisation insensible aux accents pour la recherche d'ingrédients
+function normalizeText(text: string): string {
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 import { useActionState, useEffect, useMemo, useState } from 'react';
 import {
   addManualShoppingItem,
@@ -15,7 +20,23 @@ import {
   type ShoppingItemView,
 } from '@/lib/validators/shopping';
 
-export default function ShoppingListClient({ items: initialItems }: { items: ShoppingItemView[] }) {
+export interface CatalogIngredient {
+  id: string;
+  name: string;
+  category: string;
+  defaultUnit: string;
+}
+
+// Liste de courses : génération depuis le planning + cochage/suppression.
+// L'ajout manuel cherche dans le catalogue d'ingrédients (suggestions nom +
+// rayon, unité pré-remplie) tout en gardant la saisie libre possible.
+export default function ShoppingListClient({
+  items: initialItems,
+  catalogIngredients = [],
+}: {
+  items: ShoppingItemView[];
+  catalogIngredients?: CatalogIngredient[];
+}) {
   // Copie locale pour un retour immédiat (optimiste), resynchronisée à chaque
   // revalidation serveur (les actions appellent revalidatePath('/shopping-list'))
   const [items, setItems] = useState<ShoppingItemView[]>(initialItems);
@@ -60,6 +81,10 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
 
   // Champs contrôlés du formulaire d'ajout manuel
   const [manualName, setManualName] = useState('');
+  // Ingrédient du catalogue sélectionné via la recherche (liaison du rayon)
+  const [manualIngredientId, setManualIngredientId] = useState('');
+  const [suggestions, setSuggestions] = useState<CatalogIngredient[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [manualQuantity, setManualQuantity] = useState('1');
   const [manualUnit, setManualUnit] = useState('pièce');
 
@@ -67,6 +92,8 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
   useEffect(() => {
     if (addState?.success) {
       setManualName('');
+      setManualIngredientId('');
+      setSuggestions([]);
       setManualQuantity('1');
       setManualUnit('pièce');
     }
@@ -189,15 +216,57 @@ export default function ShoppingListClient({ items: initialItems }: { items: Sho
       {addOpen && (
         <form action={addAction} className="bg-white rounded-lg shadow-sm p-3 space-y-2">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <input
-              type="text"
-              name="name"
-              value={manualName}
-              onChange={(e) => setManualName(e.target.value)}
-              placeholder="Nom de l'article"
-              required
-              className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="name"
+                value={manualName}
+                onChange={(e) => {
+                  setManualName(e.target.value);
+                  setManualIngredientId('');
+                  const q = normalizeText(e.target.value.trim());
+                  if (!q) {
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                  } else {
+                    const matches = catalogIngredients
+                      .filter((ingredient) => normalizeText(ingredient.name).includes(q))
+                      .slice(0, 8);
+                    setSuggestions(matches);
+                    setShowSuggestions(true);
+                  }
+                }}
+                onFocus={() => manualName && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder={catalogIngredients.length > 0 ? "Rechercher un ingrédient… (ou saisie libre)" : "Nom de l'article"}
+                required
+                autoComplete="off"
+                className="p-2 border border-gray-300 rounded bg-white text-gray-800 text-xs sm:text-sm w-full"
+              />
+              <input type="hidden" name="ingredientId" value={manualIngredientId} />
+              {showSuggestions && suggestions.length > 0 && (
+                <ul role="listbox" className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                  {suggestions.map((ingredient) => (
+                    <li key={ingredient.id} role="option" aria-selected={ingredient.id === manualIngredientId}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setManualName(ingredient.name);
+                          setManualIngredientId(ingredient.id);
+                          setManualUnit(ingredient.defaultUnit || 'pièce');
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-accent-soft transition-colors"
+                      >
+                        <span className="block truncate">{ingredient.name}</span>
+                        <span className="block text-xs text-gray-400 truncate">{ingredient.category}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <input
               type="number"
               name="quantity"

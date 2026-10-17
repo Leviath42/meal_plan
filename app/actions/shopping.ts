@@ -224,8 +224,23 @@ export async function addManualShoppingItem(
       };
     }
 
+    // Liaison optionnelle à un ingrédient existant : l'article hérite du
+    // rayon de l'ingrédient (regroupement correct dans la liste) et d'un
+    // ingredientId (utile au futur garde-manger F11). Sinon article libre.
+    const ingredientId = (formData.get('ingredientId') as string | null)?.trim() || null;
+    if (ingredientId) {
+      const [ingredient] = await db
+        .select({ id: ingredients.id })
+        .from(ingredients)
+        .where(eq(ingredients.id, ingredientId))
+        .limit(1);
+      if (!ingredient) {
+        return { success: false, message: 'Ingrédient introuvable', values: rawData };
+      }
+    }
     await db.insert(shoppingItems).values({
       manualName: parsed.data.name,
+      ingredientId: ingredientId,
       quantity: parsed.data.quantity,
       unit: parsed.data.unit,
       isBought: false,
