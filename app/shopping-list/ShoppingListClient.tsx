@@ -78,6 +78,16 @@ export default function ShoppingListClient({
     ShoppingFormState,
     FormData
   >(generateShoppingList, null);
+
+  // Génération réussie : fermer le modal automatiquement et porter le
+  // message dans le bandeau de notice (sinon la fermeture le masquerait
+  // aussitôt) — la liste rafraîchie confirme visuellement le résultat
+  useEffect(() => {
+    if (generateState?.success) {
+      setNotice(generateState.message);
+      setGenerateOpen(false);
+    }
+  }, [generateState]);
   const [addState, addAction, addPending] = useActionState<ShoppingFormState, FormData>(
     addManualShoppingItem,
     null
@@ -426,9 +436,6 @@ export default function ShoppingListClient({
           )}
           {generateState && !generateState.success && (
             <p className="text-red-500 text-xs sm:text-sm">{generateState.message}</p>
-          )}
-          {generateState?.success && (
-            <p className="text-green-700 text-xs sm:text-sm">{generateState.message}</p>
           )}
 
                 <div className="flex gap-3 justify-end pt-2">
