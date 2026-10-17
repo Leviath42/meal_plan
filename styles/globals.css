@@ -93,6 +93,14 @@ html {
   color: #f3f4f6;
 }
 
+/* Barre d'application transparente (C-042) : avec viewport-fit cover, le
+   contenu s'étend sous la barre d'état — le padding safe-area évite que
+   la nav ou le contenu passent dessous (encoches iPhone, barre Android). */
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Focus visible au clavier : contour d'accent sur tous les éléments
    interactifs (boutons, liens) — les champs ont déjà focus:ring-accent. */
 :focus-visible {
