@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { getPublicAppSettings } from '@/app/actions/settings';
@@ -25,11 +26,30 @@ export const metadata = {
   },
 };
 
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  themeColor: '#0f766e',
-};
+// Barre d'application PWA (« bandes » haut/bas en mode app) : la couleur
+// suit la palette choisie (F14). generateViewport est évalué à chaque
+// rendu — on lit le thème en base (variante publique : le layout rend
+// aussi login et la page de partage).
+export async function generateViewport(): Promise<Viewport> {
+  let themeAccent = '#0f766e';
+  let themeAccentDark = '#134e4a';
+  try {
+    const settings = await getPublicAppSettings();
+    const theme = getTheme(settings.theme);
+    themeAccent = theme.palette.accentLight;
+    themeAccentDark = theme.palette.accentSoftDark;
+  } catch {
+    // défauts teal
+  }
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: themeAccent },
+      { media: '(prefers-color-scheme: dark)', color: themeAccentDark },
+    ],
+  };
+}
 
 // Filet de secours pour les visiteurs sans cookie de thème : le serveur ne
 // connaît pas la préférence système, ce petit script la déduit avant le

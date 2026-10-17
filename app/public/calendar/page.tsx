@@ -31,7 +31,7 @@ export default async function PublicCalendarPage({ searchParams }: PublicCalenda
   // Palette de couleurs (F14) : la page publique suit le thème choisi.
   // Mode clair uniquement (pas de bascule sombre sur cette page).
   const appTheme = getTheme((await getPublicAppSettings()).theme);
-  const MEAL_TYPE_COLORS: Record<string, string> = themeMealColors(appTheme, false);
+  const MEAL_TYPE_COLORS: Record<string, string> = themeMealColors(appTheme);
 
   // Période : today -> today + 30 jours (dates YYYY-MM-DD, fuseau local)
   const now = new Date();

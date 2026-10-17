@@ -22,6 +22,13 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      // Manifest PWA dynamique (F14) : /manifest.json est servi par la route
+      // API qui lit la palette en base — l'URL publique reste inchangée.
+      { source: '/manifest.json', destination: '/api/manifest-json' },
+    ];
+  },
   async headers() {
     return [
       {
