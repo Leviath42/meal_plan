@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-10*
-*Version : 3.4 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-10 (v3.5)*
+*Version : 3.5 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
 
 ---
@@ -37,6 +37,8 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | 1 | F01 — version prod Proxmox + tunnel Cloudflare | ✅ En service | CT 103, `update.sh` pour les mises à jour |
 | - | **Audit UI/UX complet** — accessibilité (modals `role=dialog`/Échap/focus piégé, `ConfirmDialog` remplaçant les 5 `window.confirm()` natifs, `:focus-visible` global, `userScalable:false` retiré, toast `role=alert`), factorisation (`lib/meal-types.ts`, helpers de dates dans `lib/format.ts`), `RecipePicker` (recherche de recettes par mots-clés, insensible aux accents, navigation clavier) remplaçant les selects déroulants des modals, en-tête calendrier responsive (« Aujourd'hui » ne sort plus du cadre) | ✅ Livré (d29bb64, ae4e50f) | Fusionné sur `main` (4cbd520) — à valider dans la campagne de tests |
 | - | **Infrastructure CT beta stabilisée** — IP statique, DNS double resolver, `pm2 startup systemd` (reboot-proof) ; `update.sh` immunisé aux pannes réseau (C-035/C-036) | ✅ En service | Voir [CORRECTIONS.md](CORRECTIONS.md) C-035/C-036 |
+| - | **Lot « retour campagne de tests » (C-037)** — largeurs uniformes ; étapes de préparation optionnelles ; repas passés non supprimables (historique fiable) ; créateur de recette (`created_by`, migration 0004) ; sélecteurs recherche partout (RecipePicker, SearchSelect, catalogue à l'ajout courses) ; génération de courses en modal fermant en cas de succès ; purge validée (achetés par défaut) ; masquage des achetés par défaut | ✅ Livré (1e1f34d → 05e497d) | Fusionné sur `main` |
+| - | **Icône PWA chronomètre & couverts** (design du propriétaire) + règle anti-cache des icônes (`?v=N`, SW v5) | ✅ Livré (22af57, 6aec3a9) | C-038 |
 | 2 | **F05 - Liste de courses** | ✅ Complet | Génération validée en réel (échelle des couverts, rayons, fusion) |
 | 2 | **F04 - Partage** | ✅ Complet | Jetons, page publique, ICS, API JSON HA — test partiel effectué (jeton actif) |
 | 3 | **F08 - Historique** | ✅ Complet | `lastServedAt`, indicateur dans le calendrier — 6 tests runtime PASS |
@@ -98,7 +100,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 ### Audit UI/UX (nouveau — version auditée)
 - [ ] Modals de planification : fermeture par Échap, clic sur l'overlay, `role=dialog` annoncé ; focus dans le modal au clavier (Tab)
-- [ ] `RecipePicker` (modal création + édition) : recherche multi-mots (« poulet curry »), insensible aux accents (« gruyere » → « Gruyère »), flèches ↑↓ + Entrée, bouton ✕ pour retirer
+- [x] ~~`RecipePicker`~~ validé en campagne (recherche multi-mots, accents, clavier) — étendu depuis : rayon (SearchSelect), ingrédient des recettes, catalogue à l'ajout courses
 - [ ] `ConfirmDialog` : suppression d'une recette/ingrédient, révocation d'un jeton — message en français, focus sur Annuler, Échap annule
 - [ ] Zoom mobile réactivé (pinch-zoom fonctionne sur la page login)
 - [ ] En-tête `/calendar` : « Aujourd'hui » et « Recettes » visibles sans débordement, même sur petit écran
@@ -128,8 +130,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 36 (C-001 → C-036) |
-| Corrigées et déployées | 35 |
+| Corrections enregistrées | 38 (C-001 → C-038) |
+| Corrigées et déployées | 37 |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
 | Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |

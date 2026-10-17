@@ -2,7 +2,7 @@
 
 **Projet :** Application web familiale de planification des repas, auto-hébergée.
 
-**Statut :** **v1.2** — périmètre, solutions techniques et architecture d'accès réseau (local + Internet).
+**Statut :** **v1.3** — périmètre, solutions techniques et architecture d'accès réseau (local + Internet).
 
 ## 1. Présentation du projet
 
@@ -36,7 +36,7 @@ Planifier les repas de la famille sur un calendrier, gérer un livre de recettes
 |**F02**|**Gestion des recettes**|Créer, modifier, supprimer, dupliquer ; titre, photo, ingrédients, étapes, temps de préparation, tags, nombre de portions.|Haute (MVP)|
 |**F03**|**Proposition de repas**|Suggestion aléatoire ou filtrée par mots-clés/tags (ex. « végé », « rapide », « hiver »), bouton « propose-moi un menu » pour un créneau vide.|Moyenne|
 |**F04**|**Partage du planning**|Export ICS consultable dans Google Calendar / Home Assistant / FamilyWall ; page publique à jeton (mode kiosque tablette murale).|Moyenne|
-|**F05**|**Liste des ingrédients**|Agrégation automatique des ingrédients du planning (semaine/mois), fusion des doublons, sommation des quantités, cases à cocher, export texte.|Moyenne|
+|**F05**|**Liste des ingrédients**|Agrégation automatique des ingrédients du planning (semaine/mois ou dates précises), fusion des doublons, sommation des quantités, cases à cocher, masquage des achetés, ajout manuel avec recherche catalogue, purge validée, export texte.|Moyenne|
 |**F06**|**Authentification & autorisations**|Comptes utilisateur, rôles lecture/écriture, sessions sécurisées (httpOnly cookies, jetons d'accès).|Haute (MVP)|
 
 ### 2.2 Fonctionnalités secondaires (backlog)
