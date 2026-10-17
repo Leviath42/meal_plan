@@ -16,8 +16,8 @@ export const metadata = {
   applicationName: 'Meal Plan',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icons/icon-192.png?v=3',
-    apple: '/icons/icon-192.png?v=3',
+    icon: '/icons/icon-192.png?v=4',
+    apple: '/icons/icon-192.png?v=4',
   },
   appleWebApp: {
     capable: true,
@@ -84,13 +84,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Barre d'application mobile (bandes PWA) : la couleur suit la palette
           ET le mode du cookie — la bascule clair/sombre la met à jour côté
           client (ThemeToggle) via l'id, sans recharger */}
-      {/* Barre d'application neutre (C-043) : couleur figée à
-          l'installation par Android — neutre pour toutes les palettes.
-          Suit le mode du SYSTÈME via media-queries (le seul mécanisme
-          respecté par la PWA installée) : blanc cassé en clair, gris
-          anthracite en sombre. viewport-fit cover + safe-area conservés. */}
-      <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
-      <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)" />
+      {/* Barres d'application + splash (C-045) : suivent le mode du SYSTÈME
+          via media-queries (seul mécanisme respecté) — en clair : tons doux
+          ; en sombre : noir profond, cohérent avec l'icône neutre sur fond
+          noir et avec l'app en mode sombre. La palette de l'app (F14) ne
+          peut pas être suivie : Android fige ces couleurs à l'installation. */}
+      <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)" />
+      <meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)" />
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Nav session={session} />

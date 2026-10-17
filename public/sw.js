@@ -16,9 +16,11 @@
 // + disque) — l'icône assiette/couverts doit être re-téléchargée, et les
 // icônes sont en cache-first (jamais revalidées tant que le cache vit).
 // v5 : icône chronomètre + couverts (design perso, 22af57).
+// v6 : icône neutre (fond noir, 4006f1e) — les caches v5 contiennent
+// l'ancienne icône teal.
 
-const CACHE = 'meal-plan-v5';
-const PRECACHE = ['/', '/icons/icon-192.png?v=3', '/icons/icon-512.png?v=3'];
+const CACHE = 'meal-plan-v6';
+const PRECACHE = ['/', '/icons/icon-192.png?v=4', '/icons/icon-512.png?v=4'];
 const MAX_ENTRIES = 60;
 
 // Seuls ces chemins sont considérés comme des assets cachables
