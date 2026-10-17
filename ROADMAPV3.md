@@ -1,231 +1,177 @@
-# Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
+# Meal Plan — ROADMAP V3 — État et Suite du Projet
 
-*Dernière mise à jour : 2026-10-10 (v3.8)*
-*Version : 3.8 — Les versions précédentes sont archivées dans [archives/](archives/)*
-*Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
+*Version : **3.9** (2026-10-10) — intégration de l'audit complet (sécurité, bugs, propreté, UI/UX, bonnes pratiques). Versions précédentes dans [archives/](archives/).*
+
+> **Lecture rapide pour un agent IA** : ce document est la source de vérité sur l'état du projet. Les sections essentielles sont « État des fonctionnalités », « Processus de développement » et « Audit 2026-10-10 ». Le détail des bugs corrigés vit dans [CORRECTIONS.md](CORRECTIONS.md), le cahier des charges dans [REQUIREMENTS.md](REQUIREMENTS.md), le guide utilisateur dans [MANUEL.md](MANUEL.md), le déploiement dans [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
-## 📋 Résumé du Projet
+## 🎯 Résumé
 
-Application web **familiale** de planification des repas et gestion de recettes.
-
-**Objectif principal** : Planifier les repas sur un calendrier, gérer un livre de recettes local, générer automatiquement les listes de courses et partager le planning, sans coût d'abonnement.
-
-**Accès** : Fluide à la maison comme à l'extérieur (ex. consultation de la liste de courses au supermarché, via tunnel Cloudflare).
+Application web **familiale** de planification des repas : calendrier partagé, livre de recettes local, génération automatique des listes de courses, partage du planning par jetons — sans abonnement. Accès fluide à domicile comme à l'extérieur (tunnel Cloudflare, PWA installable).
 
 ---
 
 ## 🎯 Rôles et Permissions
 
-| Rôle | Accès | Description |
-|------|-------|-------------|
-| **ADMIN** | Lecture + Écriture + Gestion | Gère les comptes, les jetons de partage, les paramètres globaux |
-| **MEMBER** | Lecture + Écriture | Recettes, planning, liste de courses, ses propres préférences |
-| **GUEST** | Aucun | Compte en attente de validation par un ADMIN |
+| Rôle | Accès |
+|------|-------|
+| **ADMIN** | Lecture + écriture + gestion (comptes, jetons de partage, paramètres globaux) |
+| **MEMBER** | Lecture + écriture (recettes, planning, courses, ses préférences) |
+| **GUEST** | Aucun — compte en attente de validation par un ADMIN |
 
 ---
 
-## 📊 État du Projet — Phases 1 à 3 TERMINÉES
+## 📊 État des fonctionnalités (Phases 1-3 terminées, livrées sur `beta`)
 
-### ✅ Fonctionnalités implémentées et livrées sur `beta`
+| Fonctionnalité | État | Notes |
+|---|---|---|
+| F01 Planification — calendrier, DnD, modals, couverts, dates passées refusées | ✅ | Validée en usage réel |
+| F01 options — palette draggable, `/settings`, générateur de menus (`/calendar/generator`, respecte F08/F09) | ✅ | Générateur : 34 tests runtime PASS |
+| F02 Recettes & ingrédients — CRUD, étapes optionnelles, `created_by`, sélecteurs par recherche multi-mots | ✅ | Biblio. de référence : `npm run db:seed-ingredients` (568 ingrédients, 12 rayons, idempotent) |
+| F03 Suggestions — 3 recettes hors fenêtre antidoublon | ✅ | 9 tests runtime PASS |
+| F04 Partage — jetons hachés, page publique, ICS 90 j, API JSON Home Assistant | ✅ | Test partiel (jeton actif) |
+| F05 Liste de courses — génération en modal (7/14/30 j ou dates précises), échelle par couverts, fusion, rayons, purge validée | ✅ | Validée en réel |
+| F06 Auth — NextAuth v5 (JWT), Argon2, rôles ADMIN/MEMBER/GUEST, reset par question secrète | ✅ | Rôles revalidés en base à chaque action |
+| F08 Historique — `lastServedAt`, repas passés non supprimables | ✅ | 6 tests runtime PASS |
+| F09 Antidoublon — intervalle configurable par utilisateur (`/settings`, défaut 7 j) | ✅ | 10 tests runtime PASS |
+| F12 (partie 1) PWA installable — manifest statique, icône neutre `?v=4`, SW v6 (coquille hors-ligne), barres/splash neutres | ✅ | Habillage neutre : épisode C-040→C-045 |
+| F13 Statistiques — `/stats` : utilisation du catalogue, top recettes, répartition, volume mensuel | ✅ | Agrégation SQL, zéro migration |
+| F14 Thèmes — 5 palettes clair+sombre (teal, indigo, rose, ambre, vert forêt), accent UI + étiquettes calendrier, WCAG AA, sans flash | ✅ | Migration 0005 |
+| UI/UX — accessibilité (ConfirmDialog focus piégé/Échap, `:focus-visible`, sélecteurs clavier), sections repliables, recherche partout | ✅ | Audit UI/UX livré (d29bb64) |
+| Maintenance intégrée — `/deploy` (ADMIN) : version, mise à jour, rollback ; `update.sh` + `db:ensure` | ✅ | En service sur le CT beta |
 
-| Phase | Fonctionnalité | État | Notes de validation |
-|-------|---------------|------|---------------------|
-| 1 | **F01 - Planification** | ✅ Complet | CRUD, DnD, navigation jour/mois, modals — validé en usage réel |
-| 1 | F01 options — palette drag&drop, page `/settings`, correctifs menu/dates | ✅ Complet | À valider en campagne de tests |
-| 1 | F01 — version prod Proxmox + tunnel Cloudflare | ✅ En service | CT 103, `update.sh` pour les mises à jour |
-| - | **Audit UI/UX complet** — accessibilité (modals `role=dialog`/Échap/focus piégé, `ConfirmDialog` remplaçant les 5 `window.confirm()` natifs, `:focus-visible` global, `userScalable:false` retiré, toast `role=alert`), factorisation (`lib/meal-types.ts`, helpers de dates dans `lib/format.ts`), `RecipePicker` (recherche de recettes par mots-clés, insensible aux accents, navigation clavier) remplaçant les selects déroulants des modals, en-tête calendrier responsive (« Aujourd'hui » ne sort plus du cadre) | ✅ Livré (d29bb64, ae4e50f) | Fusionné sur `main` (4cbd520) — à valider dans la campagne de tests |
-| - | **Infrastructure CT beta stabilisée** — IP statique, DNS double resolver, `pm2 startup systemd` (reboot-proof) ; `update.sh` immunisé aux pannes réseau (C-035/C-036) | ✅ En service | Voir [CORRECTIONS.md](CORRECTIONS.md) C-035/C-036 |
-| - | **Lot « retour campagne de tests » (C-037)** — largeurs uniformes ; étapes de préparation optionnelles ; repas passés non supprimables (historique fiable) ; créateur de recette (`created_by`, migration 0004) ; sélecteurs recherche partout (RecipePicker, SearchSelect, catalogue à l'ajout courses) ; génération de courses en modal fermant en cas de succès ; purge validée (achetés par défaut) ; masquage des achetés par défaut | ✅ Livré (1e1f34d → 05e497d) | Fusionné sur `main` |
-| - | **Icône PWA chronomètre & couverts** (design du propriétaire) + règle anti-cache des icônes (`?v=N`, SW v5) | ✅ Livré (22af57, 6aec3a9) | C-038 |
-| - | **F13 - Statistiques d'usage** — page `/stats` (lecture seule, lien « Stats » dans la nav) : utilisation du catalogue (barre de progression, jamais planifiées, notes libres), top 10 des recettes les plus cuisinées, répartition par type de plat, volume mensuel (12 mois) — agrégation SQL pure, zéro migration | ✅ Livré (e9f281c) | Fusionné sur `main` |
-| - | **Bibliothèque d'ingrédients de référence** — `npm run db:seed-ingredients` : 568 ingrédients en 12 rayons, `INSERT OR IGNORE` idempotent et non destructif, applicable sur une base en service (beta et prod) sans toucher aux données existantes | ✅ Livré (e9f281c) | Testé : +490 sur base démo, 2ᵉ passage 100 % ignoré |
-| - | **F14 - Thèmes et palettes de couleurs** — 5 palettes (teal, indigo, rose, ambre, vert forêt) sélectionnables dans `/settings` (ADMIN), chacune déclinée clair + sombre ; contrastes vérifiés WCAG AA (4.9:1 à 8.8:1) ; teinte l'accent UI ET les étiquettes du calendrier par type de repas (avec aperçu dans le sélecteur, couleurs distinctes colorblind-safe) ; injection SSR sans flash (variables CSS `--color-accent*`, revalidation layout) ; page publique de partage suit le thème ; migration 0005 (`app_settings.theme`) | ✅ Livré | Conception recherche Okabe-Ito/WCAG 2026-10 |
-| - | **PWA — habillage neutre (C-040 → C-045)** — badges basculant proprement en mode sombre (remappage étendu aux familles amber/sky/rose) ; **icône neutre** (chronomètre & couverts sur fond noir, design du propriétaire) intégrée avec la règle anti-cache (`?v=4`, SW v6) ; barres d'application et splash **noir profond** (`#0c0c0e`) avec barre haute suivant le mode SYSTÈME (metas media-query) — connaissance plateforme documentée : Android fige les couleurs du manifest à l'installation, la palette ne peut pas y être suivie, seul le mode système est dynamique ; manifest 100 % statique via route dédiée (`/api/manifest-json` + rewrite) ; viewport-fit cover + safe-area | ✅ Livré | Épisode complet dans CORRECTIONS.md C-040→C-045 |
-| 2 | **F05 - Liste de courses** | ✅ Complet | Génération validée en réel (échelle des couverts, rayons, fusion) |
-| 2 | **F04 - Partage** | ✅ Complet | Jetons, page publique, ICS, API JSON HA — test partiel effectué (jeton actif) |
-| 3 | **F08 - Historique** | ✅ Complet | `lastServedAt`, indicateur dans le calendrier — 6 tests runtime PASS |
-| 3 | **F09 - Antidoublon** | ✅ Complet | Fenêtre configurable par utilisateur — 10 tests runtime PASS |
-| 3 | **F03 - Suggestions** | ✅ Complet | 3 propositions excluant la fenêtre antidoublon — 9 tests runtime PASS |
-| - | Auth, recettes, ingrédients, profil, admin | ✅ Complet | Audits de sécurité passés |
-| - | **Confort des catalogues** — sections repliées par défaut ; liste de courses : bouton « Dates précises » (plage libre du/au, min = aujourd'hui) en plus du preset 7 jours, segments du haut compactés en une carte, ajout d'article via bouton « + Nouvel article » (formulaire révélé au clic) ; page ingrédients : bouton « + Nouvel ingrédient » aligné à droite du titre (cohérent avec « + Nouvelle recette », formulaire repliable) ; sélecteur « Rayon » avec liste des rayons existants + création à la volée (page ingrédients, création rapide des formulaires recette) via `CategorySelect` partagé ; liste de courses : sections dépliées par défaut, bouton « Tout plier / Tout déplier », masquage des articles achetés | ✅ Livré | Validateur période testé en runtime (9 PASS) |
-| - | **Navigation des catalogues** — sections repliables par catégorie (recettes par type de plat, ingrédients par rayon, liste de courses par rayon) + recherche texte sur recettes (titre/description/tags/type) et ingrédients (nom/rayon), via `CollapsibleSection` partagé | ✅ Livré | À valider sur téléphone |
-| 1 | **F01 — Générateur de menus** — page `/calendar/generator` accessible depuis le bouton « Générer un menu… » de /calendar : plage de 1 à 30 jours (min = aujourd'hui), jours de semaine, types de repas et types de plats autorisés par repas, couverts, tags exclus, mode combler (créneaux vides) / remplacer (supprime les repas existants, notes libres incluses) ; respecte l'antidoublon F09 (fenêtre exclusive) et met à jour l'historique F08 — server action testée en runtime (34 PASS) | ✅ Livré | À valider sur le CT beta |
-| - | **Maintenance intégrée** — page `/deploy` (version chargée, mise à jour, rollback) + `update.sh` + `db:ensure` | ✅ En service | Déployé et testé sur le CT beta |
-| 4 | **F12 (partie 1)** — PWA installable : manifest, icônes maskable, Service Worker (coquille hors-ligne) | ✅ Livré | À valider sur Android : installation + ouverture hors-ligne |
-
-### 📌 Stack Technique
-
-| Couche | Technologie |
-|-------|-------------|
-| Framework | Next.js 16 (App Router, Turbopack) |
-| UI | Tailwind CSS v4, mode sombre par remappage de palette |
-| ORM | Drizzle ORM + migrations versionnées (`drizzle/`) |
-| Base de données | SQLite (better-sqlite3) — un seul fichier `data/sqlite.db` |
-| Authentification | NextAuth v5 (JWT), rôles revalidés en base à chaque action |
-| Hashage | Argon2 |
-| Validation | Zod v4 |
-| Drag & drop | @dnd-kit |
+**Stack** : Next.js 16 (App Router) · Tailwind CSS v4 (sombre par remappage) · Drizzle ORM + migrations (`drizzle/`) · SQLite better-sqlite3 (`data/sqlite.db`) · NextAuth v5 (JWT, Argon2) · Zod v4 · @dnd-kit.
 
 ---
 
-## 🤖 Processus de développement — vagues IA supervisées
+## 🧠 Processus de développement — vagues IA supervisées
 
-Le projet se développe par **vagues de travail parallèle** orchestrées par un agent chef de projet :
+1. **Contrat** : le partagé (schéma DB, migrations, nav, routes publiques) est figé et committé sur `beta` AVANT le lancement des workers.
+2. **Workers** : un agent par fonctionnalité, git worktree + branche `feature/*`, mission bornée (fichiers autorisés/interdits, spec, critères d'acceptation).
+3. **Portes de qualité** : `tsc` + `build` + **tests d'exécution réels** (toute action serveur qui écrit en base doit être testée en runtime — tsc/build ne détectent pas, par ex., les transactions async refusées par better-sqlite3).
+4. **Fusion séquentielle** : `beta` ← une branche à la fois, conformité vérifiée avant chaque merge.
+5. **Validation humaine** : tests sur le CT Proxmox, promotion `beta → main` + tag `last-stable` par le propriétaire.
 
-1. **Contrat** : tout ce qui est partagé (schéma DB, migration, liens de navigation, routes publiques) est figé et committé sur `beta` AVANT le lancement des workers ;
-2. **Workers** : un agent par fonctionnalité, sur un `git worktree` et une branche `feature/*` dédiés, avec mission bornée (liste de fichiers autorisés/interdits, spec, critères d'acceptation) ;
-3. **Portes de qualité** : `tsc` + `build` + **tests d'exécution réels** (toute action serveur qui écrit en base doit être testée en runtime — tsc/build ne détectent pas, par ex., les transactions async refusées par better-sqlite3) ;
-4. **Fusion séquentielle** : `beta` ← une branche à la fois, vérification de conformité par le chef de projet avant chaque merge ;
-5. **Validation humaine** : tests sur le conteneur Proxmox, promotion `beta → main` et tag `last-stable` sur décision du propriétaire.
+Historique : **V1** (F05 + F04 + F01-options, 3 workers), **V2** (F08 + F09 + F03, couloir unique).
 
-Historique des vagues : **V1** (F05 + F04 + F01-options, 3 workers), **V2** (F08 + F09 + F03, couloir unique).
+---
+
+## 🔍 Audit du 2026-10-10 (sécurité, bugs, propreté, UI/UX, bonnes pratiques)
+
+**Verdict** : code de bonne qualité — fondamentaux de sécurité solides (Argon2, rate-limiting, jetons hachés, guards revalidés en base, en-têtes HTTP, transactions SQLite synchrones correctes, accessibilité soignée, `update.sh` robuste). Vérifications : `tsc` ✅, `next build` ✅ (avec `AUTH_SECRET`).
+
+### Constats à traiter (par priorité)
+
+| # | Gravité | Constat | Localisation | Fix suggéré | Effort |
+|---|---------|---------|--------------|-------------|--------|
+| A1 | 🔴 | Suite de lint cassée : `next lint` invalide en Next 16, `eslint` absent des devDependencies, `eslint-config-next` en canary → **aucun lint ne tourne** | `package.json`, `eslint.config.mjs` | Ajouter `eslint` en devDep, version stable `eslint-config-next`, script `lint: eslint .` | 30 min |
+| A2 | 🔴 | Aucun test automatisé ni CI (le processus exige des tests runtime ; ils ne sont que ponctuels) | repo | CI GitHub Actions (tsc + eslint + build) + tests runtime des actions critiques | 2-3 h |
+| A3 | 🔴 | Rate-limit login par email uniquement → password spraying non borné (1 mdp courant sur N emails) | `lib/auth.ts:82` | Second bucket `login-ip:${ip}` (~30/15 min), IP via `x-forwarded-for` | 30 min |
+| A4 | 🟠 | Routes à jeton (`/public/calendar`, `/api/calendar/*`) sans `Cache-Control: no-store` → risque de cache intermédiaire du planning | routes concernées | Ajouter l'en-tête | 15 min |
+| A5 | 🟠 | `updateUserPassword` sans rate-limit sur le mot de passe actuel (brute-force possible avec session volée) | `app/actions/auth.ts` | Rate-limit léger (10/h) | 15 min |
+| A6 | 🟠 | Reset par question secrète : la branche de succès confirme email + question + réponse ; indice exposé par `getUserSecurityQuestion` | `app/actions/auth.ts` | Exiger un second facteur, ou reset par l'ADMIN | à discuter |
+| A7 | 🟡 | `console.log` d'échecs de connexion en prod (pollution des logs pm2 par les bots) | `lib/auth.ts:107-124` | Supprimer ou passer en `console.debug` | 5 min |
+| A8 | 🟡 | ~13 `any`/`@ts-ignore` (`ingredients: any`, `getValue(state: any)`, 2 `@ts-ignore` NextAuth) | `app/actions/recipes.ts`, formulaires, `lib/auth.ts` | Typer via `z.infer`, augmentation de module | 1 h |
+| A9 | 🟡 | Duplication : `formDataToRecord` ×3, libellés/ordre des types de repas ×2 (déjà dans `lib/meal-types.ts`), `todayLocalStr` ×3, `getValue`/`getFieldValue` ×2 | actions, routes API | Factoriser dans `lib/` | 1 h |
+| A10 | 🟡 | `catch` génériques trompeurs : toute erreur SQL → « Cet ingrédient existe déjà » | `app/actions/ingredients.ts` | Distinguer l'unicité (`UNIQUE constraint failed`) des autres erreurs | 30 min |
+| A11 | 🟡 | `getPublicAppSettings` invocable anonymement ('use server' exportée) — ne renvoie que le thème, bénin, mais contrat à clarifier | `app/actions/settings.ts` | Documenter/filtrer explicitement | 15 min |
+| A12 | ℹ️ | Rate-limit en mémoire volatile : un `pm2 restart` (automatique via `update.sh`) remet les compteurs à zéro | `lib/rate-limit.ts` | Documenté comme limite connue ; Redis si multi-instance | — |
+
+### Points forts confirmés par l'audit (à préserver)
+
+- Guards serveur systématiques (`requireSession`/`requireAdmin`, rôle revalidé en base à chaque action).
+- Jetons hachés SHA-256, valeur claire montrée une fois, révocation traçable.
+- Anti-énumération d'emails (messages neutres), Argon2 + rate-limit avant calcul coûteux.
+- En-têtes de sécurité (`next.config.ts`), CSP différée et documentée.
+- Transactions better-sync `.run()/.get()` correctes, `foreign_keys=ON`, WAL, base non versionnée.
+- Contrôles serveur des règles métier (dates passées, durées de jetons, dernier admin).
+- Accessibilité (focus piégé, Échap, aria), Zod partout, `dangerouslySetInnerHTML` limité à 2 blocs statiques.
+
+**Recommandation** : traiter A1→A5 en premier (faible risque, fort ROI) — idéalement en V3 (vague suivante), A6→A11 en V4.
 
 ---
 
 ## 🧪 Campagne de tests en cours (validation humaine)
 
-Checklists de validation restantes, fonctionnalité par fonctionnalité :
-
 ### F04 — Partage
-- [ ] Créer un jeton depuis `/share` (ADMIN) ; ouvrir le lien public en navigation privée
-- [ ] Révoquer le jeton → recharger → « Lien invalide ou expiré »
-- [ ] Télécharger l'ICS (`/api/calendar/ics?token=…`) et l'importer dans un agenda
-- [ ] API JSON (`/api/calendar/public?token=…`) — test Home Assistant
-- [ ] `/share` en tant que MEMBER → redirection vers l'accueil
+- [ ] Créer un jeton (`/share`, ADMIN) → lien public en navigation privée ; révoquer → « Lien invalide ou expiré »
+- [ ] ICS (`/api/calendar/ics?token=…`) importé dans un agenda ; API JSON testée avec Home Assistant
+- [ ] `/share` en MEMBER → redirection accueil
 
-### F01 options
-- [ ] Palette « Recettes » sur `/calendar` : glisser une recette dans un créneau vide, un en-tête de date, une cellule jour+type
-- [ ] Refus des dates passées depuis la palette ; rien n'est supprimable depuis la palette
-- [ ] Info-bulles des badges (temps de préparation/cuisson) et suffixe type de plat
-- [ ] Menu mobile : clic extérieur, touche Échap, navigation par les liens
-- [ ] `/settings` : ADMIN modifie les couverts par défaut → pré-remplissage du modal de création ; MEMBER en lecture seule
-
-### Audit UI/UX (nouveau — version auditée)
-- [ ] Modals de planification : fermeture par Échap, clic sur l'overlay, `role=dialog` annoncé ; focus dans le modal au clavier (Tab)
-- [x] ~~`RecipePicker`~~ validé en campagne (recherche multi-mots, accents, clavier) — étendu depuis : rayon (SearchSelect), ingrédient des recettes, catalogue à l'ajout courses
-- [ ] `ConfirmDialog` : suppression d'une recette/ingrédient, révocation d'un jeton — message en français, focus sur Annuler, Échap annule
-- [ ] Zoom mobile réactivé (pinch-zoom fonctionne sur la page login)
-- [ ] En-tête `/calendar` : « Aujourd'hui » et « Recettes » visibles sans débordement, même sur petit écran
-- [ ] Navigation clavier : contour visible (accent) sur boutons/liens à la tabulation
-
-### Générateur de menus
-- [ ] Bouton « Générer un menu… » dans l'en-tête du mois de /calendar → page /calendar/generator
-- [ ] Mode « combler » : seuls les créneaux vides sont remplis ; mode « remplacer » : repas existants (y compris notes libres) supprimés avant génération
-- [ ] Fenêtre antidoublon respectée (X=7 : aucune recette replanifiée à moins de 7 jours, pendant le run et par rapport à l'existant)
-- [ ] Cas d'échec : petit catalogue / intervalle élevé → créneaux « sans recette compatible » comptés dans le résumé
+### F01 options + générateur
+- [ ] Palette « Recettes » : drag vers créneau vide, en-tête de date, cellule jour+type ; dates passées refusées ; palette jamais destructive
+- [ ] Info-bulles des badges, suffixe type de plat ; menu mobile (clic extérieur, Échap) ; `/settings` ADMIN ↔ MEMBER
+- [ ] Générateur : mode combler / remplacer, antidoublon respecté pendant le run, cas d'échec (petit catalogue / intervalle élevé) comptés dans le résumé
 
 ### Phase 3 (F08 / F09 / F03)
-- [ ] Planifier une recette, tenter de la replanir à J+3 → refus ; à J+8 → accepté ; contrôle désactivé (0) → accepté *(fenêtre exclusive depuis C-023 : à X=7, J+7 exactement est aussi accepté)*
-- [ ] Badge « • » déjà servi + info-bulle ; ligne « Dernier repas planifié » sur la page recette
-- [ ] Bouton « Suggérer » du modal de création : les propositions excluent la fenêtre antidoublon ; cas d'échec (petit catalogue / intervalle élevé)
-- [ ] `/settings` → « Mes préférences » : intervalle antidoublon enregistrable par un MEMBER
+- [ ] Replanification J+3 refusée / J+8 acceptée / contrôle désactivé (0) accepté (fenêtre exclusive : J+X exact accepté)
+- [ ] Badge « déjà servi » + ligne « Dernier repas planifié » ; suggestions excluant la fenêtre ; intervalle antidoublon modifiable par un MEMBER
+
+### Audit UI/UX
+- [ ] Modals : Échap, overlay, `role=dialog`, Tab au clavier ; `ConfirmDialog` (suppression, révocation) ; pinch-zoom ; en-tête `/calendar` sans débordement ; contour focus visible
 
 ### Général
-- [ ] Parcours complet sur téléphone (via tunnel Cloudflare) : chaque page, chaque formulaire, mode sombre
+- [ ] Parcours complet mobile (tunnel Cloudflare), chaque page/formulaire, mode sombre
 - [ ] Deux comptes simultanés (ADMIN + MEMBER) : permissions réelles de chaque rôle
 
 ---
 
 ## 🛠️ Corrections
 
-> Le journal complet des corrections (C-001 → C-030, avec descriptions, solutions et commits de référence) vit dans **[CORRECTIONS.md](CORRECTIONS.md)**.
+Journal complet (C-001 → C-045, descriptions, solutions, commits) : **[CORRECTIONS.md](CORRECTIONS.md)**.
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 38 (C-001 → C-038) |
-| Corrigées et déployées | 37 |
-| En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
-| Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
-| Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |
+| Corrections enregistrées | 45 (C-001 → C-045) |
+| Corrigées et déployées | 44 |
+| En traitement côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe) |
+| Critiques | 3 (C-007, C-011, C-030) |
+| En suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait ; CSP complète (nonce/hash) |
+| Connu et assumé | Sessions JWT non révocables (maxAge 7 j en compensation) |
 
 ---
 
 ## 🚀 Phase 4 — Fonctionnalités restantes (prochaine vague)
 
-### F07 - Import de Recettes depuis URL
-- Extraction des métadonnées Schema.org (Recipe), parse des sites populaires (Marmiton, 750g…)
-- Prévisualisation avant import, message clair si site non supporté, import manuel toujours possible
-- Fichiers : `app/actions/import-recipe.ts`, `app/recipes/import/ImportRecipeForm.tsx`
-- Estimation : 2-3 jours
+| Fonctionnalité | Contenu | Fichiers | Estimation |
+|---|---|---|---|
+| **F07 Import de recettes URL** | Extraction Schema.org (Recipe), parse Marmiton/750g…, prévisualisation, repli manuel | `app/actions/import-recipe.ts`, `app/recipes/import/ImportRecipeForm.tsx` | 2-3 j |
+| **F10 Notifications** | Push PWA quotidien à heure configurable, email optionnel (SMTP) | SW, `app/api/notifications/route.ts` | 2 j (dépend de F12) |
+| **F11 Garde-manger** | Stock par ingrédient + péremption, exclusion de la liste de courses | table `pantry_items`, `app/pantry/page.tsx`, migration | 2-3 j |
+| **F12 Hors-ligne (reste)** | Partie 1 livrée (PWA installable, coquille). Reste : cache des données, sync au retour en ligne | `public/sw.js` | 1-2 j |
+| **OAuth** | Google/GitHub — en attente des variables d'environnement | — | 1 j |
 
-### F10 - Notifications du Repas du Jour
-- Notifications push (PWA) quotidiennes à heure configurable : « Aujourd'hui : [Nom du repas] »
-- Email optionnel (si SMTP configuré)
-- Fichiers : Service Worker, `app/api/notifications/route.ts`
-- Estimation : 2 jours — *dépend partiellement de F12 (PWA)*
-
-### F11 - Gestion du Garde-Manger
-- Quantité disponible par ingrédient, date de péremption optionnelle
-- Intégration liste de courses : exclusion des ingrédients en stock, suggestions d'achat
-- Fichiers : table `pantry_items` (schéma), `app/pantry/page.tsx`, migration
-- Estimation : 2-3 jours
-
-### F12 - Mode Hors-Ligne Partiel (PWA)
-
-**Partie 1 livrée — PWA installable** : `public/manifest.json` (thème teal, icônes 192/512 maskable), `public/sw.js` (coquille hors-ligne : assets cache-first, navigations réseau-avec-repli, `/api/` jamais interceptée), enregistrement dans le layout (`app/ServiceWorkerRegister.tsx`). Installation depuis Chrome Android (menu → « Installer l'application ») ou Safari iOS (« Sur l'écran d'accueil »).
-
-- [x] Manifest PWA complet (icônes, thème) pour installation
-- [x] Service Worker — coquille : l'app s'ouvre et affiche l'accueil hors-ligne
-- [ ] Service Worker — données : cache des recettes/ingrédients, consultation du calendrier hors ligne
-- [ ] Synchronisation automatique au retour en ligne
-- Reste : ~1-2 jours
-
-*Notes : HTTPS requis pour le SW (fourni par le tunnel Cloudflare) ; icônes générées en aplats (fond teal + disque) — remplaçables par un vrai logo.*
-
-
-### OAuth (Google, GitHub) — en attente de variables d'environnement
-- Providers, boutons de connexion alternatifs, comptes liés
-- Estimation : 1 jour
-
-*Contrat de la vague 3 à prévoir : table `pantry_items` au schéma (F11). F07, F10 et F12 sont majoritairement des fichiers nouveaux → parallélisables en 3 workers ; F11 en 4ᵉ position ou en parallèle avec son contrat.*
+*Contrat de la vague : table `pantry_items` au schéma (F11). F07/F10/F12 = fichiers nouveaux → parallélisables en 3 workers ; F11 en 4ᵉ position.*
 
 ---
 
 ## 🎨 Finitions / Backlog (basse priorité)
 
-- [ ] Export PDF de la liste de courses (F05, optionnel)
-- [ ] Partage de la liste de courses par lien (F05, optionnel)
-- [ ] Réglage de la taille des formulaires (barres de scroll non désirées dans certains modals)
-- [ ] Uniformisation des tailles de composants, très petits écrans
-- [x] ~~Accessibilité (contrastes, navigation clavier)~~ largement couvert par l'audit UI/UX (d29bb64) — reste en revue : la bump typo global (`text-xs` → `text-sm` en base), reporté volontairement
-- [x] ~~Headers de sécurité HTTP~~ faits (C-013) — reste en option : une CSP complète (nonce/hash à chaque build pour le script inline du thème)
-- [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — reste au choix : purge de l'historique (`git filter-repo`, réécriture du dépôt) et révocation des jetons créés avant le retrait
+- [ ] Export PDF de la liste de courses ; partage de la liste par lien (F05, optionnels)
+- [ ] Taille des formulaires (scrolls indésirables dans certains modals) ; uniformisation très petits écrans
+- [ ] Bump typo global (`text-xs` → `text-sm`) — reporté volontairement après validation mobile
+- [x] ~~Accessibilité~~ (audit UI/UX, d29bb64) · ~~En-têtes HTTP~~ (C-013) · ~~Retrait de `data/sqlite.db` de git~~ (C-011) — restes en suspens : purge de l'historique + CSP complète (cf. Corrections)
 
 ---
 
-## 🗂️ Organisation des branches et du déploiement
+## 🗂️ Branches et déploiement
 
 | Branche | Rôle |
-|---------|------|
-| `main` | Production — tag `last-stable` sur la dernière version validée ; le CT de production suit `main` (fichier `.deploy-branch`, lu par `update.sh` et la page /deploy) |
-| `beta` | Branche de test : déployée sur le CT de test, mise à jour via `pct exec <CT> -- bash /opt/meal_plan/update.sh` **ou depuis l'application** (Paramètres → Update) |
-| `feature/*` | Une branche par fonctionnalité (vagues IA) — conservées sur GitHub pour revue |
+|---|---|
+| `main` | Production — tag `last-stable` ; le CT de production la suit (`.deploy-branch`) |
+| `beta` | Test — CT beta ; mise à jour via `pct exec <CT> -- bash /opt/meal_plan/update.sh` ou depuis l'app (Paramètres → Update) |
+| `feature/*` | Une par fonctionnalité (vagues IA), conservées pour revue |
 
-Installation d'un conteneur (test ou production) : `bash scripts/proxmox-install.sh <CTID> <email> [mdp]` — ajouter `BRANCH=main` pour un conteneur de production (défaut : `beta`) et `CF_TUNNEL_TOKEN=<jeton>` pour installer le tunnel Cloudflare (cloudflared en service système, HTTPS extérieur sans ouverture de port). La branche est mémorisée dans `/opt/meal_plan/.deploy-branch`. Procédure complète de promotion et d'installation prod : **[DEPLOYMENT.md](DEPLOYMENT.md)** (section Production).
-
-Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[DEPLOYMENT.md](DEPLOYMENT.md)**
-
----
-
-## 🔗 Ressources et Références
-
-- [Cahier des charges](meal_plan_requirements.md)
-- [DEPLOYMENT.md](DEPLOYMENT.md) — guide de déploiement pas à pas (option script automatique incluse)
-- [CORRECTIONS.md](CORRECTIONS.md) — journal complet des corrections (C-001 → C-030)
-- [archives/ROADMAPV2.md](archives/ROADMAPV2.md) — historique de planification des phases 1-3
-- [Documentation Next.js](https://nextjs.org/docs) · [dnd-kit](https://dndkit.com/) · [Drizzle ORM](https://orm.drizzle.team/)
+Installation d'un CT : `bash scripts/proxmox-install.sh <CTID> <email> [mdp]` — options `BRANCH=main` (prod) et `CF_TUNNEL_TOKEN=<jeton>` (HTTPS extérieur sans ouverture de port). Procédure complète de promotion et d'installation prod : **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 
 ---
 
 ## 📜 Historique des versions
 
-| Version | Période | Contenu |
-|---------|---------|---------|
-| V1 (archivée) | - | Roadmap originale |
-| V2 (archivée) | 2026-10 | Planification des phases 1-3 du cahier des charges |
-| V3 (archivée) | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
-| V3.1 (archivée) | 2026-10-08 | Maintenance intégrée (page `/deploy` + `update.sh` + `db:ensure`), corrections C-002 à C-005, liens Utilisateurs/Partage/Profil/Update regroupés dans Paramètres |
-| V3.2 (archivée) | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
-| **V3.3 (ce document)** | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans DEPLOYMENT.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans DEPLOYMENT.md |
+| Version | Contenu |
+|---|---|
+| V1-V3.2 (archivées) | Phases 1-3 du cahier des charges ; maintenance intégrée ; générateur de menus ; script multi-branche ; tunnel Cloudflare |
+| V3.3-V3.5 (archivées) | Corrections C-031→C-038 ; retour campagne (largeurs, étapes optionnelles, historique, créateur, sélecteurs recherche) ; F13 stats + biblio. d'ingrédients |
+| V3.6-V3.8 (archivées) | F14 thèmes/palettes (5 palettes WCAG AA) ; habillage PWA neutre C-040→C-045 |
+| **V3.9 (ce document)** | **Audit 2026-10-10 : constats A1→A12 classés par gravité, points forts à préserver, plan d'action priorisé ; rationalisation de la roadmap (source de vérité unique, renvois vers les docs dédiées) ; compteur de corrections aligné (45)** |
