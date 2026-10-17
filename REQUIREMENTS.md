@@ -53,6 +53,7 @@ Planifier les repas de la famille sur un calendrier, gérer un livre de recettes
     
 - **F12 :** Mode hors-ligne partiel (PWA Service Worker)
 - **F13 :** Statistiques d'usage (fréquence des recettes, plats les plus cuisinés, répartition par type de plat, taux d'utilisation du catalogue)
+- **F14 (backlog) :** Thèmes et palettes de couleurs sélectionnables dans les paramètres (palettes clair + sombre)
     
 
 ## 3. Solutions techniques retenues
