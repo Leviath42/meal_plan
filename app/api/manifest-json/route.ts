@@ -3,20 +3,13 @@
 // paramètres. Sert l'URL /api/manifest-json, exposée en /manifest.json via une rewrite
 // du next.config (le <link> du layout ne change pas d'URL).
 import { NextResponse } from 'next/server';
-import { getPublicAppSettings } from '@/app/actions/settings';
-import { getTheme } from '@/lib/themes';
 
-export const dynamic = 'force-dynamic';
-
+// Manifest désormais 100 % statique (C-044) : le splash et les barres
+// Android suivent des couleurs NEUTRES — une couleur liée à la palette
+// étant figée à l'installation, elle devenait obsolète au premier
+// changement de thème. Neutre = toujours correct, et plus de lecture
+// de base à chaque requête du manifest.
 export async function GET() {
-  let themeAccent = '#0f766e';
-  try {
-    const settings = await getPublicAppSettings();
-    themeAccent = getTheme(settings.theme).palette.accentLight;
-  } catch {
-    // défauts teal (base injoignable)
-  }
-
   return NextResponse.json(
     {
       name: 'Meal Plan',
@@ -27,7 +20,12 @@ export async function GET() {
       scope: '/',
       display: 'standalone',
       orientation: 'portrait',
-      background_color: themeAccent,
+      // Splash screen ET barre de navigation inférieure Android (C-044) :
+      // le background_color pilote les DEUX — la barre du bas d'Android
+      // (liée au splash, diagnostic utilisateur) et l'écran de lancement.
+      // Neutre blanc cassé : sobre, s'accorde avec l'icône et toutes les
+      // palettes, jamais obsolète (couleur figée à l'installation).
+      background_color: '#fafaf9',
       // Barre d'application (C-043) : Android fige la couleur à
       // l'INSTALLATION depuis ce champ — lier la barre à la palette est
       // voué à l'échec. Neutre : gris anthracite discret, compatible avec
