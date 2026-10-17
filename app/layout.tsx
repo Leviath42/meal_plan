@@ -13,8 +13,8 @@ export const metadata = {
   applicationName: 'Meal Plan',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icons/icon-192.png?v=2',
-    apple: '/icons/icon-192.png?v=2',
+    icon: '/icons/icon-192.png?v=3',
+    apple: '/icons/icon-192.png?v=3',
   },
   appleWebApp: {
     capable: true,
