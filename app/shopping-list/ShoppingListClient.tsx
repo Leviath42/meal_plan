@@ -52,14 +52,19 @@ export default function ShoppingListClient({
   // remontage force CollapsibleSection à réinitialiser son état interne)
   const [allOpen, setAllOpen] = useState(true);
   // Masquer les articles déjà achetés (ils restent cochés en base)
-  const [hideBought, setHideBought] = useState(false);
+  // Masquer les achetés : actif par défaut — en courses, ce qui est coché
+  // n'a plus d'intérêt visuel, la page se rapproche de la pending list
+  const [hideBought, setHideBought] = useState(true);
   // Formulaire d'ajout manuel : révélé par « + Nouvel article »
   // (même comportement que les pages Recettes et Ingrédients)
   const [addOpen, setAddOpen] = useState(false);
   // Génération depuis le planning : ouverte via le bouton « Générer »
   const [generateOpen, setGenerateOpen] = useState(false);
-  // Purge de la liste : ConfirmDialog avant l'irréversible
+  // Purge de la liste : ConfirmDialog avant l'irréversible.
+  // Étendue par défaut : achetés seulement (purge de fin de courses) ;
+  // « tout » est le choix explicite pour repartir de zéro.
   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
+  const [purgeBoughtOnly, setPurgeBoughtOnly] = useState(true);
   const [purging, setPurging] = useState(false);
 
   // Sélection précise : plage de dates libre (mode « personnalisé »)
@@ -184,7 +189,7 @@ export default function ShoppingListClient({
     setPurgeConfirmOpen(false);
     setPurging(true);
     try {
-      const result = await purgeShoppingList();
+      const result = await purgeShoppingList(purgeBoughtOnly);
       setNotice(result.message);
     } catch {
       setNotice('Impossible de purger la liste');
@@ -558,12 +563,37 @@ export default function ShoppingListClient({
         title="Purger la liste de courses"
         message={
           <>
-            Vider <strong>toute</strong> la liste&nbsp;? Les {items.length} article
-            {items.length > 1 ? 's' : ''} (générés et manuels, achetés ou non) seront
-            définitivement supprimés.
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="purge-scope"
+                  checked={purgeBoughtOnly}
+                  onChange={() => setPurgeBoughtOnly(true)}
+                  className="accent-accent"
+                />
+                <span>
+                  Les <strong>{boughtCount} article{boughtCount > 1 ? 's' : ''} acheté{boughtCount > 1 ? 's' : ''}</strong> seulement
+                  <span className="block text-xs text-gray-400">Fin de courses — les articles restant à acheter sont conservés</span>
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="purge-scope"
+                  checked={!purgeBoughtOnly}
+                  onChange={() => setPurgeBoughtOnly(false)}
+                  className="accent-accent"
+                />
+                <span>
+                  <strong>Toute</strong> la liste ({items.length} article{items.length > 1 ? 's' : ''})
+                  <span className="block text-xs text-gray-400">Repartir de zéro — achetés et à acheter</span>
+                </span>
+              </label>
+            </div>
           </>
         }
-        confirmLabel="Purger la liste"
+        confirmLabel="Purger"
         pending={purging}
         onCancel={() => setPurgeConfirmOpen(false)}
         onConfirm={handlePurge}
