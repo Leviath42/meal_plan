@@ -129,7 +129,7 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
 
   return (
     <main className="px-3 sm:px-4 py-2 sm:py-3">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="mb-3 px-2">
           <h1 className="text-lg sm:text-xl font-bold text-gray-800">Partage du planning</h1>
           <p className="text-xs text-gray-500 mt-1">

@@ -29,6 +29,14 @@
       "when": 1791492982083,
       "tag": "0003_flaky_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792241799773,
+      "tag": "0004_rich_quentin_quire",
+      "breakpoints": true
     }
+
   ]
 }

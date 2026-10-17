@@ -36,6 +36,8 @@ export const recipes = sqliteTable("recipes", {
   
   // Lien vers un site web ou nom d'un livre papier pour retrouver l'inspiration originale
   source: text("source"),
+  // Créateur de la recette (nom/email de l'utilisateur connecté à la création)
+  created_by: text("created_by"),
   
   // Date (AAAA-MM-JJ) du repas le plus recent planifie avec cette recette (F08 - historique)
   lastServedAt: text("last_served_at"),

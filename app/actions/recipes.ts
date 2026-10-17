@@ -29,7 +29,7 @@ export async function createRecipe(
   prevState: RecipeFormState,
   formData: FormData
 ): Promise<RecipeFormState> {
-  await requireSession();
+  const session = await requireSession();
   const rawData = formDataToRecord(formData);
   let ingredients: any;
   try {
@@ -54,6 +54,8 @@ export async function createRecipe(
   }
 
   const { ingredients: items, ...recipeData } = parsed.data;
+  // Créateur de la recette : email de l'utilisateur connecté
+  recipeData.createdBy = session.user?.email ?? null;
 
   // better-sqlite3 est synchrone : callback de transaction synchrone,
   // requeteurs .get()/.run() (un callback async est refuse par drizzle)
@@ -107,6 +109,7 @@ export async function updateRecipe(
   }
 
   const { ingredients: items, ...recipeData } = parsed.data;
+  // Créateur de la recette : email de l'utilisateur connecté
 
   // Mise à jour transactionnelle : recette + ingrédients, ou rien
   db.transaction((tx) => {

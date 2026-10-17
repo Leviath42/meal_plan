@@ -115,12 +115,14 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
           )}
         </div>
 
-        <div className="mb-4">
-          <h2 className="text-xs sm:text-sm font-semibold mb-2">Étapes de préparation</h2>
-          <div className="prose max-w-none text-xs sm:text-sm">
-            <p className="whitespace-pre-wrap">{recipe.instructions}</p>
+        {recipe.instructions && recipe.instructions.trim() !== '' && (
+          <div className="mb-4">
+            <h2 className="text-xs sm:text-sm font-semibold mb-2">Étapes de préparation</h2>
+            <div className="prose max-w-none text-xs sm:text-sm">
+              <p className="whitespace-pre-wrap">{recipe.instructions}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {recipe.source && (
           <div className="mb-4">
@@ -145,6 +147,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
         <div className="text-xs text-gray-500 space-y-1">
           <p>
             Créé le : {formatNumericDate(new Date(recipe.createdAt))}
+            {recipe.created_by && <> par <span className="font-medium">{recipe.created_by}</span></>}
           </p>
           <p>
             Modifié le : {formatNumericDate(new Date(recipe.updatedAt))}

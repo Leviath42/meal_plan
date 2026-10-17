@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import SearchSelect from '@/app/components/SearchSelect';
 
 // Sélecteur de rayon avec création à la volée : liste des rayons existants
 // + option « + Nouveau rayon… » qui bascule sur un champ texte libre.
@@ -53,27 +54,28 @@ export default function CategorySelect({
   }
 
   return (
-    <select
-      id={id}
-      value={value}
-      required={required}
-      className={className}
-      onChange={(e) => {
-        if (e.target.value === '__new__') {
+    <div className="flex gap-2 flex-1">
+      <SearchSelect
+        id={id}
+        items={categories.map((category) => ({ value: category, label: category }))}
+        value={value}
+        onChange={onChange}
+        placeholder="Recherchez un rayon…"
+        emptyLabel="Aucun rayon ne correspond"
+        required={required}
+        className={className}
+      />
+      <button
+        type="button"
+        onClick={() => {
           setCreatingNew(true);
           onChange('');
-        } else {
-          onChange(e.target.value);
-        }
-      }}
-    >
-      <option value="">Sélectionnez un rayon…</option>
-      {categories.map((category) => (
-        <option key={category} value={category}>
-          {category}
-        </option>
-      ))}
-      <option value="__new__">+ Nouveau rayon…</option>
-    </select>
+        }}
+        className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors whitespace-nowrap flex-shrink-0"
+        title="Créer un rayon qui n'existe pas encore"
+      >
+        + Nouveau
+      </button>
+    </div>
   );
 }

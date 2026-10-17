@@ -33,7 +33,7 @@ export default async function ShoppingListPage() {
 
   return (
     <main className="px-3 sm:px-6 py-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         {/* Titre rendu par ShoppingListClient : rangée « Liste de courses »
             + bouton « + Nouvel article » (même structure que les pages
             Recettes et Ingrédients) */}

@@ -52,6 +52,7 @@ Planifier les repas de la famille sur un calendrier, gérer un livre de recettes
 - **F11 :** Gestion d'un garde-manger / stock basique
     
 - **F12 :** Mode hors-ligne partiel (PWA Service Worker)
+- **F13 :** Statistiques d'usage (fréquence des recettes, plats les plus cuisinés, répartition par type de plat, taux d'utilisation du catalogue)
     
 
 ## 3. Solutions techniques retenues

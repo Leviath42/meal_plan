@@ -19,10 +19,14 @@ export const recipeInput = z.object({
   prepTime: z.coerce.number().int().min(0),
   cookTime: z.coerce.number().int().min(0),
   defaultServings: z.coerce.number().int().min(1).default(3),
-  instructions: z.string().min(1, 'Les étapes sont requises'),
+  // Optionnel : certaines recettes n'ont pas d'étapes (assemblage simple)
+  instructions: z.string().default(''),
   tags: z.string().optional().nullable(),
   source: z.string().optional().nullable(),
   mealCourse: z.string().optional().nullable(),
+  // Rempli côté serveur à la création (email de l'utilisateur connecté),
+  // jamais soumis par le formulaire ni modifié à l'édition
+  createdBy: z.string().optional().nullable(),
   // ✅ Ingrédients maintenant optionnels avec valeur par défaut
   ingredients: z.array(recipeIngredientInput).default([]),
 });
