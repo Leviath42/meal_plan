@@ -14,11 +14,14 @@
 
 ### Recettes & ingrédients (F02)
 - CRUD complet, association recettes-ingrédients avec quantités, type de plat (`mealCourse`), tags, temps de préparation/cuisson
+- Étapes de préparation **optionnelles** (assemblages simples), créateur de la recette mémorisé à la création et affiché sur le détail
 - Ingrédients organisés par rayons de supermarché, unités par défaut
 
 ### Liste de courses (F05)
-- Génération automatique depuis le planning (7/14/30 jours) : extraction, mise à l'échelle par le nombre de couverts, fusion des doublons
-- Affichage par rayons, cases à cocher persistées, ajout manuel, copie en texte brut
+- Génération depuis le planning en **modal** (7/14/30 jours ou dates précises) : extraction, mise à l'échelle par couverts, fusion des doublons ; le modal se ferme tout seul en cas de succès
+- Affichage par rayons, cases à cocher persistées, masquage des achetés actif par défaut, copie en texte brut
+- Ajout manuel avec **recherche dans le catalogue d'ingrédients** (suggestions nom + rayon, unité pré-remplie, héritage du rayon) ou saisie libre
+- **Purge** avec validation : par défaut les articles achetés seulement (fin de courses), ou toute la liste (repartir de zéro)
 
 ### Partage (F04)
 - Jetons d'accès cryptographiques (création/révocation/expiration) gérés par l'ADMIN (`/share`)
@@ -26,7 +29,7 @@
 
 ### Intelligence (F03 / F08 / F09)
 - **Suggestions** : 3 recettes proposées dans le modal de création, excluant celles déjà planifiées dans la fenêtre antidoublon
-- **Historique** : date du dernier repas par recette, indicateur dans le calendrier
+- **Historique** : date du dernier repas par recette, indicateur dans le calendrier ; les repas passés ne sont **plus supprimables** (fiabilité de l'historique)
 - **Antidoublon** : intervalle minimum configurable par utilisateur (`/settings` → Mes préférences, 0 = désactivé, défaut 7 jours)
 
 ### Authentification & comptes (F06)
@@ -35,6 +38,9 @@
 - Sessions revalidées en base à chaque action (rétrogradation/suppression effectives immédiatement)
 
 ### Interface
+- Sélecteurs par **recherche multi-mots** (insensible aux accents, navigation clavier) pour les recettes, ingrédients et rayons — adaptés aux grands catalogues
+- Confirmations in-app accessibles (focus piégé, Échap) pour toutes les actions destructrices
+- Icône PWA « chronomètre & couverts » ; icônes versionnées (`?v=N`) pour contourner les caches
 ### Maintenance intégrée
 - Page `/deploy` (ADMIN, lien depuis `/settings` → Update) : version chargée (commit + build), **mise à jour depuis GitHub** et **retour arrière** (dernière sauvegarde de la base) sans accéder au serveur, journal de déploiement en direct
 - `update.sh` : sauvegarde horodatée de la base (10 conservées), `git reset --hard origin/beta`, `db:ensure` + `db:migrate`, build, healthcheck HTTP, relance de l'app même en cas d'échec ; mode `rollback`
@@ -42,6 +48,14 @@
 - Mobile-first, mode sombre complet (bascule dans la navigation), thème teal unifié, formulaires qui conservent les champs en erreur
 
 ---
+
+## 📖 Documentation
+
+- **[MANUEL.md](MANUEL.md)** — guide utilisateur (installation PWA, planification, courses, partage, FAQ)
+- [ROADMAPV3.md](ROADMAPV3.md) — état du projet et suite du développement
+- [CORRECTIONS.md](CORRECTIONS.md) — journal des corrections (C-001 → C-038)
+- [REQUIREMENTS.md](REQUIREMENTS.md) — cahier des charges
+- [DEPLOYMENT.md](DEPLOYMENT.md) — déploiement Proxmox et dépannage
 
 ## 🚀 Démarrage rapide
 
