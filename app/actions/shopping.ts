@@ -293,3 +293,18 @@ export async function deleteShoppingItem(
     return { success: false, message: 'Impossible de supprimer cet article' };
   }
 }
+// Purger la liste : supprime TOUS les articles (générés et manuels,
+// achetés ou non). Irréversible — la validation se fait côté UI
+// (ConfirmDialog) avant l'appel.
+export async function purgeShoppingList(): Promise<{ success: boolean; message: string }> {
+  try {
+    await requireSession();
+    const result = await db.delete(shoppingItems);
+    revalidatePath('/shopping-list');
+    return { success: true, message: `${result.changes} article(s) supprimé(s) — liste vidée` };
+  } catch (error) {
+    console.error('Erreur lors de la purge de la liste:', error);
+    return { success: false, message: 'Impossible de purger la liste' };
+  }
+}
+

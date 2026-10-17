@@ -12,8 +12,10 @@ import {
   addManualShoppingItem,
   deleteShoppingItem,
   generateShoppingList,
+  purgeShoppingList,
   toggleShoppingItem,
 } from '@/app/actions/shopping';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 import {
   SHOPPING_PERIOD_PRESETS,
   type ShoppingFormState,
@@ -56,6 +58,9 @@ export default function ShoppingListClient({
   const [addOpen, setAddOpen] = useState(false);
   // Génération depuis le planning : ouverte via le bouton « Générer »
   const [generateOpen, setGenerateOpen] = useState(false);
+  // Purge de la liste : ConfirmDialog avant l'irréversible
+  const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
+  const [purging, setPurging] = useState(false);
 
   // Sélection précise : plage de dates libre (mode « personnalisé »)
   const [mode, setMode] = useState<'preset' | 'custom'>('preset');
@@ -171,6 +176,20 @@ export default function ShoppingListClient({
     if (!result.success) {
       setItems(previous);
       setNotice(result.message);
+    }
+  };
+
+  // Purger toute la liste (générés + manuels, achetés ou non)
+  const handlePurge = async () => {
+    setPurgeConfirmOpen(false);
+    setPurging(true);
+    try {
+      const result = await purgeShoppingList();
+      setNotice(result.message);
+    } catch {
+      setNotice('Impossible de purger la liste');
+    } finally {
+      setPurging(false);
     }
   };
 
@@ -463,6 +482,14 @@ export default function ShoppingListClient({
             >
               Copier la liste
             </button>
+            <button
+              onClick={() => setPurgeConfirmOpen(true)}
+              disabled={items.length === 0 || purging}
+              className="px-3 py-1.5 border border-red-300 text-red-600 rounded hover:bg-red-50 text-xs sm:text-sm disabled:opacity-50 transition-colors"
+              title="Vider entièrement la liste (articles générés et manuels)"
+            >
+              {purging ? 'Purge...' : 'Purger'}
+            </button>
           </div>
         </div>
       </div>
@@ -526,6 +553,21 @@ export default function ShoppingListClient({
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={purgeConfirmOpen}
+        title="Purger la liste de courses"
+        message={
+          <>
+            Vider <strong>toute</strong> la liste&nbsp;? Les {items.length} article
+            {items.length > 1 ? 's' : ''} (générés et manuels, achetés ou non) seront
+            définitivement supprimés.
+          </>
+        }
+        confirmLabel="Purger la liste"
+        pending={purging}
+        onCancel={() => setPurgeConfirmOpen(false)}
+        onConfirm={handlePurge}
+      />
     </div>
   );
 }
