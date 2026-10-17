@@ -11,9 +11,13 @@
 // pas à jour après une mutation.
 //
 // Le mode "consultation hors-ligne complète" reste à faire — ROADMAPV3, phase 4.
+//
+// v4 : purge des caches v3 contenant les ANCIENNES icônes PWA (aplat teal
+// + disque) — l'icône assiette/couverts doit être re-téléchargée, et les
+// icônes sont en cache-first (jamais revalidées tant que le cache vit).
 
-const CACHE = 'meal-plan-v3';
-const PRECACHE = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'meal-plan-v4';
+const PRECACHE = ['/', '/manifest.json', '/icons/icon-192.png?v=2', '/icons/icon-512.png?v=2'];
 const MAX_ENTRIES = 60;
 
 // Seuls ces chemins sont considérés comme des assets cachables
