@@ -2,7 +2,7 @@
 
 *Dernière mise à jour : 2026-10-10 (v3.8)*
 *Version : 3.8 — Les versions précédentes sont archivées dans [archives/](archives/)*
-*Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md) (cahier des charges)*
+*Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
 
@@ -211,7 +211,7 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 
 ## 🔗 Ressources et Références
 
-- [Cahier des charges](meal_plan_requirements.md)
+- [Cahier des charges](cahier-des-charges.md)
 - [deploiement-proxmox.md](deploiement-proxmox.md) — guide de déploiement pas à pas (option script automatique incluse)
 - [correctifs.md](correctifs.md) — journal complet des corrections (C-001 → C-030)
 - [archives/ROADMAPV2.md](archives/ROADMAPV2.md) — historique de planification des phases 1-3
