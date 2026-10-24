@@ -214,7 +214,7 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 - [Cahier des charges](cahier-des-charges.md)
 - [deploiement-proxmox.md](deploiement-proxmox.md) — guide de déploiement pas à pas (option script automatique incluse)
 - [correctifs.md](correctifs.md) — journal complet des corrections (C-001 → C-030)
-- [archives/ROADMAPV2.md](archives/ROADMAPV2.md) — historique de planification des phases 1-3
+- [archives/roadmap-v2.old.md](archives/roadmap-v2.old.md) — historique de planification des phases 1-3
 - [Documentation Next.js](https://nextjs.org/docs) · [dnd-kit](https://dndkit.com/) · [Drizzle ORM](https://orm.drizzle.team/)
 
 ---
