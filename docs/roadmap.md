@@ -138,7 +138,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 | Corrigées et déployées | 37 |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
-| Décisions en suspens | C-011 : runbook de purge prêt ([purge-historique-c-011.md](purge-historique-c-011.md)) — reste l'exécution par le propriétaire |
+| Décisions en suspens | C-011 : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT (purge Support GitHub écartée par décision, risque résiduel accepté) |
 
 ---
 
@@ -148,7 +148,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 - [x] **SECURITY.md créé** (`.github/SECURITY.md`) + **Dependabot version updates configuré** (`.github/dependabot.yml`) — 24 oct. 2026
 - [x] **Côté propriétaire — fait le 24 oct. 2026 (meal_plan et modop)** : secret scanning + push protection ✅ ; code scanning CodeQL ✅ ; Dependabot alerts vérifiées ✅ ; signalement privé ✅ ; 2FA ✅
-- [ ] **C-011 (priorité n°1)** : purge de l'historique git + révocation des jetons pré-retrait — **runbook prêt** : [purge-historique-c-011.md](purge-historique-c-011.md) (exécution propriétaire ~30 min, 0 €)
+- [ ] **C-011 (priorité n°1)** : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT beta-prod — purge Support GitHub écartée par décision du 24/10/2026 (jetons révoqués, risque résiduel accepté) — [runbook](purge-historique-c-011.md)
 - [ ] CI GitHub Actions minimale : lint + build à chaque push/PR (pattern modop transposable)
 - [ ] CSP complète (nonce/hash au build pour le script inline du thème) — point d'attention persistant
 - [ ] Révocation des sessions au changement de mot de passe (compensation actuelle : maxAge 7 j)
@@ -208,7 +208,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - [ ] Uniformisation des tailles de composants, très petits écrans
 - [x] ~~Accessibilité (contrastes, navigation clavier)~~ largement couvert par l'audit UI/UX (d29bb64) — reste en revue : la bump typo global (`text-xs` → `text-sm` en base), reporté volontairement
 - [x] ~~Headers de sécurité HTTP~~ faits (C-013) — reste en option : une CSP complète (nonce/hash à chaque build pour le script inline du thème)
-- [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — reste : exécution de la purge par le propriétaire (runbook : [purge-historique-c-011.md](purge-historique-c-011.md)) et révocation des jetons pré-retrait
+- [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT beta-prod (purge Support GitHub écartée par décision ; runbook : [purge-historique-c-011.md](purge-historique-c-011.md))
 
 ---
 
@@ -248,4 +248,4 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.2 (archivée) | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
 | V3.3 (archivée) | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans deploiement-proxmox.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans deploiement-proxmox.md |
 | V3.9 (archivée) | 2026-10-24 | Audit « socle commercial » : section Conformité + checklist, `.github/SECURITY.md` + `.github/dependabot.yml` créés, CDC v1.5 (§6 suivi d'audit), PRA v1.0 ([plan-de-reprise.md](plan-de-reprise.md)) |
-| **V3.10 (ce document)** | 2026-10-24 | C-011 : runbook de purge de l'historique prêt ([purge-historique-c-011.md](purge-historique-c-011.md)) — exécution et clôture restées au propriétaire |
+| **V3.10 (ce document)** | 2026-10-24 | C-011 : branches/tags réécrits et jetons révoqués ; reste le réalignement des clones/CT ; purge Support GitHub écartée par décision (risque résiduel accepté) |

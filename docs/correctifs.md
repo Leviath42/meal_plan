@@ -35,5 +35,5 @@
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
-| Décisions en suspens | C-011 : purge de l'historique git + révocation des jetons pré-retrait |
+| Décisions en suspens | C-011 : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT — purge Support GitHub écartée par décision du 24/10/2026, risque résiduel accepté (voir [purge-historique-c-011.md](purge-historique-c-011.md)) |
 | Points d'attention persistants | CSP complète (nonce/hash au build), sessions non révocables au changement de mot de passe (maxAge réduit à 7 jours en compensation) |

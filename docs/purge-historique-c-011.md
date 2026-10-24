@@ -1,6 +1,7 @@
 # Purge de l'historique git — C-011
 
-**Statut :** runbook prêt — exécution réservée au propriétaire (réécriture d'historique + force-push). Durée ~30 min, coût **0 €**.
+**Statut :** branches et tags réécrits le 24 oct. 2026 après révocation des jetons ; clone de travail resynchronisé et nettoyé. Aucun fork public détecté.
+**Reste à faire :** réaligner les clones restants et les CT beta/prod (un `update.sh` suffit : `git reset --hard origin/<branche>`). **Décision du 24 oct. 2026 : pas de ticket Support GitHub** — purge et révocation des jetons jugées suffisantes pour protéger les secrets (jetons exposés inertes depuis leur révocation) ; l'ancienne URL de commit renvoie encore HTTP 200 (vue cachée / commit pendant, accessible par SHA direct ~90 jours), risque résiduel accepté.
 **Créé :** 24 oct. 2026 (audit « socle commercial », cahier des charges §6).
 **Références :** [correctifs.md](correctifs.md) C-011 · procédure officielle : [Removing sensitive data from a repository](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository).
 
@@ -51,7 +52,7 @@ git push --force origin --tags      # dont le tag last-stable
 
 ## 4. Étape 2 — nettoyage côté GitHub (5 min + délai Support)
 
-Le force-push ne retire pas les **vues cachées** ni les commits *dangling* (accessibles par SHA direct pendant ~90 jours). Demander à GitHub de les purger — **gratuit** :
+Le force-push ne retire pas les **vues cachées** ni les commits *dangling* (accessibles par SHA direct pendant ~90 jours). **Non exécuté — écarté par décision du 24 oct. 2026** (jetons révoqués, risque résiduel accepté) ; procédure conservée pour référence, gratuite si un jour nécessaire :
 
 1. Ouvrir un ticket sur <https://support.github.com> : demander la suppression des *cached views* et *dangling commits* pour `Leviath42/meal_plan`, suite à une *sensitive data removal* (base SQLite contenant des données personnelles, déjà filtrée avec `git filter-repo --sensitive-data-removal`).
 2. Vérifier au préalable le nombre de **forks** sur la page du repo ; si > 0, demander dans le même ticket la propagation du nettoyage au réseau de forks.
