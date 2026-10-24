@@ -62,7 +62,7 @@
 | [docs/guide-utilisateur.md](docs/guide-utilisateur.md) | Guide utilisateur : installation PWA, planification, courses, statistiques, partage, FAQ |
 | [docs/cahier-des-charges.md](docs/cahier-des-charges.md) | Exigences du projet (cahier des charges) |
 | [docs/roadmap.md](docs/roadmap.md) | **État actuel** : campagne de tests, corrections, phase 4 |
-| [docs/correctifs.md](docs/correctifs.md) | Journal des corrections (C-001 → C-038) |
+| [docs/correctifs.md](docs/correctifs.md) | Journal des corrections (C-001 → C-045) |
 | [docs/deploiement-proxmox.md](docs/deploiement-proxmox.md) | Déploiement Proxmox + tunnel Cloudflare, mise à jour, dépannage |
 | [docs/test-scenarios.md](docs/test-scenarios.md) | Scénarios de recette métier (S01–S23) et décisions ouvertes |
 | [docs/plan-commercialisation.md](docs/plan-commercialisation.md) | Plan de commercialisation : positionnement, prix, légal, pérennité |
