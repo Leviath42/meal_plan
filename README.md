@@ -57,11 +57,18 @@
 
 ## 📖 Documentation
 
-- **[MANUEL.md](MANUEL.md)** — guide utilisateur (installation PWA, planification, courses, statistiques, partage, FAQ)
-- [ROADMAPV3.md](ROADMAPV3.md) — état du projet et suite du développement
-- [CORRECTIONS.md](CORRECTIONS.md) — journal des corrections (C-001 → C-038)
-- [REQUIREMENTS.md](REQUIREMENTS.md) — cahier des charges
-- [DEPLOYMENT.md](DEPLOYMENT.md) — déploiement Proxmox et dépannage
+| Document | Contenu |
+|---|---|
+| [docs/guide-utilisateur.md](docs/guide-utilisateur.md) | Guide utilisateur : installation PWA, planification, courses, statistiques, partage, FAQ |
+| [docs/cahier-des-charges.md](docs/cahier-des-charges.md) | Exigences du projet (cahier des charges) |
+| [docs/roadmap.md](docs/roadmap.md) | **État actuel** : campagne de tests, corrections, phase 4 |
+| [docs/correctifs.md](docs/correctifs.md) | Journal des corrections (C-001 → C-038) |
+| [docs/deploiement-proxmox.md](docs/deploiement-proxmox.md) | Déploiement Proxmox + tunnel Cloudflare, mise à jour, dépannage |
+| [docs/test-scenarios.md](docs/test-scenarios.md) | Scénarios de recette métier (S01–S23) et décisions ouvertes |
+| [docs/plan-commercialisation.md](docs/plan-commercialisation.md) | Plan de commercialisation : positionnement, prix, légal, pérennité |
+| [docs/plan-action-10k-foyers.md](docs/plan-action-10k-foyers.md) | Plan d'action phases 0–3, critères Go/No-Go |
+| [docs/echecs-et-stripe.md](docs/echecs-et-stripe.md) | Échecs du segment (Yummly, PlateJoy…) + annexe Stripe |
+| [docs/archives/](docs/archives/) | Roadmaps historiques |
 
 ## 🚀 Démarrage rapide
 
@@ -93,7 +100,7 @@ npm run build && npm start   # production
 | `seed` / `seed:clear` | Remplit / vide les données de démonstration |
 | `create-admin` | Crée un compte ADMIN (email et mot de passe en arguments, ou `ADMIN_EMAIL`/`ADMIN_PASSWORD`) |
 
-> ⚠️ `AUTH_SECRET` est **obligatoire** : l'application refuse de démarrer en production sans lui. Le fuseau horaire du serveur doit être `Europe/Paris` (voir DEPLOYMENT.md).
+> ⚠️ `AUTH_SECRET` est **obligatoire** : l'application refuse de démarrer en production sans lui. Le fuseau horaire du serveur doit être `Europe/Paris` (voir docs/deploiement-proxmox.md).
 
 ---
 
@@ -133,10 +140,10 @@ meal_plan/
 │   ├── components/PlannerBoard.tsx   # calendrier partagé (DnD, modals, palette)
 │   ├── ingredients/ · recipes/ · login/ · profile/ · register/ · reset-password/
 │   ├── shopping-list/        # liste de courses
-│   ├── share/                 # gestion des jetons (ADMIN)
-│   ├── settings/              # page de paramétrage
-│   ├── deploy/                # page de déploiement (mise à jour / rollback, ADMIN)
-│   └── public/calendar/       # page publique (jeton)
+│   ├── share/                # gestion des jetons (ADMIN)
+│   ├── settings/             # page de paramétrage
+│   ├── deploy/               # page de déploiement (mise à jour / rollback, ADMIN)
+│   └── public/calendar/      # page publique (jeton)
 ├── lib/
 │   ├── auth.ts               # configuration NextAuth
 │   ├── auth-guards.ts        # requireSession / requireAdmin (revalidation en base)
@@ -145,18 +152,17 @@ meal_plan/
 │   └── db/                   # schema.ts, index.ts, seed.ts
 ├── drizzle/                  # migrations versionnées
 ├── data/sqlite.db            # base de données (suivie pour les données de test)
-├── scripts/                  # proxmox-install.sh, db-ensure.ts (réconciliation schéma), create-admin.ts
-├── DEPLOYMENT.md             # guide de déploiement Proxmox + Cloudflare├── update.sh                 # mise à jour robuste (backup, ensure, build, healthcheck, rollback)
-
-├── ROADMAPV3.md              # roadmap courante (tests, corrections, phase 4)
-└── archives/                 # roadmaps précédentes
+├── docs/                     # toute la documentation (kebab-case)
+├── scripts/                  # proxmox-install.sh, db-ensure.ts, create-admin.ts
+├── AGENTS.md                 # contexte de travail pour agents IA
+└── update.sh                 # mise à jour robuste (backup, ensure, build, healthcheck, rollback)
 ```
 
 ---
 
 ## 📦 Déploiement
 
-Tout est documenté dans **[DEPLOYMENT.md](DEPLOYMENT.md)** :
+Tout est documenté dans **[docs/deploiement-proxmox.md](docs/deploiement-proxmox.md)** :
 
 - **Option A — script automatique** : une commande depuis le Shell de l'hôte Proxmox crée le conteneur et installe tout (`scripts/proxmox-install.sh`, v5) ;
 - **Option B — manuelle pas à pas** (avec le pourquoi de chaque étape) ;
@@ -169,16 +175,19 @@ Tout est documenté dans **[DEPLOYMENT.md](DEPLOYMENT.md)** :
 
 ## 🧪 Tests et corrections
 
-L'état des validations manuelles et la liste des corrections se trouvent dans **[ROADMAPV3.md](ROADMAPV3.md)** :
+L'état des validations manuelles et la liste des corrections se trouvent dans **[docs/roadmap.md](docs/roadmap.md)** :
 
 - section « **Campagne de tests en cours** » : checklists de validation par fonctionnalité ;
 - section « **CORRECTIONS** » : tableau à alimenter pendant les tests (une ligne par problème).
+- scénarios de recette métier (parcours complets) : [docs/test-scenarios.md](docs/test-scenarios.md)
 
 ---
 
 ## 🗺️ Roadmap
 
-Phases 1 à 3 du cahier des charges : **terminées**. Restent (phase 4) : import de recettes par URL (F07), notifications (F10), garde-manger (F11), PWA hors-ligne (F12), OAuth. Détails et estimations : [ROADMAPV3.md](ROADMAPV3.md).
+Phases 1 à 3 du cahier des charges : **terminées**. Restent (phase 4) : import de recettes par URL (F07), notifications (F10), garde-manger (F11), PWA hors-ligne (F12), OAuth. Détails et estimations : [docs/roadmap.md](docs/roadmap.md).
+
+Préparation de la **commercialisation** (licence à vie par foyer) : chantiers bloquants et scénarios de recette dans [docs/test-scenarios.md](docs/test-scenarios.md), stratégie dans [docs/plan-commercialisation.md](docs/plan-commercialisation.md) et [docs/plan-action-10k-foyers.md](docs/plan-action-10k-foyers.md).
 
 ---
 
@@ -194,12 +203,9 @@ Conventions : commits en français (`feat:`, `fix:`, `chore:`, `docs:`), les mig
 
 ---
 
-## 📄 Documentation
+## 🤖 Pour les agents IA
 
-- **[ROADMAPV3.md](ROADMAPV3.md)** — roadmap courante, tests, corrections, phase 4
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** — déploiement Proxmox + Cloudflare
-- **[meal_plan_requirements.md](meal_plan_requirements.md)** — cahier des charges
-- [archives/](archives/) — roadmaps historiques
+Tout le contexte de travail (stack, commandes, arborescence annotée, conventions, routage documentaire) est concentré dans [AGENTS.md](AGENTS.md), lu automatiquement par la plupart des agents IA. Les journaux longs ([docs/correctifs.md](docs/correctifs.md)) se consultent par mot-clé (`grep -n "<mot-clé>" docs/correctifs.md`), jamais en entier.
 
 ---
 
