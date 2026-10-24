@@ -2,7 +2,7 @@
 
 **Projet :** Application web familiale de planification des repas, auto-hébergée.
 
-**Statut :** **v1.5** — v1.4 (addendum multi-tenant vision) + suivi de conformité « socle commercial » (§6, audit du 24 oct. 2026).
+**Statut :** **v1.6** — v1.5 + C-011 : runbook de purge de l'historique prêt (§6, voir [purge-historique-c-011.md](purge-historique-c-011.md)).
 
 ## 1. Présentation du projet
 
@@ -192,7 +192,7 @@ L'application est conçue aujourd'hui pour **un seul foyer**. L'hébergement mut
 | CI lint + build | ❌ | workflow GitHub Actions à créer (pattern modop transposable) |
 | CSP complète (nonce/hash au build) | ⚠️ connu | point d'attention persistant (correctifs.md) |
 | Sessions révocables au changement de mot de passe | ⚠️ connu | compensation temporaire : maxAge 7 j |
-| C-011 — purge de l'historique git + révocation des jetons pré-retrait | 🔴 en suspens | décision documentée, à exécuter (priorité n°1) |
+| C-011 — purge de l'historique git + révocation des jetons pré-retrait | 🟠 runbook prêt (24/10) | exécution propriétaire ~30 min, 0 € — voir [purge-historique-c-011.md](purge-historique-c-011.md) |
 | Sauvegarde planifiée + copie hors CT | ❌ | cron quotidien `sqlite.db` + `.env.local` (voir `docs/plan-de-reprise.md`) |
 | Moniteur uptime | ❌ | ajouter meal_plan à l'instance Uptime Kuma existante |
 | Releases SemVer | ❌ (1 tag `last-stable`) | au premier lot de prod post-vacances |
