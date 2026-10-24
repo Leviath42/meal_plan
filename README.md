@@ -62,13 +62,14 @@
 | [docs/guide-utilisateur.md](docs/guide-utilisateur.md) | Guide utilisateur : installation PWA, planification, courses, statistiques, partage, FAQ |
 | [docs/cahier-des-charges.md](docs/cahier-des-charges.md) | Exigences du projet (cahier des charges) |
 | [docs/roadmap.md](docs/roadmap.md) | **État actuel** : campagne de tests, corrections, phase 4 |
-| [docs/correctifs.md](docs/correctifs.md) | Journal des corrections (C-001 → C-045) |
+| [docs/correctifs.md](docs/correctifs.md) | Journal des corrections (C-036 → C-045 ; C-001 → C-035 archivés) |
 | [docs/deploiement-proxmox.md](docs/deploiement-proxmox.md) | Déploiement Proxmox + tunnel Cloudflare, mise à jour, dépannage |
+| [docs/plan-de-reprise.md](docs/plan-de-reprise.md) | Plan de reprise d'activité (PRA) : RTO/RPO, scénarios de sinistre, procédures de restauration |
 | [docs/test-scenarios.md](docs/test-scenarios.md) | Scénarios de recette métier (S01–S23) et décisions ouvertes |
 | [docs/plan-commercialisation.md](docs/plan-commercialisation.md) | Plan de commercialisation : positionnement, prix, légal, pérennité |
 | [docs/plan-action-10k-foyers.md](docs/plan-action-10k-foyers.md) | Plan d'action phases 0–3, critères Go/No-Go |
 | [docs/echecs-et-stripe.md](docs/echecs-et-stripe.md) | Échecs du segment (Yummly, PlateJoy…) + annexe Stripe |
-| [docs/archives/](docs/archives/) | Roadmaps historiques |
+| [docs/archives/](docs/archives/) | Roadmaps historiques + journal des corrections C-001 → C-035 |
 
 ## 🚀 Démarrage rapide
 
