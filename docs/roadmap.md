@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-10 (v3.8)*
-*Version : 3.8 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-24 (v3.9)*
+*Version : 3.9 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -142,6 +142,23 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 ---
 
+## 🛡️ Conformité socle commercial — audit du 24 oct. 2026
+
+Audit du repo contre une checklist « socle d'une application commerciale B2B/B2C » (hygiène GitHub, sécurité native, CI/CD, OWASP, sauvegardes, exploitation, légal). Traçabilité détaillée : [cahier-des-charges.md](cahier-des-charges.md) §6.
+
+- [x] **SECURITY.md créé** (`.github/SECURITY.md`) + **Dependabot version updates configuré** (`.github/dependabot.yml`) — 24 oct. 2026
+- [ ] **Côté propriétaire (~5 min, paramètres GitHub)** : secret scanning + push protection ; code scanning (CodeQL) ; vérifier Dependabot alerts + dependency graph ; activer le signalement privé de vulnérabilités ; 2FA sur le compte
+- [ ] **C-011 (priorité n°1)** : purge de l'historique git (`git filter-repo`) + révocation des jetons créés avant le retrait de la base
+- [ ] CI GitHub Actions minimale : lint + build à chaque push/PR (pattern modop transposable)
+- [ ] CSP complète (nonce/hash au build pour le script inline du thème) — point d'attention persistant
+- [ ] Révocation des sessions au changement de mot de passe (compensation actuelle : maxAge 7 j)
+- [ ] Sauvegarde quotidienne planifiée + copie hors CT (base + `.env.local`) — voir [plan-de-reprise.md](plan-de-reprise.md)
+- [ ] Moniteur Uptime Kuma dédié (contournement actuel : sonde sur `/login`)
+- [ ] Releases SemVer (tags + notes de version) au premier lot de production
+- [ ] Au lancement commercial : licence actée (reco FSL-1.1), CGV/mentions légales publiées, accessibilité EAA (déclaration + bases WCAG)
+
+---
+
 ## 🚀 Phase 4 — Fonctionnalités restantes (prochaine vague)
 
 ### F07 - Import de Recettes depuis URL
@@ -228,4 +245,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3 (archivée) | 2026-10-07 | État réel post-phases 1-3 : phases terminées, processus IA documenté, campagne de tests, section corrections, phase 4 restante |
 | V3.1 (archivée) | 2026-10-08 | Maintenance intégrée (page `/deploy` + `update.sh` + `db:ensure`), corrections C-002 à C-005, liens Utilisateurs/Partage/Profil/Update regroupés dans Paramètres |
 | V3.2 (archivée) | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
-| **V3.3 (ce document)** | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans deploiement-proxmox.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans deploiement-proxmox.md |
+| V3.3 (archivée) | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans deploiement-proxmox.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans deploiement-proxmox.md |
+| **V3.9 (ce document)** | 2026-10-24 | Audit « socle commercial » : section Conformité + checklist, `.github/SECURITY.md` + `.github/dependabot.yml` créés, CDC v1.5 (§6 suivi d'audit), PRA v1.0 ([plan-de-reprise.md](plan-de-reprise.md)) |

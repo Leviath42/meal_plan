@@ -2,7 +2,7 @@
 
 **Projet :** Application web familiale de planification des repas, auto-hébergée.
 
-**Statut :** **v1.4** — v1.3 (périmètre, solutions techniques, architecture d'accès réseau) + addendum multi-tenant & administration (vision SaaS, non engagé).
+**Statut :** **v1.5** — v1.4 (addendum multi-tenant vision) + suivi de conformité « socle commercial » (§6, audit du 24 oct. 2026).
 
 ## 1. Présentation du projet
 
@@ -178,3 +178,22 @@ L'application est conçue aujourd'hui pour **un seul foyer**. L'hébergement mut
 2. Un super-admin peut suspendre, réactiver et supprimer définitivement un foyer (suppression vérifiable sur le disque).
 3. Les jetons ICS/API d'un foyer ne fonctionnent pas pour un autre foyer.
 4. Le backup/restauration fonctionne foyer par foyer.
+
+## 6. Conformité « socle commercial » — suivi d'audit (24 oct. 2026)
+
+> Audit du 24 oct. 2026 contre une checklist « socle d'une application commerciale B2B/B2C » (hygiène GitHub, sécurité native, CI/CD, OWASP, sauvegardes, exploitation, légal). Cette section trace l'état et les restes — à mettre à jour au fil des corrections.
+
+| Exigence | État (24/10/2026) | Reste / échéance |
+|---|---|---|
+| `SECURITY.md` + signalement privé | ✅ créé (`.github/SECURITY.md`) | activer le signalement privé (paramètres du repo) |
+| Dependabot version updates | ✅ configuré (`.github/dependabot.yml`) | vérifier que les alerts sont ON ; fusionner les PR hebdomadaires |
+| Secret scanning + push protection | ❌ | à activer (propriétaire, ~2 min) |
+| Code scanning (CodeQL) | ❌ | à activer (gratuit, repo public) |
+| CI lint + build | ❌ | workflow GitHub Actions à créer (pattern modop transposable) |
+| CSP complète (nonce/hash au build) | ⚠️ connu | point d'attention persistant (correctifs.md) |
+| Sessions révocables au changement de mot de passe | ⚠️ connu | compensation temporaire : maxAge 7 j |
+| C-011 — purge de l'historique git + révocation des jetons pré-retrait | 🔴 en suspens | décision documentée, à exécuter (priorité n°1) |
+| Sauvegarde planifiée + copie hors CT | ❌ | cron quotidien `sqlite.db` + `.env.local` (voir `docs/plan-de-reprise.md`) |
+| Moniteur uptime | ❌ | ajouter meal_plan à l'instance Uptime Kuma existante |
+| Releases SemVer | ❌ (1 tag `last-stable`) | au premier lot de prod post-vacances |
+| Légal (CGV, mentions légales, EAA accessibilité, licence) | 🟡 préparé | au lancement commercial (`docs/plan-commercialisation.md`) |

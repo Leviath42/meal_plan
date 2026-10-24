@@ -1,0 +1,23 @@
+# Mises à jour automatiques de dépendances — audit socle du 24 oct. 2026
+version: 2
+updates:
+  # npm : minor + patch regroupés pour limiter le bruit, majors en PR individuelles
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+    groups:
+      minor-et-patch:
+        update-types:
+          - "minor"
+          - "patch"
+  # GitHub Actions — prêt pour la future CI
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
