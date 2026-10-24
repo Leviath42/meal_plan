@@ -168,7 +168,7 @@ L'application est conçue aujourd'hui pour **un seul foyer**. L'hébergement mut
 ### 5.5 Impact sur l'existant
 
 - **F06 (auth)** : le middleware résout le foyer courant en plus de la session ; aucune reprise des rôles existants.
-- **F04 (ICS) / intégration HA** : jetons déjà révocables, à scop er par foyer — pas de refonte.
+- **F04 (ICS) / intégration HA** : jetons déjà révocables, à scoper par foyer — pas de refonte.
 - **Sauvegardes (critère 6)** : le script itère par dossier de foyer.
 - **Kiosque tablette murale** : un jeton ne donne accès qu'au planning de son foyer.
 
