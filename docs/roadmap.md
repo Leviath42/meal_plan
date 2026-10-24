@@ -147,7 +147,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 Audit du repo contre une checklist « socle d'une application commerciale B2B/B2C » (hygiène GitHub, sécurité native, CI/CD, OWASP, sauvegardes, exploitation, légal). Traçabilité détaillée : [cahier-des-charges.md](cahier-des-charges.md) §6.
 
 - [x] **SECURITY.md créé** (`.github/SECURITY.md`) + **Dependabot version updates configuré** (`.github/dependabot.yml`) — 24 oct. 2026
-- [ ] **Côté propriétaire (~5 min, paramètres GitHub)** : secret scanning + push protection ; code scanning (CodeQL) ; vérifier Dependabot alerts + dependency graph ; activer le signalement privé de vulnérabilités ; 2FA sur le compte
+- [x] **Côté propriétaire — fait le 24 oct. 2026 (meal_plan et modop)** : secret scanning + push protection ✅ ; code scanning CodeQL ✅ ; Dependabot alerts vérifiées ✅ ; signalement privé ✅ ; 2FA ✅
 - [ ] **C-011 (priorité n°1)** : purge de l'historique git (`git filter-repo`) + révocation des jetons créés avant le retrait de la base
 - [ ] CI GitHub Actions minimale : lint + build à chaque push/PR (pattern modop transposable)
 - [ ] CSP complète (nonce/hash au build pour le script inline du thème) — point d'attention persistant

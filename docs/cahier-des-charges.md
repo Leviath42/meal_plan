@@ -185,10 +185,10 @@ L'application est conçue aujourd'hui pour **un seul foyer**. L'hébergement mut
 
 | Exigence | État (24/10/2026) | Reste / échéance |
 |---|---|---|
-| `SECURITY.md` + signalement privé | ✅ créé (`.github/SECURITY.md`) | activer le signalement privé (paramètres du repo) |
-| Dependabot version updates | ✅ configuré (`.github/dependabot.yml`) | vérifier que les alerts sont ON ; fusionner les PR hebdomadaires |
-| Secret scanning + push protection | ❌ | à activer (propriétaire, ~2 min) |
-| Code scanning (CodeQL) | ❌ | à activer (gratuit, repo public) |
+| `SECURITY.md` + signalement privé | ✅ créé + signalement privé activé | traiter les éventuels signalements |
+| Dependabot version updates | ✅ configuré ; alerts vérifiées ON | fusionner les PR hebdomadaires |
+| Secret scanning + push protection | ✅ activés (Secret Protection) | — |
+| Code scanning (CodeQL) | ✅ activé (default setup) | trier les alertes remontées |
 | CI lint + build | ❌ | workflow GitHub Actions à créer (pattern modop transposable) |
 | CSP complète (nonce/hash au build) | ⚠️ connu | point d'attention persistant (correctifs.md) |
 | Sessions révocables au changement de mot de passe | ⚠️ connu | compensation temporaire : maxAge 7 j |
