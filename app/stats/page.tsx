@@ -217,7 +217,7 @@ export default async function StatsPage() {
         </section>
 
         <p className="text-xs text-gray-400 text-center">
-          Statistiques calculées sur l'ensemble des repas planifiés (y compris passés).
+          Statistiques calculées sur l&apos;ensemble des repas planifiés (y compris passés).
           Dernière mise à jour de cette page : {formatNumericDate(new Date())}.
         </p>
       </div>

@@ -139,7 +139,7 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
             className="w-full sm:w-32 p-2 border rounded bg-white text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Cette valeur pré-remplit le champ « Nombre de couverts » lorsqu'un repas est
+            Cette valeur pré-remplit le champ « Nombre de couverts » lorsqu&apos;un repas est
             créé dans le calendrier.
           </p>
         </div>
@@ -183,7 +183,7 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
           />
           <p className="text-xs text-gray-500 mt-1">
             Une recette ne peut pas être replanifiée à moins de ce nombre de jours
-            d'une autre planification. 0 = contrôle désactivé (défaut : 7 jours).
+            d&apos;une autre planification. 0 = contrôle désactivé (défaut : 7 jours).
           </p>
         </div>
         <button
