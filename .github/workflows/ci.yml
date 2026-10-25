@@ -20,7 +20,7 @@ jobs:
       - name: Installer les dépendances
         run: npm ci
       - name: Lint
-        run: npm run lint
+        run: npx eslint . --format github
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Build
