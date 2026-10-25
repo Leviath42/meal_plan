@@ -2,7 +2,7 @@
 
 **Projet :** Application web familiale de planification des repas, auto-hébergée.
 
-**Statut :** **v1.3** — périmètre, solutions techniques et architecture d'accès réseau (local + Internet).
+**Statut :** **v1.6** — v1.5 + C-011 : runbook de purge de l'historique prêt (§6, voir [purge-historique-c-011.md](purge-historique-c-011.md)).
 
 ## 1. Présentation du projet
 
@@ -125,3 +125,75 @@ Solution à définir
 5. Les API REST sont consommées proprement par Home Assistant pour les automatisations locales.
     
 6. La base SQLite et le dossier d'images sont conservés sur un volume hôte Proxmox et sauvegardés automatiquement.
+
+## 5. Addendum v1.4 — Multi-tenant & administration (vision SaaS)
+
+**Statut :** addendum de **vision, non engagé**. Il prépare l'hypothèse de commercialisation SaaS (plusieurs foyers hébergés) sans modifier le périmètre actuel mono-foyer. À mettre en œuvre uniquement si la commercialisation passe du stade « opportunité secondaire » au stade actif (voir `docs/plan-commercialisation.md`).
+
+### 5.1 Principe directeur
+
+L'application est conçue aujourd'hui pour **un seul foyer**. L'hébergement mutualisé suppose d'isoler strictement plusieurs foyers (tenants) sur une même instance.
+
+**Le foyer est l'unité d'isolation** : recettes, plannings, photos, jetons et membres n'appartiennent qu'à un seul foyer. Aucune donnée n'est partagée entre foyers.
+
+### 5.2 Modèle de tenancy
+
+| Option | Principe | Avantages | Inconvénients |
+|---|---|---|---|
+| **A — Une base SQLite par foyer** (recommandée) | Dossier `data/<foyer-id>/` : base + photos | Isolation physique maximale ; backup/restauration/export par copie de dossier ; suppression RGPD triviale ; schéma inchangé | Connexion par foyer (pool) ; métriques cross-foyers à agréger à part |
+| **B — Base unique + colonne `tenant_id`** | Toutes les tables portent `tenant_id` | Une seule connexion ; stats plateforme simples | Fuite inter-foyers possible à chaque requête (le filtre doit être inaliénable, au niveau ORM) ; export/suppression par foyer complexes |
+
+**Recommandation : option A**, cohérente avec l'argument actuel de SQLite (« backup par simple copie »). Si l'app évolue vers PostgreSQL (v1+), l'option B devient plus naturelle : la décision finale est donc **explicitement reportée au moment de la mise en œuvre**.
+
+### 5.3 Rôles et droits d'accès
+
+| Rôle | Portée | Droits |
+|---|---|---|
+| **Super-admin plateforme** | Instance | Gestion des foyers (création, suspension, suppression), souscriptions, quotas, métriques techniques. **Aucun accès au contenu** (recettes, plannings) |
+| **Admin foyer** | Son foyer | Droits actuels de l'admin : comptes du foyer, jetons ICS/API |
+| **Membre** | Son foyer | Lecture + écriture (inchangé, F06) |
+| **Invité** | Son foyer | Attente validation admin (inchangé) |
+
+- Un compte appartient à **un seul foyer** dans le premier lot multi-tenant ; l'appartenance multiple est explicitement hors périmètre.
+- Toute route API vérifie « foyer du jeton de session == foyer de la ressource ».
+- Les jetons ICS et API Home Assistant restent **scopés au foyer** (F04, §3.6).
+
+### 5.4 Administration plateforme
+
+- Console `/admin` réservée au super-admin : liste des foyers, état de souscription, volumétrie (recettes, photos, taille de base), actions suspendre / réactiver / supprimer.
+- **Quotas par foyer** (photos, recettes) : à définir au moment du lancement SaaS, pas avant.
+- **Suppression d'un foyer** : effacement du dossier `data/<foyer-id>/` — avantage décisif de l'option A pour le droit à l'effacement RGPD.
+- **Facturation** : le multi-tenant est le prérequis technique du paiement en ligne (voir `docs/echecs-et-stripe.md`) mais cet addendum n'anticipe aucune implémentation Stripe.
+
+### 5.5 Impact sur l'existant
+
+- **F06 (auth)** : le middleware résout le foyer courant en plus de la session ; aucune reprise des rôles existants.
+- **F04 (ICS) / intégration HA** : jetons déjà révocables, à scoper par foyer — pas de refonte.
+- **Sauvegardes (critère 6)** : le script itère par dossier de foyer.
+- **Kiosque tablette murale** : un jeton ne donne accès qu'au planning de son foyer.
+
+### 5.6 Critères d'acceptation (à n'activer qu'au passage SaaS)
+
+1. Deux foyers sur la même instance ne peuvent voir aucune donnée l'un de l'autre (test croisé automatisé).
+2. Un super-admin peut suspendre, réactiver et supprimer définitivement un foyer (suppression vérifiable sur le disque).
+3. Les jetons ICS/API d'un foyer ne fonctionnent pas pour un autre foyer.
+4. Le backup/restauration fonctionne foyer par foyer.
+
+## 6. Conformité « socle commercial » — suivi d'audit (24 oct. 2026)
+
+> Audit du 24 oct. 2026 contre une checklist « socle d'une application commerciale B2B/B2C » (hygiène GitHub, sécurité native, CI/CD, OWASP, sauvegardes, exploitation, légal). Cette section trace l'état et les restes — à mettre à jour au fil des corrections.
+
+| Exigence | État (24/10/2026) | Reste / échéance |
+|---|---|---|
+| `SECURITY.md` + signalement privé | ✅ créé + signalement privé activé | traiter les éventuels signalements |
+| Dependabot version updates | ✅ configuré ; alerts vérifiées ON | fusionner les PR hebdomadaires |
+| Secret scanning + push protection | ✅ activés (Secret Protection) | — |
+| Code scanning (CodeQL) | ✅ activé (default setup) | trier les alertes remontées |
+| CI lint + build | ❌ | workflow GitHub Actions à créer (pattern modop transposable) |
+| CSP complète (nonce/hash au build) | ⚠️ connu | point d'attention persistant (correctifs.md) |
+| Sessions révocables au changement de mot de passe | ⚠️ connu | compensation temporaire : maxAge 7 j |
+| C-011 — purge de l'historique git + révocation des jetons pré-retrait | 🟡 branches/tags réécrits et jetons révoqués (24/10) | reste à réaligner les clones et CT beta/prod ; purge Support GitHub écartée par décision du 24/10 (risque résiduel accepté) — voir [purge-historique-c-011.md](purge-historique-c-011.md) |
+| Sauvegarde planifiée + copie hors CT | ❌ | cron quotidien `sqlite.db` + `.env.local` (voir `docs/plan-de-reprise.md`) |
+| Moniteur uptime | ❌ | ajouter meal_plan à l'instance Uptime Kuma existante |
+| Releases SemVer | ❌ (1 tag `last-stable`) | au premier lot de prod post-vacances |
+| Légal (CGV, mentions légales, EAA accessibilité, licence) | 🟡 préparé | au lancement commercial (`docs/plan-commercialisation.md`) |

@@ -2,7 +2,7 @@
 
 *Dernière mise à jour : 2026-10-07*
 *Version : 2.6*
-*Basé sur : [meal_plan_requirements.md](meal_plan_requirements.md)*
+*Basé sur : [cahier-des-charges.md](cahier-des-charges.md)*
 
 ---
 
@@ -545,7 +545,7 @@ CREATE TABLE pantry_items (
 
 ## 🔗 **Ressources et Références**
 
-- [Cahier des Charges](meal_plan_requirements.md) - Spécifications complètes
+- [Cahier des Charges](cahier-des-charges.md) - Spécifications complètes
 - [ROADMAP Originale](ROADMAP.md) - État actuel du projet
 - [Documentation Next.js](https://nextjs.org/docs)
 - [dnd-kit Documentation](https://dndkit.com/)
@@ -557,7 +557,7 @@ CREATE TABLE pantry_items (
 
 Pour toute question sur la planification :
 1. Consulter ce document
-2. Vérifier le [cahier des charges](meal_plan_requirements.md)
+2. Vérifier le [cahier des charges](cahier-des-charges.md)
 3. Regarder les commits récents pour voir les exemples d'implémentation
 
 ---

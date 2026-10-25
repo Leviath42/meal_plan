@@ -232,7 +232,7 @@ export default function ShareClient({ tokens }: { tokens: AccessTokenWithStatus[
             Jetons existants
           </h2>
           <p className="text-xs text-gray-400 mb-2">
-            Les jetons sont stockés hachés : les liens complets ne sont affichés qu'à la création.
+            Les jetons sont stockés hachés : les liens complets ne sont affichés qu&apos;à la création.
           </p>
 
           {tokens.length === 0 ? (
