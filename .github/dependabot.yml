@@ -16,8 +16,16 @@ updates:
         update-types:
           - "minor"
           - "patch"
-  # GitHub Actions — prêt pour la future CI
+  # GitHub Actions : actions tierces des workflows, regroupées pour limiter le bruit
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore"
+    groups:
+      actions:
+        patterns:
+          - "*"
