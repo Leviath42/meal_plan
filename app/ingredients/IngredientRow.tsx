@@ -71,7 +71,7 @@ export default function IngredientRow({ id, name, category, defaultUnit }: {
         message={
           <>
             Supprimer <strong>«&nbsp;{name}&nbsp;»</strong>&nbsp;?
-            Les recettes qui l'utilisent conserveront leur ligne d'ingrédient.
+            Les recettes qui l&apos;utilisent conserveront leur ligne d&apos;ingrédient.
           </>
         }
         pending={pending}

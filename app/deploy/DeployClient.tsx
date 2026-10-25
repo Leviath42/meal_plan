@@ -226,7 +226,7 @@ export default function DeployClient({ role }: DeployClientProps) {
           </div>
         </>
       ) : (
-        <p className="text-sm text-gray-500">Chargement de l'état...</p>
+        <p className="text-sm text-gray-500">Chargement de l&apos;état...</p>
       )}
 
       {/* État d'exécution */}

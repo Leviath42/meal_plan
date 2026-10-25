@@ -241,7 +241,7 @@ function MealPlanCreationModal({
       setSuggestionsError(null);
       setIsLoading(false);
     }
-  }, [isOpen]);
+  }, [isOpen, defaultServings]);
 
   if (!isOpen) return null;
 
@@ -709,7 +709,7 @@ function MealPlanActionsModal({
                 ) : (
                   <div className="w-full text-left p-3 opacity-50" title="Les repas passés ne sont pas supprimables (historique)">
                     <span className="font-medium text-gray-400">Supprimer</span>
-                    <p className="text-sm text-gray-400">Impossible : date passée — l'historique est conservé</p>
+                    <p className="text-sm text-gray-400">Impossible : date passée — l&apos;historique est conservé</p>
                   </div>
                 )}
               </div>
@@ -1555,7 +1555,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
               title="Revenir à aujourd'hui"
               className="px-3 py-1.5 bg-accent text-white rounded hover:bg-accent-hover text-xs whitespace-nowrap disabled:opacity-50"
             >
-              Aujourd'hui
+              Aujourd&apos;hui
             </button>
             {enableRecipePalette && (
               <button

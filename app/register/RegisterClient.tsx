@@ -437,7 +437,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
                   type="submit"
                   className="sm:col-span-3 w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors"
                 >
-                  Créer l'utilisateur
+                  Créer l&apos;utilisateur
                 </button>
               </form>
             </div>

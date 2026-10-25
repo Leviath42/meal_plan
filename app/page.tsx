@@ -40,7 +40,7 @@ export default async function HomePage() {
           className="block bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow hover:border-green-300"
         >
           <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-1">Ingrédients</h2>
-          <p className="text-xs sm:text-sm text-gray-600">Gérez votre dictionnaire d'ingrédients par rayon.</p>
+          <p className="text-xs sm:text-sm text-gray-600">Gérez votre dictionnaire d&apos;ingrédients par rayon.</p>
         </Link>
 
         <Link

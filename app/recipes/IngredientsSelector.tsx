@@ -212,7 +212,7 @@ export default function IngredientsSelector({
               {creating ? 'Création…' : 'Créer l\'ingrédient'}
             </button>
             <p className="text-xs text-gray-500">
-              L'ingrédient créé est directement sélectionné dans la liste ci-dessous.
+              L&apos;ingrédient créé est directement sélectionné dans la liste ci-dessous.
             </p>
           </div>
         )}
@@ -308,7 +308,7 @@ export default function IngredientsSelector({
               disabled={!selectedIngredientId || !quantity || Number.isNaN(Number.parseFloat(quantity)) || Number.parseFloat(quantity) <= 0 || (!unit && !selectedIngredient?.defaultUnit)}
               className="w-full bg-green-600 text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              + Ajouter l'ingrédient
+              + Ajouter l&apos;ingrédient
             </button>
           </div>
         )}
