@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-24 (v3.10)*
-*Version : 3.10 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-24 (v3.11)*
+*Version : 3.11 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -196,6 +196,26 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - Providers, boutons de connexion alternatifs, comptes liés
 - Estimation : 1 jour
 
+### F15 - Système de retours clients (feedback)
+
+**Objectif commercial** : installer la boucle de feedback dès la bêta privée — savoir pourquoi un essai ne convertit pas, capter les bugs terrain et les idées avant le lancement public. Le feedback fait partie des critères Go/No-Go (plan-action-10k-foyers.md) : sans canal de retour, pas d'apprentissage bêta.
+
+**Périmètre v1 — moyens du bord, zéro service tiers** (pas de SaaS de feedback, cohérent avec le positionnement vie privée / auto-hébergé) :
+
+- Table *feedback* (migration) : id, household_id, user_id, catégorie (bug / idée / question / ressenti prix), message, page/URL d'origine, version de l'app, created_at, statut (nouveau / trié / traité / rejeté)
+- Bouton « Retours » permanent (nav ou footer) → modal /feedback : 3 clics maximum (catégorie, message, envoyer), server action + validation Zod, rate-limit simple par utilisateur
+- Page ADMIN /admin/feedback : liste triable, changement de statut, compteur par catégorie — base du tri hebdomadaire
+- Enquêtes par email (si SMTP configuré, sinon relance manuelle) :
+  - J-7 de fin d'essai : « Qu'est-ce qui vous a manqué ? » + la question prix actée (« cher / correct / cadeau ? »)
+  - J+30 après achat : NPS 0-10 + commentaire libre
+- Enquête satisfiable en 30 secondes ; aucun champ obligatoire hormis le message
+- Vie privée : aucune donnée personnelle au-delà du compte existant ; mention dans la politique de confidentialité (finalité « amélioration du produit »)
+- Option (plus tard) : suggestion de créer une issue publique sur le repo pour les idées de fonctionnalités
+
+**Fichiers** : app/feedback/ (modal + action), app/admin/feedback/page.tsx, migration 0006 (table feedback), éventuellement lib/email (réutilisation F10)
+
+**Estimation : 1-2 jours** — parallélisable avec F07/F10/F11 (fichiers majoritairement nouveaux)
+
 *Contrat de la vague 3 à prévoir : table `pantry_items` au schéma (F11). F07, F10 et F12 sont majoritairement des fichiers nouveaux → parallélisables en 3 workers ; F11 en 4ᵉ position ou en parallèle avec son contrat.*
 
 ---
@@ -248,4 +268,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.2 (archivée) | 2026-10-08 | Générateur de menus paramétrable (page /calendar/generator), liste de courses dépliée par défaut avec tout plier/déplier et masquage des achetés, bouton nouvel ingrédient aligné avec le titre |
 | V3.3 (archivée) | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans deploiement-proxmox.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans deploiement-proxmox.md |
 | V3.9 (archivée) | 2026-10-24 | Audit « socle commercial » : section Conformité + checklist, `.github/SECURITY.md` + `.github/dependabot.yml` créés, CDC v1.5 (§6 suivi d'audit), PRA v1.0 ([plan-de-reprise.md](plan-de-reprise.md)) |
-| **V3.10 (ce document)** | 2026-10-24 | C-011 : branches/tags réécrits et jetons révoqués ; reste le réalignement des clones/CT ; purge Support GitHub écartée par décision (risque résiduel accepté) |
+| V3.10 (archivée) | 2026-10-24 | C-011 : branches/tags réécrits et jetons révoqués ; reste le réalignement des clones/CT ; purge Support GitHub écartée par décision (risque résiduel accepté) |
+| **V3.11 (ce document)** | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
