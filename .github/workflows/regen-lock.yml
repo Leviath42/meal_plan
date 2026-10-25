@@ -1,0 +1,34 @@
+name: regen-lock
+
+# Regenere package-lock.json quand package.json change sur main.
+# Le commit automatique declenche ensuite la CI normale.
+on:
+  push:
+    branches: [main]
+    paths: ['package.json']
+
+permissions:
+  contents: write
+
+jobs:
+  regen:
+    name: Regen lockfile (npm install)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Regenerer package-lock.json
+        run: npm install --no-audit --no-fund
+      - name: Commiter si modifie
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "Lockfile deja a jour."
+          else
+            git commit -m "chore: lockfile regenere par npm install (regen-lock)"
+            git push
+          fi
