@@ -82,6 +82,9 @@ export default function ShoppingListClient({
   // Génération réussie : fermer le modal automatiquement et porter le
   // message dans le bandeau de notice (sinon la fermeture le masquerait
   // aussitôt) — la liste rafraîchie confirme visuellement le résultat
+  // Bandeau de message (erreur ou info), fermé tout seul après 6 secondes
+  const [notice, setNotice] = useState<string | null>(null);
+
   useEffect(() => {
     if (generateState?.success) {
       setNotice(generateState.message);
@@ -93,8 +96,6 @@ export default function ShoppingListClient({
     null
   );
 
-  // Bandeau de message (erreur ou info), fermé tout seul après 6 secondes
-  const [notice, setNotice] = useState<string | null>(null);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(null), 6000);

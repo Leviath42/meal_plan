@@ -27,6 +27,9 @@ jobs:
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # Placeholder requis uniquement pour le build en CI : lib/auth.ts refuse
+          # NODE_ENV=production sans AUTH_SECRET. Ce n'est pas un secret réel.
+          AUTH_SECRET: 'ci-build-placeholder'
 
   audit:
     name: Audit dépendances (production, high+)

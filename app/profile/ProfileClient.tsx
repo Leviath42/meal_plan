@@ -289,7 +289,7 @@ export default function ProfileClient({ session }: ProfileClientProps) {
         </div>
 
         <div className="mt-1">
-          <Link href="/" className="text-xs sm:text-sm text-accent hover:underline">Retour à l'accueil</Link>
+          <Link href="/" className="text-xs sm:text-sm text-accent hover:underline">Retour à l&apos;accueil</Link>
         </div>
       </div>
     </main>
