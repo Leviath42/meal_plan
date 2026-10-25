@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  pull-requests: write
-
 jobs:
   build:
     name: App (lint + typecheck + build)
@@ -23,63 +20,28 @@ jobs:
       - name: Installer les dépendances
         run: npm ci
       - name: Lint
-        id: lint
-        run: |
-          set +e
-          npx eslint . > lint-output.txt 2>&1
-          echo "exitcode=$?" >> "$GITHUB_OUTPUT"
+        run: npm run lint
       - name: Typecheck
-        id: typecheck
-        run: |
-          set +e
-          npx tsc --noEmit > typecheck-output.txt 2>&1
-          echo "exitcode=$?" >> "$GITHUB_OUTPUT"
+        run: npx tsc --noEmit
       - name: Build
-        id: build
-        run: |
-          set +e
-          npm run build > build-output.txt 2>&1
-          echo "exitcode=$?" >> "$GITHUB_OUTPUT"
-      - name: Rapport sur la PR
-        if: always()
-        uses: actions/github-script@v7
+        run: npm run build
         env:
-          LINT_CODE: ${{ steps.lint.outputs.exitcode }}
-          TS_CODE: ${{ steps.typecheck.outputs.exitcode }}
-          BUILD_CODE: ${{ steps.build.outputs.exitcode }}
           NEXT_TELEMETRY_DISABLED: '1'
+          # Placeholder requis uniquement pour le build en CI : lib/auth.ts refuse
+          # NODE_ENV=production sans AUTH_SECRET. Ce n'est pas un secret reel.
+          AUTH_SECRET: 'ci-build-placeholder'
+
+  audit:
+    name: Audit dépendances (production, high+)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          script: |
-            const fs = require('fs');
-            const read = (f) => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { return '(absent) ' + f; } };
-            const clip = (s, n) => (s && s.length > n ? s.slice(0, n) + '\n…(tronqué, ' + s.length + ' octets au total)' : (s || '(vide)'));
-            const codes = { lint: process.env.LINT_CODE, typecheck: process.env.TS_CODE, build: process.env.BUILD_CODE };
-            const body = [
-              '### Diagnostic CI (run ' + context.runId + ')',
-              '- lint : exit ' + codes.lint,
-              '- typecheck : exit ' + codes.typecheck,
-              '- build : exit ' + codes.build,
-              '',
-              '**Lint**',
-              '```',
-              clip(read('lint-output.txt'), 20000),
-              '```',
-              '',
-              '**Typecheck**',
-              '```',
-              clip(read('typecheck-output.txt'), 20000),
-              '```',
-              '',
-              '**Build**',
-              '```',
-              clip(read('build-output.txt'), 20000),
-              '```'
-            ].join('\n');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            });
-            const bad = Object.entries(codes).filter(([k, v]) => v !== '0').map(([k]) => k);
-            if (bad.length > 0) core.setFailed('etapes en echec : ' + bad.join(', '));
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Installer les dépendances
+        run: npm ci
+      - name: npm audit (prod uniquement)
+        run: npm audit --omit=dev --audit-level=high
