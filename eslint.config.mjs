@@ -1,3 +1,5 @@
 import next from 'eslint-config-next';
 
-export default [...next()];
+// eslint-config-next exporte directement un Linter.Config[] (module.exports = config),
+// pas une fonction : ne pas appeler next().
+export default [...next];
