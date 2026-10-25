@@ -37,7 +37,7 @@ export default function DeleteRecipeButton({ id, title }: { id: string; title: s
         message={
           <>
             Voulez-vous vraiment supprimer <strong>«&nbsp;{title}&nbsp;»</strong>&nbsp;?
-            Les repas planifiés qui l'utilisent seront conservés mais perdront
+            Les repas planifiés qui l&apos;utilisent seront conservés mais perdront
             leur référence à la recette.
           </>
         }
