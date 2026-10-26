@@ -7,7 +7,7 @@
 ---
 
 **Vendeur** : [Prénom NOM], micro-entrepreneur immatriculé au répertoire SIRENE sous le numéro [SIREN], domicilié à [adresse complète] — ci-après « le Vendeur ».
-**Contact** : [email professionnel] — formulaire de contact disponible sur [site web].
+**Contact** : contact@neliora.fr — formulaire de contact disponible sur [site web].
 **Site** : [https://…]
 
 ---
@@ -59,11 +59,11 @@
 
 6.2. L'activation du Foyer est **immédiate** après la confirmation du paiement. Une confirmation de commande est envoyée par courrier électronique.
 
-6.3. En cas d'erreur dans une commande ou d'absence d'activation, le client contacte [email professionnel] ; le Vendeur remédie à l'anomalie dans un délai raisonnable.
+6.3. En cas d'erreur dans une commande ou d'absence d'activation, le client contacte contact@neliora.fr ; le Vendeur remédie à l'anomalie dans un délai raisonnable.
 
 ## Article 7 — Droit de rétractation et renonciation expresse
 
-7.1. Conformément aux articles L221-18 et suivants du code de la consommation, le client dispose d'un **délai de 14 jours** à compter de la conclusion du contrat pour exercer son droit de rétractation, sans motif ni pénalité, au moyen du formulaire type figurant en annexe ou de toute autre déclaration non ambiguë adressée à [email professionnel].
+7.1. Conformément aux articles L221-18 et suivants du code de la consommation, le client dispose d'un **délai de 14 jours** à compter de la conclusion du contrat pour exercer son droit de rétractation, sans motif ni pénalité, au moyen du formulaire type figurant en annexe ou de toute autre déclaration non ambiguë adressée à contact@neliora.fr.
 
 7.2. Le Service étant un **contenu numérique fourni immédiatement après la commande**, son exécution commence dès l'activation. Conformément à l'article L221-28 13° du code de la consommation, le client qui demande l'exécution immédiate du contrat **renonce expressément à son droit de rétractation**, au moyen d'une case dédiée affichée **avant le paiement**. La case est décochée par défaut ; en son absence, le droit de rétractation de 7.1 demeure intégral.
 
@@ -73,7 +73,7 @@
 
 8.1. **Plus favorable que le droit légal** : le Vendeur accorde une garantie commerciale de remboursement intégral pendant **14 jours après l'achat, sans justification**, renonciation expresse ou non.
 
-8.2. Cette garantie est indépendante des garanties légales de l'article 9. Elle s'exerce par simple email à [email professionnel] ; le remboursement intervient sous 14 jours. Les données du Foyer restent exportables jusqu'à leur suppression.
+8.2. Cette garantie est indépendante des garanties légales de l'article 9. Elle s'exerce par simple email à contact@neliora.fr ; le remboursement intervient sous 14 jours. Les données du Foyer restent exportables jusqu'à leur suppression.
 
 ## Article 9 — Garanties légales
 
@@ -97,7 +97,7 @@
 
 ## Article 11 — Support et mises à jour
 
-11.1. Le support est assuré par email à [email professionnel], en français, dans un délai de réponse raisonnable au regard d'une entreprise unipersonnelle, **sans engagement de SLA**. La correction des bugs signalés et les mises à jour du Service sont incluses à vie, sans coût additionnel.
+11.1. Le support est assuré par email à contact@neliora.fr, en français, dans un délai de réponse raisonnable au regard d'une entreprise unipersonnelle, **sans engagement de SLA**. La correction des bugs signalés et les mises à jour du Service sont incluses à vie, sans coût additionnel.
 
 11.2. Le support ne couvre pas : l'assistance sur des équipements ou navigateurs non conformes à l'article 3.2, les dommages résultant d'une utilisation non conforme, ou la récupération de données supprimées par les utilisateurs.
 
@@ -123,7 +123,7 @@
 
 15.1. Les données personnelles sont traitées conformément au règlement (UE) 2016/679 (RGPD) et à la loi Informatique et Libertés ; les modalités détaillées figurent dans la [politique de confidentialité] publiée sur le site, qui fait partie intégrante du contrat.
 
-15.2. Le client dispose d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité, exercable en libre-service dans l'application ou par email à [email professionnel] ; il peut saisir la CNIL à tout moment.
+15.2. Le client dispose d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité, exercable en libre-service dans l'application ou par email à contact@neliora.fr ; il peut saisir la CNIL à tout moment.
 
 15.3. La suppression de compte est disponible en libre-service et effective sous 30 jours, à l'exception des copies de sauvegarde chiffrées, dont la durée de rétention est précisée dans la politique de confidentialité.
 
@@ -137,7 +137,7 @@
 
 ## Article 17 — Réclamations
 
-Toute réclamation s'effectue prioritairement par email à [email professionnel] ; le Vendeur accuse réception et répond dans un délai raisonnable, au plus tard dans les 30 jours.
+Toute réclamation s'effectue prioritairement par email à contact@neliora.fr ; le Vendeur accuse réception et répond dans un délai raisonnable, au plus tard dans les 30 jours.
 
 ## Article 18 — Droit applicable et litiges
 
@@ -163,7 +163,7 @@ Toute réclamation s'effectue prioritairement par email à [email professionnel]
 
 ## Annexe — Formulaire type de rétractation
 
-*(à détacher et envoyer à [email professionnel])*
+*(à détacher et envoyer à contact@neliora.fr)*
 
 Je vous notifie par la présente ma rétractation relative au contrat de licence Meal Plan référencé sous le numéro [n° de commande] :
 
@@ -177,7 +177,7 @@ Je vous notifie par la présente ma rétractation relative au contrat de licence
 
 ## Notes internes (à supprimer avant publication sur le site)
 
-- **À compléter** : SIREN (après immatriculation micro-entreprise), adresse, email pro, site/domaine, date de mise en vigueur, coordonnées CM2C (après adhésion — obligatoire **avant la première vente**), lien vers la politique de confidentialité.
+- **À compléter** : SIREN (après immatriculation micro-entreprise), adresse, site/domaine, date de mise en vigueur, coordonnées CM2C (après adhésion — obligatoire **avant la première vente**), lien vers la politique de confidentialité. Email pro renseigné : contact@neliora.fr (boîte opérationnelle, DKIM actif).
 - **Correction vs trame du 24 oct.** : l'article 18 ne reprend plus « tribunaux compétents du domicile du vendeur » — clause à risque en B2C (le consommateur garde toujours la possibilité de saisir son propre tribunal) ; formulation alignée sur le droit commun.
 - **Renonciation expresse (7.2)** : la case doit être **décochée par défaut** dans le tunnel de paiement — c'est ce qui la rend valable juridiquement ; à vérifier côté implémentation Stripe.
 - Garantie commerciale 14 j (art. 8) volontairement plus forte que le légal : argument de vente assumé (remboursement = coût Stripe négligeable).
