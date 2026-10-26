@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-26 (v3.12)*
-*Version : 3.12 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-26 (v3.13)*
+*Version : 3.13 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -156,7 +156,8 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - [ ] Moniteur Uptime Kuma dédié (contournement actuel : sonde sur `/login`)
 - [ ] Releases SemVer (tags + notes de version) au premier lot de production
 - [ ] Au lancement commercial : licence actée (reco FSL-1.1), CGV/mentions légales publiées, accessibilité EAA (déclaration + bases WCAG)
-- [ ] **Suivi des versions des CGV (art. 19) + liaison licence ↔ version** : chaque révision des CGV versionnée et datée (v1.0, v1.1…) et archivée ; à chaque vente, enregistrer **la version des CGV acceptée + la date de licence** — prouver sans ambiguïté quelle version s'applique à quel client (art. 19 des CGV v1.0 prévoit la modification ; un litige se juge sur la version applicable). Ajouté le 26 oct. 2026.
+- [ ] **Suivi des versions des CGV (art. 19) + liaison licence ↔ version** : chaque révision des CGV versionnée et datée (v1.0, v1.1…) et archivée ; à chaque vente, enregistrer **la version des CGV acceptée + la date de licence** — prouver sans ambiguïté quelle version s'applique à quel client (art. 19 des CGV v1.0 prévoit la modification ; un litige se juge sur la version applicable). Ajouté le 26 oct. 2026. Implémentation naturelle : au webhook `checkout.session.completed`, stocker la version des CGV en **métadonnées du paiement** (`cgv_version` + `license_date`) → le lien licence ↔ version s'écrit tout seul dans SQLite, sans ressaisie.
+- [ ] **Suspension / réactivation d'une licence** : action admin (raison tracée, date) — cas d'usage : remboursement, litige, médiation, fraude, test support ; le foyer suspendu garde ses données (lecture seule ou accès bloqué, à décider en spéc) mais perd l'accès premium ; toute suspension/réactivation consignée dans le journal (auditabilité, cohérente avec l'accès admin support tracé du CDC). Ajouté le 26 oct. 2026.
 
 ---
 
@@ -271,4 +272,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.9 (archivée) | 2026-10-24 | Audit « socle commercial » : section Conformité + checklist, `.github/SECURITY.md` + `.github/dependabot.yml` créés, CDC v1.5 (§6 suivi d'audit), PRA v1.0 ([plan-de-reprise.md](plan-de-reprise.md)) |
 | V3.10 (archivée) | 2026-10-24 | C-011 : branches/tags réécrits et jetons révoqués ; reste le réalignement des clones/CT ; purge Support GitHub écartée par décision (risque résiduel accepté) |
 | V3.11 (archivée) | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
-| **V3.12 (ce document)** | 2026-10-26 | Conformité : ajout du suivi des versions des CGV (art. 19) + liaison licence ↔ version CGV acceptée à chaque vente |
+| V3.12 (archivée) | 2026-10-26 | Conformité : ajout du suivi des versions des CGV (art. 19) + liaison licence ↔ version CGV acceptée à chaque vente |
+| **V3.13 (ce document)** | 2026-10-26 | Précision d'implémentation CGV (métadonnées `cgv_version`/`license_date` au webhook) + suspension/réactivation de licence (action admin tracée) |
