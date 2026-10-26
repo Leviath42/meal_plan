@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-24 (v3.11)*
-*Version : 3.11 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-26 (v3.12)*
+*Version : 3.12 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -156,6 +156,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - [ ] Moniteur Uptime Kuma dédié (contournement actuel : sonde sur `/login`)
 - [ ] Releases SemVer (tags + notes de version) au premier lot de production
 - [ ] Au lancement commercial : licence actée (reco FSL-1.1), CGV/mentions légales publiées, accessibilité EAA (déclaration + bases WCAG)
+- [ ] **Suivi des versions des CGV (art. 19) + liaison licence ↔ version** : chaque révision des CGV versionnée et datée (v1.0, v1.1…) et archivée ; à chaque vente, enregistrer **la version des CGV acceptée + la date de licence** — prouver sans ambiguïté quelle version s'applique à quel client (art. 19 des CGV v1.0 prévoit la modification ; un litige se juge sur la version applicable). Ajouté le 26 oct. 2026.
 
 ---
 
@@ -269,4 +270,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.3 (archivée) | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans deploiement-proxmox.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans deploiement-proxmox.md |
 | V3.9 (archivée) | 2026-10-24 | Audit « socle commercial » : section Conformité + checklist, `.github/SECURITY.md` + `.github/dependabot.yml` créés, CDC v1.5 (§6 suivi d'audit), PRA v1.0 ([plan-de-reprise.md](plan-de-reprise.md)) |
 | V3.10 (archivée) | 2026-10-24 | C-011 : branches/tags réécrits et jetons révoqués ; reste le réalignement des clones/CT ; purge Support GitHub écartée par décision (risque résiduel accepté) |
-| **V3.11 (ce document)** | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
+| V3.11 (archivée) | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
+| **V3.12 (ce document)** | 2026-10-26 | Conformité : ajout du suivi des versions des CGV (art. 19) + liaison licence ↔ version CGV acceptée à chaque vente |
