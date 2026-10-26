@@ -1,14 +1,12 @@
 # Conditions Générales de Vente — Meal Plan
 
-**Version 1.0 — en vigueur au [date de mise en ligne]**
-
-*Document de travail généré avec assistance IA, à faire relire par un avocat après les 20–30 premières ventes (décision actée du plan de commercialisation). Ce n'est pas un conseil juridique. Les champs entre crochets sont à compléter avant publication. Développe la trame §3 de docs/legal-commercialisation.md.*
+**Version 1.0 — en vigueur au 27/10/2026**
 
 ---
 
-**Vendeur** : [Prénom NOM], micro-entrepreneur immatriculé au répertoire SIRENE sous le numéro [SIREN], domicilié à [adresse complète] — ci-après « le Vendeur ».
+**Vendeur** : Nicolas NOTAMY, micro-entrepreneur immatriculé au répertoire SIRENE sous le numéro [SIREN], domicilié à [adresse complète] — ci-après « le Vendeur ».
 **Contact** : contact@neliora.fr — formulaire de contact disponible sur [site web].
-**Site** : [https://…]
+**Site** : [https://www.neliora.fr]
 
 ---
 
@@ -178,7 +176,6 @@ Je vous notifie par la présente ma rétractation relative au contrat de licence
 ## Notes internes (à supprimer avant publication sur le site)
 
 - **À compléter** : SIREN (après immatriculation micro-entreprise), adresse, site/domaine, date de mise en vigueur, coordonnées CM2C (après adhésion — obligatoire **avant la première vente**), lien vers la politique de confidentialité. Email pro renseigné : contact@neliora.fr (boîte opérationnelle, DKIM actif).
-- **Correction vs trame du 24 oct.** : l'article 18 ne reprend plus « tribunaux compétents du domicile du vendeur » — clause à risque en B2C (le consommateur garde toujours la possibilité de saisir son propre tribunal) ; formulation alignée sur le droit commun.
 - **Renonciation expresse (7.2)** : la case doit être **décochée par défaut** dans le tunnel de paiement — c'est ce qui la rend valable juridiquement ; à vérifier côté implémentation Stripe.
 - Garantie commerciale 14 j (art. 8) volontairement plus forte que le légal : argument de vente assumé (remboursement = coût Stripe négligeable).
 - Décisions D2 (données après remboursement) et D3 (rétention sauvegardes RGPD) non tranchées : les renvois art. 8.2 et 15.3 sont rédigés pour rester justes dans les deux cas.
