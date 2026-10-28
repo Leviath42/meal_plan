@@ -29,11 +29,11 @@ Dépendances externes : hôte Proxmox, gestionnaire DNS/tunnel, hébergeur VPS l
 |---|---|---|
 | 1 | Sauvegarde horodatée **avant chaque mise à jour** (`update.sh`, 10 conservées dans `data/backups/`) | ✅ automatique |
 | 2 | Rollback testé : `bash update.sh rollback` ou page **/deploy → Retour arrière** (ADMIN) | ✅ |
-| 3 | **Copie quotidienne de `sqlite.db` hors conteneur** (cron `pct pull`/`scp` sur l'hôte, ou vzdump du CT) | ⚠️ **à planifier** — sans elle, le RPO réel = la dernière mise à jour |
-| 4 | Sauvegarde du `.env.local` hors conteneur | ⚠️ idem — sans `AUTH_SECRET`, la base restaurée démarre mais toutes les sessions sautent |
+| 3 | **Copie quotidienne de `sqlite.db` hors conteneur** | ✅ couverte par le vzdump quotidien du CT (job 05:00) → export chiffré R2 (rétention 2 j offsite) — **restauration prouvée le 28/10/2026** (CT scratch, RTO 10 min ; recette : runbook R2 vibe_docs) |
+| 4 | Sauvegarde du `.env.local` hors conteneur | ✅ embarquée dans le vzdump du CT (export chiffré R2) — présence vérifiée dans la restauration test du 28/10/2026. Sans `AUTH_SECRET` sauvegardé, les sessions sautent (aucune donnée perdue) |
 | 5 | Snapshot Proxmox avant manipulation risquée (interface web → Snapshot) | réflexe manuel |
 
-Sauvegarde manuelle hors Proxmox (à mettre en cron quotidien) :
+Export manuel ponctuel (la couverture quotidienne est assurée depuis le 26/10/2026 par la chaîne vzdump 05:00 → rclone crypt → R2, restauration prouvée le 28/10/2026) :
 
 ```bash
 scp root@IP_CONTENEUR:/opt/meal_plan/data/sqlite.db ./sauvegarde-$(date +%F).db
@@ -49,7 +49,9 @@ scp root@IP_CONTENEUR:/opt/meal_plan/data/sqlite.db ./sauvegarde-$(date +%F).db
 ### S2 — Perte du conteneur (suppression, hôte HS)
 1. Réinstaller via le script : `BRANCH=<branche du CT> bash scripts/proxmox-install.sh <CTID> …` (cf. [deploiement-proxmox.md](deploiement-proxmox.md) ; la branche est mémorisée dans `/opt/meal_plan/.deploy-branch` — la consigner hors CT à l'installation).
 2. Recréer `.env.local` (`AUTH_SECRET` neuf ou sauvegardé, `AUTH_TRUST_HOST=true`, `TZ=Europe/Paris`).
-3. Restaurer la dernière copie externe : `pct push <CTID> ./sauvegarde-XXXX.db /opt/meal_plan/data/sqlite.db`, supprimer `-wal`/`-shm`, puis `npm run db:ensure && npm run db:migrate && pm2 restart meal-plan`.
+3. Restaurer les données — deux routes :
+   - **Offsite, prouvée le 28/10/2026 (RTO 10 min)** : télécharger l'archive du CT depuis R2 (`rclone copy "r2crypt:vzdump/vzdump-lxc-103-<date>.tar.zst" /root/r2-restore-test/`) puis `pct restore <CTID> /root/r2-restore-test/<archive> --storage local-zfs` — **retirer `net0` avant tout démarrage du clone** (sinon son daemon cloudflared détourne le tunnel de prod) ; recette détaillée : runbook R2 §« Restauration testée » (vibe_docs) ;
+   - copie manuelle : `pct push <CTID> ./sauvegarde-XXXX.db /opt/meal_plan/data/sqlite.db`, supprimer `-wal`/`-shm`, puis `npm run db:ensure && npm run db:migrate && pm2 restart meal-plan`.
 4. Reconfigurer le tunnel Cloudflare nommé (cf. déploiement).
 5. Vérifications §5.
 
@@ -73,6 +75,8 @@ scp root@IP_CONTENEUR:/opt/meal_plan/data/sqlite.db ./sauvegarde-$(date +%F).db
 - [ ] Un export ICS sur jeton : événements aux bonnes dates (arithmétique calendaire — leçon C-024)
 
 ## 6. Exercice chronométré (à faire)
+
+> Point du 28/10/2026 : la partie offsite est **déjà prouvée** (archive R2 → `pct restore` sur CT scratch → `sqlite.db` + `.env.local` vérifiés, 10 min). Reste à jouer l'exercice complet — CT vierge + checklist §5 entière — pour valider aussi le chemin applicatif.
 
 Reconstruire un CT **vierge** en ne suivant que ce document, chronomètre en main :
 
