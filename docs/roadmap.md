@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-26 (v3.13)*
-*Version : 3.13 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-30 (v3.14)*
+*Version : 3.14 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -222,6 +222,15 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 ---
 
+### F16 - Règles de quantité standard par ingrédient
+- Quantité « standard » par ingrédient (ou par famille d'ingrédient), fonction du nombre de couverts — ex. 100 g de pâtes / personne, 1 oignon pour 4 couverts
+- À la création/édition d'une recette : suggestion automatique de la quantité en fonction du nombre de couverts saisi, ajustable manuellement
+- Bénéfice : accélère la saisie des recettes et fiabilise les quantités (moins d'erreurs, listes de courses plus justes)
+- Piste d'implémentation : table `ingredient_standards` (ingrédient ou famille, quantité_ref, nb_couverts_ref) + pré-remplissage du champ quantité dans le formulaire de recette ; démarrer sur une trentaine d'ingrédients courants plutôt qu'une base exhaustive
+- Estimation : 1-2 jours — ajouté le 30 oct. 2026 sur demande de Nicolas
+
+---
+
 ## 🎨 Finitions / Backlog (basse priorité)
 
 - [ ] Export PDF de la liste de courses (F05, optionnel)
@@ -273,4 +282,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.10 (archivée) | 2026-10-24 | C-011 : branches/tags réécrits et jetons révoqués ; reste le réalignement des clones/CT ; purge Support GitHub écartée par décision (risque résiduel accepté) |
 | V3.11 (archivée) | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
 | V3.12 (archivée) | 2026-10-26 | Conformité : ajout du suivi des versions des CGV (art. 19) + liaison licence ↔ version CGV acceptée à chaque vente |
-| **V3.13 (ce document)** | 2026-10-26 | Précision d'implémentation CGV (métadonnées `cgv_version`/`license_date` au webhook) + suspension/réactivation de licence (action admin tracée) |
+| **V3.13 (archivée)** | 2026-10-26 | Précision d'implémentation CGV (métadonnées `cgv_version`/`license_date` au webhook) + suspension/réactivation de licence (action admin tracée) |
+| **V3.14 (ce document)** | 2026-10-30 | Ajout **F16 — règles de quantité standard par ingrédient** en Phase 4 (suggestion de quantité selon le nombre de couverts, pour faciliter la création de recettes) |
