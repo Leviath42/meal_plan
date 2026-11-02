@@ -15,6 +15,7 @@ export default function LoginPage() {
     rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")
       ? rawCallbackUrl
       : "/";
+  const registered = searchParams.get("registered") === "1";
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -58,7 +59,12 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {registered && (
+        <p className="mb-3 px-3 py-2 bg-green-50 border border-green-200 text-green-700 rounded text-xs sm:text-sm">
+          Compte créé avec succès — connectez-vous pour commencer.
+        </p>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Email

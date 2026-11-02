@@ -71,16 +71,17 @@ export async function registerUser(
     // Hash du mot de passe
     const hashedPassword = await hashPassword(password);
 
-    // Créer l'utilisateur avec rôle GUEST (à valider par l'admin)
+    // Onboarding self-service (vague 3) : le compte est utilisable
+    // immédiatement (MEMBER) — plus de file d'attente GUEST
     await db.insert(users).values({
       email,
       name: name.trim(),
       password: hashedPassword,
-      role: 'GUEST', // Par défaut, l'utilisateur est GUEST jusqu'à validation
+      role: 'MEMBER',
     });
 
     revalidatePath('/register');
-    return { success: true, message: 'Compte créé avec succès. Attendez la validation par un administrateur.' };
+    return { success: true, message: 'Compte créé avec succès. Connectez-vous pour commencer.' };
   } catch (error) {
     console.error('Erreur lors de l\'inscription:', error);
     return { errors: { form: ['Une erreur est survenue lors de la création du compte'] } };
