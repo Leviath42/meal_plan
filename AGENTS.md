@@ -19,6 +19,7 @@
 |---|---|
 | `npm ci` | installation |
 | `npm run dev` / `build` / `start` | développement / build / production |
+| `npm test` | tests runtime sur base jetable (`SQLITE_PATH`) — tourne en CI |
 | `npm run db:generate` | migration depuis `lib/db/schema.ts` (jamais de SQL manuel versionné) |
 | `npm run db:migrate` / `db:ensure` | appliquer les migrations / réconcilier le schéma |
 | `npm run seed` / `seed:clear` / `db:seed-ingredients` | données démo / bibliothèque 568 ingrédients |

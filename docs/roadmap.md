@@ -149,7 +149,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - [x] **SECURITY.md créé** (`.github/SECURITY.md`) + **Dependabot version updates configuré** (`.github/dependabot.yml`) — 24 oct. 2026
 - [x] **Côté propriétaire — fait le 24 oct. 2026 (meal_plan et modop)** : secret scanning + push protection ✅ ; code scanning CodeQL ✅ ; Dependabot alerts vérifiées ✅ ; signalement privé ✅ ; 2FA ✅
 - [ ] **C-011 (priorité n°1)** : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT beta-prod — purge Support GitHub écartée par décision du 24/10/2026 (jetons révoqués, risque résiduel accepté) — [runbook](purge-historique-c-011.md)
-- [x] CI GitHub Actions à chaque push/PR sur `main` : lint + typecheck + build + `npm audit` prod high+ — `.github/workflows/ci.yml` (PR #10/#11, 25 oct. 2026)
+- [x] CI GitHub Actions à chaque push/PR sur `main` et `beta` : lint + typecheck + build + **tests runtime** (`npm test`, base jetable) + `npm audit` prod high+ — `.github/workflows/ci.yml` (PR #10/#11, 25 oct. 2026 ; C-047 : job tests + branche beta, 02/11/2026)
 - [ ] CSP complète (nonce/hash au build pour le script inline du thème) — point d'attention persistant
 - [ ] Révocation des sessions au changement de mot de passe (compensation actuelle : maxAge 7 j)
 - [x] Sauvegarde nightly planifiée + copie hors CT : vzdump CT 103/104 + hook rclone crypt → R2 (rétention offsite 2 j) ; restauration prouvée le 28/10 (RTO 10 min, runbook R2) ; `.env.local` migré au coffre Vaultwarden (H48, 1ᵉʳ nov.) — voir [plan-de-reprise.md](plan-de-reprise.md)

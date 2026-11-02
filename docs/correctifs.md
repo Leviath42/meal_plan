@@ -25,6 +25,8 @@
 
 | C-046 | 2026-11-02 | Supervision — sonde `/api/health` | La sonde Uptime Kuma pointait sur `/login` : un 200 y prouve seulement que le middleware répond, pas que l'app et la base vivent → ajout d'un vrai endpoint de santé, hors middleware d'auth | Corrigé : `app/api/health/route.ts` (ouverture readonly `fileMustExist` + `SELECT 1` → 200, sinon 503), `/api/health` ajouté aux routes publiques de `proxy.ts`, `SQLITE_PATH` pris en compte par `lib/db/index.ts` (tests sur base jetable) ; testé en runtime : build + start, `curl /api/health` → 200 sans session, `SQLITE_PATH` vers un chemin invalide → 503 | Moyenne |
 
+| C-047 | 2026-11-02 | CI — tests en exécution | La CI ne faisait que lint + typecheck + build : les actions serveur qui écrivent en base n'étaient pas testées en CI (risque connu, ex. transactions async refusées par better-sqlite3) ; le workflow ne couvrait en outre que `main`, pas `beta` | Corrigé : `scripts/test-smoke.ts` (`npm test`) — base jetable `SQLITE_PATH`, migrations via `db:ensure`, 9 tests runtime (insert user + Argon2 accepte/rejette, recette + ingrédient + repas + jointure, jeton stocké hashé puis validé puis révoqué via `validateAccessToken`) ; job `tests` ajouté à `.github/workflows/ci.yml` et triggers `main` + `beta` | Moyenne |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -33,7 +35,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 46 (C-001 → C-046) |
+| Corrections enregistrées | 47 (C-001 → C-047) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |

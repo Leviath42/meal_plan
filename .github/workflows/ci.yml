@@ -2,9 +2,9 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta]
   pull_request:
-    branches: [main]
+    branches: [main, beta]
 
 jobs:
   build:
@@ -30,6 +30,21 @@ jobs:
           # Placeholder requis uniquement pour le build en CI : lib/auth.ts refuse
           # NODE_ENV=production sans AUTH_SECRET. Ce n'est pas un secret réel.
           AUTH_SECRET: 'ci-build-placeholder'
+
+  tests:
+    name: Tests runtime (base jetable SQLITE_PATH)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Installer les dependances
+        run: npm ci
+      - name: Tests runtime
+        run: npm test
 
   audit:
     name: Audit dépendances (production, high+)
