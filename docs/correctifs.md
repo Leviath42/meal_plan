@@ -23,6 +23,8 @@
 | C-044 | 2026-10-10 | F14 — barre inférieure + splash | Barre supérieure corrigée par C-043 (neutre selon système) mais la barre INFÉRIEURE restait à la couleur du thème d'installation : Android la pilote via le `background_color` du manifest (lié au splash — diagnostic utilisateur initial : « la couleur de la barre est liée au splash ») ; le splash était également coloré à la palette, peu sobre | Corrigé : `background_color` neutre `#fafaf9` (blanc cassé) — corrige la barre inférieure ET rend le splash sobre en une seule valeur ; manifest devenu 100 % statique (lecture de base supprimée — couleur neutre jamais obsolète) ; complète la stratégie neutre C-043 : barre haut = système clair/sombre, barre bas + splash = blanc cassé | Haute |
 | C-045 | 2026-10-10 | F14 — barres/splash trop clairs + icône neutre | Le blanc cassé (C-044) était trop clair pour l'usage principal en mode sombre ; icône neutre poussée par le propriétaire (fond noir, 4006f1e) à intégrer avec la règle anti-cache | Corrigé : barres et splash passent au NOIR PROFOND `#0c0c0e` — cohérent avec l'icône sur fond noir et l'app en mode sombre ; metas par media-query système (`#f4f4f5` clair / `#0c0c0e` sombre) ; manifest `theme_color`/`background_color` = `#0c0c0e`. La palette (F14) ne peut PAS être suivie (figée à l'installation) — le mode SYSTÈME est le seul axe dynamique possible. Icône intégrée : `?v=4` (layout, manifest, SW) + cache SW v6 | Haute |
 
+| C-046 | 2026-11-02 | Supervision — sonde `/api/health` | La sonde Uptime Kuma pointait sur `/login` : un 200 y prouve seulement que le middleware répond, pas que l'app et la base vivent → ajout d'un vrai endpoint de santé, hors middleware d'auth | Corrigé : `app/api/health/route.ts` (ouverture readonly `fileMustExist` + `SELECT 1` → 200, sinon 503), `/api/health` ajouté aux routes publiques de `proxy.ts`, `SQLITE_PATH` pris en compte par `lib/db/index.ts` (tests sur base jetable) ; testé en runtime : build + start, `curl /api/health` → 200 sans session, `SQLITE_PATH` vers un chemin invalide → 503 | Moyenne |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -31,7 +33,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 45 (C-001 → C-045) |
+| Corrections enregistrées | 46 (C-001 → C-046) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |

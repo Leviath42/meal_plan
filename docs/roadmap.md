@@ -134,8 +134,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 38 (C-001 → C-038) |
-| Corrigées et déployées | 37 |
+| Corrections enregistrées | 46 (C-001 → C-046) |
+| Corrigées et déployées | 33 déployées ; C-046 livrée (branche `vibe/health-api-maj-conformite-5a4be7`), déploiement beta à valider |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
 | Décisions en suspens | C-011 : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT (purge Support GitHub écartée par décision, risque résiduel accepté) |
@@ -149,11 +149,11 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - [x] **SECURITY.md créé** (`.github/SECURITY.md`) + **Dependabot version updates configuré** (`.github/dependabot.yml`) — 24 oct. 2026
 - [x] **Côté propriétaire — fait le 24 oct. 2026 (meal_plan et modop)** : secret scanning + push protection ✅ ; code scanning CodeQL ✅ ; Dependabot alerts vérifiées ✅ ; signalement privé ✅ ; 2FA ✅
 - [ ] **C-011 (priorité n°1)** : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT beta-prod — purge Support GitHub écartée par décision du 24/10/2026 (jetons révoqués, risque résiduel accepté) — [runbook](purge-historique-c-011.md)
-- [ ] CI GitHub Actions minimale : lint + build à chaque push/PR (pattern modop transposable)
+- [x] CI GitHub Actions à chaque push/PR sur `main` : lint + typecheck + build + `npm audit` prod high+ — `.github/workflows/ci.yml` (PR #10/#11, 25 oct. 2026)
 - [ ] CSP complète (nonce/hash au build pour le script inline du thème) — point d'attention persistant
 - [ ] Révocation des sessions au changement de mot de passe (compensation actuelle : maxAge 7 j)
-- [ ] Sauvegarde quotidienne planifiée + copie hors CT (base + `.env.local`) — voir [plan-de-reprise.md](plan-de-reprise.md)
-- [ ] Moniteur Uptime Kuma dédié (contournement actuel : sonde sur `/login`)
+- [x] Sauvegarde nightly planifiée + copie hors CT : vzdump CT 103/104 + hook rclone crypt → R2 (rétention offsite 2 j) ; restauration prouvée le 28/10 (RTO 10 min, runbook R2) ; `.env.local` migré au coffre Vaultwarden (H48, 1ᵉʳ nov.) — voir [plan-de-reprise.md](plan-de-reprise.md)
+- [x] Endpoint `/api/health` hors middleware auth (C-046, 02/11/2026, testé en runtime 200/503) ; reste : poser le moniteur Uptime Kuma dédié (CT 111) pointant dessus
 - [ ] Releases SemVer (tags + notes de version) au premier lot de production
 - [ ] Au lancement commercial : licence actée (reco FSL-1.1), CGV/mentions légales publiées, accessibilité EAA (déclaration + bases WCAG)
 - [ ] **Suivi des versions des CGV (art. 19) + liaison licence ↔ version** : chaque révision des CGV versionnée et datée (v1.0, v1.1…) et archivée ; à chaque vente, enregistrer **la version des CGV acceptée + la date de licence** — prouver sans ambiguïté quelle version s'applique à quel client (art. 19 des CGV v1.0 prévoit la modification ; un litige se juge sur la version applicable). Ajouté le 26 oct. 2026. Implémentation naturelle : au webhook `checkout.session.completed`, stocker la version des CGV en **métadonnées du paiement** (`cgv_version` + `license_date`) → le lien licence ↔ version s'écrit tout seul dans SQLite, sans ressaisie.

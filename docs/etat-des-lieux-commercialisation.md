@@ -25,7 +25,7 @@ Le client paye pour trois écrans : **import de recettes → planning familial p
 
 | # | Sujet | État | Pourquoi |
 |---|---|---|---|
-| 7 | Sonde /api/health + moniteur Uptime Kuma dédié | Manquant (sonde sur /login) | Vérifier que le service commercial est réellement up ; chaîne d'alerte Kuma → HA → téléphone à tester de bout en bout |
+| 7 | Sonde /api/health + moniteur Uptime Kuma dédié | Route `/api/health` livrée le 02/11/2026 (C-046, hors middleware auth, testée runtime 200/503) ; sonde Kuma encore sur `/login` | Reste : poser le moniteur Kuma dédié (CT 111) pointant sur `/api/health` ; chaîne d'alerte Kuma → HA → téléphone à tester de bout en bout |
 | 8 | Sauvegarde hors machine (Litestream → R2) | Todo acté 24/10 | Une base client payante ne peut pas vivre sur du single-disk sans backup externe (RTO 2 h / RPO 24 h, cf. plan-de-reprise.md) |
 | 9 | Releases SemVer (tags + notes) | 1 tag last-stable | Confiance : le client payeur doit savoir ce qui change |
 | 10 | CSP complète + sessions révocables | Connu, non traité | Hygiène sécurité au moment où des inconnus arrivent sur l'app |
