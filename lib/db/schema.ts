@@ -302,3 +302,46 @@ export const accessTokensRelations = relations(accessTokens, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ============================================================================
+// 10. LICENCE PAR FOYER (commercialisation — licence à vie, une instance = un foyer)
+// ============================================================================
+export const licenses = sqliteTable("licenses", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+
+  // Clé de licence stockée HACHÉE (sha256:...) — jamais en clair en base
+  licenseKey: text("license_key").notNull().unique(),
+
+  // active = premium ; suspended = bloquée (remboursement/litige) sans perte de données ; revoked = révoquée définitivement
+  status: text("status", { enum: ["active", "suspended", "revoked"] })
+    .notNull()
+    .default("active"),
+
+  // Traçabilité CGV (art. 19) : version des CGV acceptée à la vente + date de licence
+  cgvVersion: text("cgv_version"),
+  licensedAt: text("licensed_at"),
+
+  // Lien avec le paiement Stripe (idempotence du webhook)
+  stripeSessionId: text("stripe_session_id").unique(),
+  stripeCustomerId: text("stripe_customer_id"),
+
+  // Suspension / réactivation (tracées aussi dans license_audit)
+  suspendedAt: text("suspended_at"),
+  suspensionReason: text("suspension_reason"),
+  reactivatedAt: text("reactivated_at"),
+
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// Journal d'audit des actions sur licence (suspension/réactivation/révocation)
+export const licenseAudit = sqliteTable("license_audit", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  licenseId: text("license_id")
+    .notNull()
+    .references(() => licenses.id, { onDelete: "cascade" }),
+  action: text("action", { enum: ["activated", "suspended", "reactivated", "revoked", "refunded"] }).notNull(),
+  reason: text("reason"),
+  byUserId: text("by_user_id").references(() => users.id, { onDelete: "set null" }),
+  at: text("at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
