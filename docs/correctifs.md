@@ -23,6 +23,14 @@
 | C-044 | 2026-10-10 | F14 — barre inférieure + splash | Barre supérieure corrigée par C-043 (neutre selon système) mais la barre INFÉRIEURE restait à la couleur du thème d'installation : Android la pilote via le `background_color` du manifest (lié au splash — diagnostic utilisateur initial : « la couleur de la barre est liée au splash ») ; le splash était également coloré à la palette, peu sobre | Corrigé : `background_color` neutre `#fafaf9` (blanc cassé) — corrige la barre inférieure ET rend le splash sobre en une seule valeur ; manifest devenu 100 % statique (lecture de base supprimée — couleur neutre jamais obsolète) ; complète la stratégie neutre C-043 : barre haut = système clair/sombre, barre bas + splash = blanc cassé | Haute |
 | C-045 | 2026-10-10 | F14 — barres/splash trop clairs + icône neutre | Le blanc cassé (C-044) était trop clair pour l'usage principal en mode sombre ; icône neutre poussée par le propriétaire (fond noir, 4006f1e) à intégrer avec la règle anti-cache | Corrigé : barres et splash passent au NOIR PROFOND `#0c0c0e` — cohérent avec l'icône sur fond noir et l'app en mode sombre ; metas par media-query système (`#f4f4f5` clair / `#0c0c0e` sombre) ; manifest `theme_color`/`background_color` = `#0c0c0e`. La palette (F14) ne peut PAS être suivie (figée à l'installation) — le mode SYSTÈME est le seul axe dynamique possible. Icône intégrée : `?v=4` (layout, manifest, SW) + cache SW v6 | Haute |
 
+| C-046 | 2026-11-02 | Supervision — sonde `/api/health` | La sonde Uptime Kuma pointait sur `/login` : un 200 y prouve seulement que le middleware répond, pas que l'app et la base vivent → ajout d'un vrai endpoint de santé, hors middleware d'auth | Corrigé : `app/api/health/route.ts` (ouverture readonly `fileMustExist` + `SELECT 1` → 200, sinon 503), `/api/health` ajouté aux routes publiques de `proxy.ts`, `SQLITE_PATH` pris en compte par `lib/db/index.ts` (tests sur base jetable) ; testé en runtime : build + start, `curl /api/health` → 200 sans session, `SQLITE_PATH` vers un chemin invalide → 503 | Moyenne |
+
+| C-047 | 2026-11-02 | CI — tests en exécution | La CI ne faisait que lint + typecheck + build : les actions serveur qui écrivent en base n'étaient pas testées en CI (risque connu, ex. transactions async refusées par better-sqlite3) ; le workflow ne couvrait en outre que `main`, pas `beta` | Corrigé : `scripts/test-smoke.ts` (`npm test`) — base jetable `SQLITE_PATH`, migrations via `db:ensure`, 9 tests runtime (insert user + Argon2 accepte/rejette, recette + ingrédient + repas + jointure, jeton stocké hashé puis validé puis révoqué via `validateAccessToken`) ; job `tests` ajouté à `.github/workflows/ci.yml` et triggers `main` + `beta` | Moyenne |
+
+| C-048 | 2026-11-02 | Sécurité — CSP complète | Aucune Content-Security-Policy : le script inline anti-flash du thème (layout) et les scripts internes de Next exigeaient un nonce/hash à chaque build | Corrigé : nonce aléatoire par requête posé par `proxy.ts` (en-tête requête `x-nonce` + CSP en réponse, Report-Only hors production), lu par le layout via `headers()` et posé sur le `<script>` inline du thème ; `'strict-dynamic'` couvre les scripts injectés par Next ; testé en runtime : header CSP et nonce du HTML concordants sur `/login`, 307 sur `/`, 200 sur `/api/health` | Haute |
+
+| C-049 | 2026-11-02 | Sécurité — sessions révoquables + réparation meta drizzle | Sessions non révoquables au changement de mdp (compensation maxAge 7 j) ; la purge C-011 avait supprimé `drizzle/meta/0005_snapshot.json` → `db:generate` produisait une migration folle (rebuild de tables déjà en base) et `db:ensure` échouait sur les PRAGMA | Corrigé : colonne `users.token_version` (migration 0006 propre, après reconstruction du snapshot 0005 depuis la chaîne prevId), incrémentée au changement/reset de mdp, vérifiée en base à chaque requête (callback jwt + contrôle dans `proxy.ts`) → session révoquée ; testé en runtime : login → GET / 200, bump token_version → GET / 307 /login, /login et /api/health publics OK | Haute |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -31,9 +39,9 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 45 (C-001 → C-045) |
+| Corrections enregistrées | 49 (C-001 → C-049) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
 | Décisions en suspens | C-011 : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT — purge Support GitHub écartée par décision du 24/10/2026, risque résiduel accepté (voir [purge-historique-c-011.md](purge-historique-c-011.md)) |
-| Points d'attention persistants | CSP complète (nonce/hash au build), sessions non révocables au changement de mot de passe (maxAge réduit à 7 jours en compensation) |
+| Points d’attention persistants | aucun — CSP (C-048) et sessions révoquables (C-049) livrées le 02/11/2026 |

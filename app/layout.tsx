@@ -1,6 +1,6 @@
 import { Inter } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { getPublicAppSettings } from '@/app/actions/settings';
 import { getTheme, themeCssVariables } from '@/lib/themes';
@@ -47,6 +47,9 @@ const themeInitScript = `(function(){try{if(document.cookie.indexOf('meal-theme=
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  // Nonce CSP posé par le proxy (x-nonce) — requis pour autoriser le script
+  // inline anti-flash du thème dans la Content-Security-Policy
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   // Thème rendu côté serveur depuis le cookie (posé par ThemeToggle ou par le
   // script de migration ci-dessus). La classe .dark est donc dans le HTML
@@ -92,7 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)" />
       <meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)" />
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <Nav session={session} />
         <div>{children}</div>
         <ServiceWorkerRegister />

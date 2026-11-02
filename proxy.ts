@@ -1,12 +1,52 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { auth } from "./lib/auth";
+import { db } from "./lib/db";
+import { users } from "./lib/db/schema";
 
-export default auth((req) => {
+// CSP avec nonce par requête : le nonce est posé sur les en-têtes de la
+// requête (lu par le layout via headers() pour le script inline anti-flash
+// du thème) et la politique est posée sur la réponse. 'strict-dynamic'
+// laisse passer les scripts injectés par Next. En dev : Report-Only.
+function buildCsp(): { key: string; value: string; nonce: string } {
+  const nonce = randomBytes(16).toString("base64");
+  const value = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "manifest-src 'self'",
+    "worker-src 'self' blob:",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+  const key =
+    process.env.NODE_ENV === "production"
+      ? "Content-Security-Policy"
+      : "Content-Security-Policy-Report-Only";
+  return { key, value, nonce };
+}
+
+export default auth(async (req) => {
+  const { key, value, nonce } = buildCsp();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  const respond = (res: NextResponse) => {
+    res.headers.set(key, value);
+    return res;
+  };
+
   const url = req.nextUrl.pathname;
-  
+
   // Routes publiques toujours accessibles
   const publicRoutes = [
     '/api/auth',
+    '/api/health',
     '/login',
     '/register',
     '/public/calendar',
@@ -16,24 +56,42 @@ export default auth((req) => {
     '/_next/image',
     '/favicon.ico'
   ];
-  
-  // Si authentifié
+
+  // Si authentifié : vérifier tokenVersion en base — un changement de mot de
+  // passe entre-temps révoque la session (redirection vers /login)
   if (req.auth) {
-    return;
+    const claims = (req.auth as unknown as { user?: { id?: string; tokenVersion?: number } }).user;
+    if (claims?.id) {
+      const [row] = await db
+        .select({ tokenVersion: users.tokenVersion })
+        .from(users)
+        .where(eq(users.id, claims.id))
+        .limit(1);
+      if (!row || row.tokenVersion !== (claims.tokenVersion ?? 0)) {
+        return respond(
+          NextResponse.redirect(new URL("/login?session=revoked", req.url))
+        );
+      }
+    }
+    return respond(NextResponse.next({ request: { headers: requestHeaders } }));
   }
-  
+
   // Si non authentifié, rediriger vers /login sauf pour les routes publiques
   // (correspondance exacte ou préfixe de chemin AVEC délimiteur : '/login'
   // couvre '/login' et '/login/x', pas '/login-autre-chose')
   const shouldRedirect = !publicRoutes.some(
     (route) => url === route || url.startsWith(route + '/')
   );
-  
+
   if (shouldRedirect) {
-    return NextResponse.redirect(
-      new URL(`/login?callbackUrl=${encodeURIComponent(url)}`, req.url)
+    return respond(
+      NextResponse.redirect(
+        new URL(`/login?callbackUrl=${encodeURIComponent(url)}`, req.url)
+      )
     );
   }
+
+  return respond(NextResponse.next({ request: { headers: requestHeaders } }));
 });
 
 // Le middleware ne doit pas tourner sur les assets statiques ni les routes

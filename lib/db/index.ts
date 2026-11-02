@@ -7,7 +7,8 @@ import * as schema from './schema';
 
 // Chemin absolu construit depuis la racine du projet : un chemin relatif
 // dépendrait du répertoire de travail courant (fragile en build/production).
-const dbPath = path.join(process.cwd(), 'data', 'sqlite.db');
+const dbPath =
+  process.env.SQLITE_PATH ?? path.join(process.cwd(), 'data', 'sqlite.db');
 
 // Empêche la multiplication des instances en mode dev avec Next.js
 const globalForDb = globalThis as unknown as {

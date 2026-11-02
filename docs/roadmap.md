@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-24 (v3.11)*
-*Version : 3.11 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-10-30 (v3.14)*
+*Version : 3.14 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -134,8 +134,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 38 (C-001 → C-038) |
-| Corrigées et déployées | 37 |
+| Corrections enregistrées | 46 (C-001 → C-046) |
+| Corrigées et déployées | 33 déployées ; C-046 livrée (branche `vibe/health-api-maj-conformite-5a4be7`), déploiement beta à valider |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
 | Décisions en suspens | C-011 : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT (purge Support GitHub écartée par décision, risque résiduel accepté) |
@@ -149,13 +149,15 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - [x] **SECURITY.md créé** (`.github/SECURITY.md`) + **Dependabot version updates configuré** (`.github/dependabot.yml`) — 24 oct. 2026
 - [x] **Côté propriétaire — fait le 24 oct. 2026 (meal_plan et modop)** : secret scanning + push protection ✅ ; code scanning CodeQL ✅ ; Dependabot alerts vérifiées ✅ ; signalement privé ✅ ; 2FA ✅
 - [ ] **C-011 (priorité n°1)** : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT beta-prod — purge Support GitHub écartée par décision du 24/10/2026 (jetons révoqués, risque résiduel accepté) — [runbook](purge-historique-c-011.md)
-- [ ] CI GitHub Actions minimale : lint + build à chaque push/PR (pattern modop transposable)
-- [ ] CSP complète (nonce/hash au build pour le script inline du thème) — point d'attention persistant
-- [ ] Révocation des sessions au changement de mot de passe (compensation actuelle : maxAge 7 j)
-- [ ] Sauvegarde quotidienne planifiée + copie hors CT (base + `.env.local`) — voir [plan-de-reprise.md](plan-de-reprise.md)
-- [ ] Moniteur Uptime Kuma dédié (contournement actuel : sonde sur `/login`)
+- [x] CI GitHub Actions à chaque push/PR sur `main` et `beta` : lint + typecheck + build + **tests runtime** (`npm test`, base jetable) + `npm audit` prod high+ — `.github/workflows/ci.yml` (PR #10/#11, 25 oct. 2026 ; C-047 : job tests + branche beta, 02/11/2026)
+- [x] CSP complète : nonce par requête dans `proxy.ts` + script inline du thème noncé via `headers()` (C-048, 02/11/2026, testé en runtime : header CSP et nonce HTML concordants) — `Report-Only` hors production
+- [x] Sessions révoquées au changement de mot de passe : `users.token_version` incrémenté (change/reset password), vérifié en base à chaque requête (callback JWT + `proxy.ts`) — C-049, 02/11/2026, testé en runtime (login 200 → bump → 307). La purge C-011 avait aussi supprimé `drizzle/meta/0005_snapshot.json` : snapshot reconstruit, migration 0006 propre
+- [x] Sauvegarde nightly planifiée + copie hors CT : vzdump CT 103/104 + hook rclone crypt → R2 (rétention offsite 2 j) ; restauration prouvée le 28/10 (RTO 10 min, runbook R2) ; `.env.local` migré au coffre Vaultwarden (H48, 1ᵉʳ nov.) — voir [plan-de-reprise.md](plan-de-reprise.md)
+- [x] Endpoint `/api/health` hors middleware auth (C-046, 02/11/2026, testé en runtime 200/503) ; reste : poser le moniteur Uptime Kuma dédié (CT 111) pointant dessus
 - [ ] Releases SemVer (tags + notes de version) au premier lot de production
 - [ ] Au lancement commercial : licence actée (reco FSL-1.1), CGV/mentions légales publiées, accessibilité EAA (déclaration + bases WCAG)
+- [ ] **Suivi des versions des CGV (art. 19) + liaison licence ↔ version** : chaque révision des CGV versionnée et datée (v1.0, v1.1…) et archivée ; à chaque vente, enregistrer **la version des CGV acceptée + la date de licence** — prouver sans ambiguïté quelle version s'applique à quel client (art. 19 des CGV v1.0 prévoit la modification ; un litige se juge sur la version applicable). Ajouté le 26 oct. 2026. Implémentation naturelle : au webhook `checkout.session.completed`, stocker la version des CGV en **métadonnées du paiement** (`cgv_version` + `license_date`) → le lien licence ↔ version s'écrit tout seul dans SQLite, sans ressaisie.
+- [ ] **Suspension / réactivation d'une licence** : action admin (raison tracée, date) — cas d'usage : remboursement, litige, médiation, fraude, test support ; le foyer suspendu garde ses données (lecture seule ou accès bloqué, à décider en spéc) mais perd l'accès premium ; toute suspension/réactivation consignée dans le journal (auditabilité, cohérente avec l'accès admin support tracé du CDC). Ajouté le 26 oct. 2026.
 
 ---
 
@@ -220,6 +222,15 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 ---
 
+### F16 - Règles de quantité standard par ingrédient
+- Quantité « standard » par ingrédient (ou par famille d'ingrédient), fonction du nombre de couverts — ex. 100 g de pâtes / personne, 1 oignon pour 4 couverts
+- À la création/édition d'une recette : suggestion automatique de la quantité en fonction du nombre de couverts saisi, ajustable manuellement
+- Bénéfice : accélère la saisie des recettes et fiabilise les quantités (moins d'erreurs, listes de courses plus justes)
+- Piste d'implémentation : table `ingredient_standards` (ingrédient ou famille, quantité_ref, nb_couverts_ref) + pré-remplissage du champ quantité dans le formulaire de recette ; démarrer sur une trentaine d'ingrédients courants plutôt qu'une base exhaustive
+- Estimation : 1-2 jours — ajouté le 30 oct. 2026 sur demande de Nicolas
+
+---
+
 ## 🎨 Finitions / Backlog (basse priorité)
 
 - [ ] Export PDF de la liste de courses (F05, optionnel)
@@ -227,7 +238,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - [ ] Réglage de la taille des formulaires (barres de scroll non désirées dans certains modals)
 - [ ] Uniformisation des tailles de composants, très petits écrans
 - [x] ~~Accessibilité (contrastes, navigation clavier)~~ largement couvert par l'audit UI/UX (d29bb64) — reste en revue : la bump typo global (`text-xs` → `text-sm` en base), reporté volontairement
-- [x] ~~Headers de sécurité HTTP~~ faits (C-013) — reste en option : une CSP complète (nonce/hash à chaque build pour le script inline du thème)
+- [x] ~~Headers de sécurité HTTP~~ faits (C-013) ; CSP complète faite (C-048, nonce par requête)
 - [x] ~~Retrait de `data/sqlite.db` du suivi git~~ fait (C-011) — branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT beta-prod (purge Support GitHub écartée par décision ; runbook : [purge-historique-c-011.md](purge-historique-c-011.md))
 
 ---
@@ -269,4 +280,7 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.3 (archivée) | 2026-10-08 | Préparation de la production : correction C-032 (script d'installation), script multi-branche (`BRANCH=main`), `update.sh` suit `.deploy-branch`, section Production dans deploiement-proxmox.md, correction C-031 (UX calendrier) ; tunnel Cloudflare optionnel à l'installation (`CF_TUNNEL_TOKEN`, cloudflared en service système) + section dédiée dans deploiement-proxmox.md |
 | V3.9 (archivée) | 2026-10-24 | Audit « socle commercial » : section Conformité + checklist, `.github/SECURITY.md` + `.github/dependabot.yml` créés, CDC v1.5 (§6 suivi d'audit), PRA v1.0 ([plan-de-reprise.md](plan-de-reprise.md)) |
 | V3.10 (archivée) | 2026-10-24 | C-011 : branches/tags réécrits et jetons révoqués ; reste le réalignement des clones/CT ; purge Support GitHub écartée par décision (risque résiduel accepté) |
-| **V3.11 (ce document)** | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
+| V3.11 (archivée) | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
+| V3.12 (archivée) | 2026-10-26 | Conformité : ajout du suivi des versions des CGV (art. 19) + liaison licence ↔ version CGV acceptée à chaque vente |
+| **V3.13 (archivée)** | 2026-10-26 | Précision d'implémentation CGV (métadonnées `cgv_version`/`license_date` au webhook) + suspension/réactivation de licence (action admin tracée) |
+| **V3.14 (ce document)** | 2026-10-30 | Ajout **F16 — règles de quantité standard par ingrédient** en Phase 4 (suggestion de quantité selon le nombre de couverts, pour faciliter la création de recettes) |

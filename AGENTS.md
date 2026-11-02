@@ -19,6 +19,7 @@
 |---|---|
 | `npm ci` | installation |
 | `npm run dev` / `build` / `start` | développement / build / production |
+| `npm test` | tests runtime sur base jetable (`SQLITE_PATH`) — tourne en CI |
 | `npm run db:generate` | migration depuis `lib/db/schema.ts` (jamais de SQL manuel versionné) |
 | `npm run db:migrate` / `db:ensure` | appliquer les migrations / réconcilier le schéma |
 | `npm run seed` / `seed:clear` / `db:seed-ingredients` | données démo / bibliothèque 568 ingrédients |
@@ -62,4 +63,4 @@ docs/            toute la documentation (kebab-case)
 
 ## Travaux en cours (voir docs/roadmap.md)
 
-Phase 4 : import de recettes par URL (F07), notifications (F10), garde-manger (F11), PWA hors-ligne (F12), OAuth. **Préparation commercialisation (phase 0)** : multi-tenant `household_id` (chantier prioritaire — schéma encore mono-famille), onboarding self-service (suppression de la validation ADMIN), export/import JSON complet. **Angles morts connus** : pas d'endpoint `/api/health` (sonde Uptime Kuma sur `/login` en contournement) ; licence du code non actée (reco : FSL-1.1).
+Phase 4 : import de recettes par URL (F07), notifications (F10), garde-manger (F11), PWA hors-ligne (F12), OAuth. **Préparation commercialisation (phase 0)** : multi-tenant `household_id` (chantier prioritaire — schéma encore mono-famille), onboarding self-service (suppression de la validation ADMIN), export/import JSON complet. **Angles morts connus** : endpoint `/api/health` livré (C-046) mais le moniteur Uptime Kuma pointe encore sur `/login` (à repointer, CT 111) ; licence du code non actée (reco : FSL-1.1).

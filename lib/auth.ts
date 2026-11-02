@@ -12,6 +12,7 @@ interface UserWithRole {
   name: string | null;
   password: string;
   role: "ADMIN" | "MEMBER" | "GUEST";
+  tokenVersion: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -33,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // Configuration de la session
   session: {
     strategy: "jwt", // Stockage dans JWT (alternative: "database" pour stocker en base)
-    maxAge: 7 * 24 * 60 * 60, // 7 jours (sessions non révocables : durée courte pour limiter la persistance d'un cookie volé)
+    maxAge: 7 * 24 * 60 * 60, // 7 jours (borne haute ; la révocation réelle vient de tokenVersion, vérifié en base à chaque requête)
   },
 
   // Pages personnalisées
@@ -50,7 +51,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         // @ts-ignore - user.role est de type string mais vient de la base avec l'enum
         token.role = user.role;
+        // @ts-ignore - tokenVersion vient de la base
+        token.tokenVersion = user.tokenVersion ?? 0;
+        return token;
       }
+      // Requêtes suivantes : revalidation en base — tokenVersion différent =
+      // mot de passe changé entre-temps = session révoquée ; le rôle est aussi
+      // relu, une rétrogradation est effective immédiatement
+      const [row] = await db
+        .select({ role: users.role, tokenVersion: users.tokenVersion })
+        .from(users)
+        .where(eq(users.id, token.id as string))
+        .limit(1);
+      if (!row || row.tokenVersion !== (token.tokenVersion ?? 0)) {
+        return null;
+      }
+      token.role = row.role;
       return token;
     },
 
@@ -60,6 +76,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         // @ts-ignore - token.role est compatible avec session.user.role
         session.user.role = token.role;
+        // @ts-ignore - tokenVersion exposé pour la vérification de révocation côté middleware
+        session.user.tokenVersion = token.tokenVersion ?? 0;
       }
       return session;
     },
@@ -96,6 +114,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: users.name,
             password: users.password,
             role: users.role,
+            tokenVersion: users.tokenVersion,
             createdAt: users.createdAt,
             updatedAt: users.updatedAt,
           })
@@ -144,6 +163,7 @@ declare module "next-auth" {
       email: string;
       name?: string | null;
       role?: "ADMIN" | "MEMBER" | "GUEST";
+      tokenVersion?: number;
       securityQuestion?: string | null;
     };
   }
@@ -151,6 +171,7 @@ declare module "next-auth" {
   interface JWT {
     id: string;
     role?: "ADMIN" | "MEMBER" | "GUEST";
+    tokenVersion?: number;
     securityQuestion?: string | null;
   }
 }
