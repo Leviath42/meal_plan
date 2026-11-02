@@ -68,6 +68,7 @@
 | [docs/test-scenarios.md](docs/test-scenarios.md) | Scénarios de recette métier (S01–S23) et décisions ouvertes |
 | [docs/plan-commercialisation.md](docs/plan-commercialisation.md) | Plan de commercialisation : positionnement, prix, légal, pérennité |
 | [docs/plan-action-10k-foyers.md](docs/plan-action-10k-foyers.md) | Plan d'action phases 0–3, critères Go/No-Go |
+| [docs/contrat-vague-3.md](docs/contrat-vague-3.md) | Contrat figé de la vague 3 (commercialisation) : schéma licence, routes, workers F07/onboarding/Stripe |
 | [docs/echecs-et-stripe.md](docs/echecs-et-stripe.md) | Échecs du segment (Yummly, PlateJoy…) + annexe Stripe |
 | [docs/archives/](docs/archives/) | Roadmaps historiques + journal des corrections C-001 → C-035 |
 
