@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { auth } from "./lib/auth";
+import { db } from "./lib/db";
+import { users } from "./lib/db/schema";
 
 // CSP avec nonce par requête : le nonce est posé sur les en-têtes de la
 // requête (lu par le layout via headers() pour le script inline anti-flash
@@ -28,7 +31,7 @@ function buildCsp(): { key: string; value: string; nonce: string } {
   return { key, value, nonce };
 }
 
-export default auth((req) => {
+export default auth(async (req) => {
   const { key, value, nonce } = buildCsp();
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
@@ -54,8 +57,22 @@ export default auth((req) => {
     '/favicon.ico'
   ];
 
-  // Si authentifié
+  // Si authentifié : vérifier tokenVersion en base — un changement de mot de
+  // passe entre-temps révoque la session (redirection vers /login)
   if (req.auth) {
+    const claims = (req.auth as unknown as { user?: { id?: string; tokenVersion?: number } }).user;
+    if (claims?.id) {
+      const [row] = await db
+        .select({ tokenVersion: users.tokenVersion })
+        .from(users)
+        .where(eq(users.id, claims.id))
+        .limit(1);
+      if (!row || row.tokenVersion !== (claims.tokenVersion ?? 0)) {
+        return respond(
+          NextResponse.redirect(new URL("/login?session=revoked", req.url))
+        );
+      }
+    }
     return respond(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 

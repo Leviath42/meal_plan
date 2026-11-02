@@ -29,6 +29,8 @@
 
 | C-048 | 2026-11-02 | Sécurité — CSP complète | Aucune Content-Security-Policy : le script inline anti-flash du thème (layout) et les scripts internes de Next exigeaient un nonce/hash à chaque build | Corrigé : nonce aléatoire par requête posé par `proxy.ts` (en-tête requête `x-nonce` + CSP en réponse, Report-Only hors production), lu par le layout via `headers()` et posé sur le `<script>` inline du thème ; `'strict-dynamic'` couvre les scripts injectés par Next ; testé en runtime : header CSP et nonce du HTML concordants sur `/login`, 307 sur `/`, 200 sur `/api/health` | Haute |
 
+| C-049 | 2026-11-02 | Sécurité — sessions révoquables + réparation meta drizzle | Sessions non révoquables au changement de mdp (compensation maxAge 7 j) ; la purge C-011 avait supprimé `drizzle/meta/0005_snapshot.json` → `db:generate` produisait une migration folle (rebuild de tables déjà en base) et `db:ensure` échouait sur les PRAGMA | Corrigé : colonne `users.token_version` (migration 0006 propre, après reconstruction du snapshot 0005 depuis la chaîne prevId), incrémentée au changement/reset de mdp, vérifiée en base à chaque requête (callback jwt + contrôle dans `proxy.ts`) → session révoquée ; testé en runtime : login → GET / 200, bump token_version → GET / 307 /login, /login et /api/health publics OK | Haute |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -37,9 +39,9 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 48 (C-001 → C-048) |
+| Corrections enregistrées | 49 (C-001 → C-049) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
 | Décisions en suspens | C-011 : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT — purge Support GitHub écartée par décision du 24/10/2026, risque résiduel accepté (voir [purge-historique-c-011.md](purge-historique-c-011.md)) |
-| Points d’attention persistants | sessions non révoquables au changement de mot de passe (maxAge réduit à 7 jours en compensation) — C-049 en branche |
+| Points d’attention persistants | aucun — CSP (C-048) et sessions révoquables (C-049) livrées le 02/11/2026 |

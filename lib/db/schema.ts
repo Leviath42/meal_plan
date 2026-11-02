@@ -217,6 +217,7 @@ export const users = sqliteTable("users", {
   // Antidoublon (F09) : interdire de replanifier la meme recette a moins de X jours
   // d'intervalle. 0 = controle desactive. Defaut : 7 jours.
   minDaysBetween: integer("min_days_between").notNull().default(7),
+  tokenVersion: integer("token_version").notNull().default(0),
   createdAt: text("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),

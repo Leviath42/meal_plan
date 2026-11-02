@@ -8,7 +8,7 @@ import { registerInput } from '@/lib/validators/auth';
 import Argon2 from '@node-rs/argon2';
 import { rateLimit } from '@/lib/rate-limit';
 import { headers } from 'next/headers';
-import { eq, count } from 'drizzle-orm';
+import { eq, count, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -221,7 +221,7 @@ export async function updateUserPassword(
     // Mettre à jour le mot de passe
     await db
       .update(users)
-      .set({ password: hashedPassword, updatedAt: new Date().toISOString() })
+      .set({ password: hashedPassword, tokenVersion: sql`${users.tokenVersion} + 1`, updatedAt: new Date().toISOString() })
       .where(eq(users.id, userId));
 
     // Note: La déconnexion sera gérée côté client pour éviter les problèmes avec Server Actions
@@ -380,6 +380,7 @@ export async function resetPasswordWithSecurityQuestion(
       .update(users)
       .set({ 
         password: hashedPassword, 
+        tokenVersion: sql`${users.tokenVersion} + 1`,
         updatedAt: new Date().toISOString() 
       })
       .where(eq(users.id, user.id));
