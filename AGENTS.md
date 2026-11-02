@@ -20,6 +20,7 @@
 | `npm ci` | installation |
 | `npm run dev` / `build` / `start` | développement / build / production |
 | `npm test` | tests runtime sur base jetable (`SQLITE_PATH`) — tourne en CI |
+| `npm run test:import` / `test:onboarding` / `test:license` | tests runtime F07 / onboarding / licence — en CI |
 | `npm run db:generate` | migration depuis `lib/db/schema.ts` (jamais de SQL manuel versionné) |
 | `npm run db:migrate` / `db:ensure` | appliquer les migrations / réconcilier le schéma |
 | `npm run seed` / `seed:clear` / `db:seed-ingredients` | données démo / bibliothèque 568 ingrédients |
@@ -46,7 +47,7 @@ docs/            toute la documentation (kebab-case)
 - **Correctifs numérotés C-xxx** : toute modification non triviale = une entrée dans `docs/correctifs.md` (problème → correctif → tests → fichiers) + docs associées mises à jour dans le même commit.
 - Migrations toujours par `db:generate` ; toute action serveur qui écrit en base est testée **en exécution** (tsc/build ne suffisent pas).
 - **Racine du repo : uniquement `README.md` et ce fichier.** Toute la documentation dans `docs/`, kebab-case sans MAJUSCULES ni accents.
-- Env : `AUTH_SECRET` obligatoire en production ; `AUTH_TRUST_HOST=true` ; `TZ=Europe/Paris` (fuseau critique pour les dates de repas).
+- Env : `AUTH_SECRET` obligatoire en production ; `AUTH_TRUST_HOST=true` ; `TZ=Europe/Paris` (fuseau critique pour les dates de repas). En commercialisation : `STRIPE_WEBHOOK_SECRET` (webhook signé) + `STRIPE_PAYMENT_LINK` (lien d'achat) dans `.env.local`.
 
 ## Routage documentaire — ne lire QUE ce qui est utile à la tâche
 

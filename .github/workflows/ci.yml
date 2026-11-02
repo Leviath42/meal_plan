@@ -44,7 +44,11 @@ jobs:
       - name: Installer les dependances
         run: npm ci
       - name: Tests runtime
-        run: npm test
+        run: |
+          npm test
+          npm run test:import
+          npm run test:onboarding
+          npm run test:license
 
   audit:
     name: Audit dépendances (production, high+)

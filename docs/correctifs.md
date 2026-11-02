@@ -31,6 +31,8 @@
 
 | C-049 | 2026-11-02 | Sécurité — sessions révoquables + réparation meta drizzle | Sessions non révoquables au changement de mdp (compensation maxAge 7 j) ; la purge C-011 avait supprimé `drizzle/meta/0005_snapshot.json` → `db:generate` produisait une migration folle (rebuild de tables déjà en base) et `db:ensure` échouait sur les PRAGMA | Corrigé : colonne `users.token_version` (migration 0006 propre, après reconstruction du snapshot 0005 depuis la chaîne prevId), incrémentée au changement/reset de mdp, vérifiée en base à chaque requête (callback jwt + contrôle dans `proxy.ts`) → session révoquée ; testé en runtime : login → GET / 200, bump token_version → GET / 307 /login, /login et /api/health publics OK | Haute |
 
+| C-052 | 2026-11-02 | Licence par foyer + Stripe (vague 3) | Aucun mécanisme de licence/paiement : modèle « licence à vie par foyer » à mettre en place avec traçabilité CGV (art. 19) et suspension tracée | Livré (branche `feature/licence-stripe`) : `lib/license.ts` (essai 30 j depuis le 1er compte, statut active/suspended/revoked), webhook Stripe signé HMAC vérifié + idempotent (`stripe_session_id` unique) avec métadonnées `cgv_version`/`license_date`, activation par clé hashée MP-XXXX…, page `/activate` (+ lien d'achat `STRIPE_PAYMENT_LINK`), admin `/admin/licenses` avec suspension/réactivation tracée dans `license_audit`, garde dans `proxy.ts` (essai expiré = lecture seule, écritures → /activate) ; test runtime 15 PASS (`test:license`) | Haute |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -39,7 +41,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 49 (C-001 → C-049) |
+| Corrections enregistrées | 52 (C-001 → C-052, C-050/C-051 sur leurs branches feature) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
