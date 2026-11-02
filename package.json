@@ -11,6 +11,7 @@
     "seed": "tsx lib/db/seed.ts",
     "seed:clear": "tsx lib/db/seed.ts --clear",
     "db:seed-ingredients": "tsx scripts/seed-ingredients.ts",
+    "db:seed-demo-planning": "tsx scripts/seed-demo-planning.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:ensure": "tsx scripts/db-ensure.ts",
