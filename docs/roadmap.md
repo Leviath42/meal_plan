@@ -163,11 +163,10 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 ## 🚀 Phase 4 — Fonctionnalités restantes (prochaine vague)
 
-### F07 - Import de Recettes depuis URL
-- Extraction des métadonnées Schema.org (Recipe), parse des sites populaires (Marmiton, 750g…)
-- Prévisualisation avant import, message clair si site non supporté, import manuel toujours possible
-- Fichiers : `app/actions/import-recipe.ts`, `app/recipes/import/ImportRecipeForm.tsx`
-- Estimation : 2-3 jours
+### F07 - Import de Recettes depuis URL — 🟡 livré en branche `feature/f07-import-url` (C-050, PR à venir)
+- ✅ Extraction Schema.org (JSON-LD Recipe), fallback og: Marmiton/750g, prévisualisation avant import, doublon de titre suffixé, ingrédients inconnus créés au catalogue
+- ✅ Fichiers : `lib/recipe-import.ts`, `app/actions/import-recipe.ts`, `app/recipes/import/` ; test runtime 16 PASS en CI (`test:import`)
+- Reste : validation humaine sur CT beta + vraies pages Marmiton/750g
 
 ### F10 - Notifications du Repas du Jour
 - Notifications push (PWA) quotidiennes à heure configurable : « Aujourd'hui : [Nom du repas] »

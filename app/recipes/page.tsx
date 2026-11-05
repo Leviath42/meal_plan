@@ -25,6 +25,9 @@ export default async function RecipesPage() {
           <Link href="/recipes/new" className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors whitespace-nowrap">
             + Nouvelle recette
           </Link>
+          <Link href="/recipes/import" className="rounded border border-accent text-accent px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent hover:text-white transition-colors whitespace-nowrap">
+            Importer une URL
+          </Link>
         </div>
         <RecipesClient recipes={all} />
       </div>
