@@ -31,6 +31,8 @@
 
 | C-049 | 2026-11-02 | Sécurité — sessions révoquables + réparation meta drizzle | Sessions non révoquables au changement de mdp (compensation maxAge 7 j) ; la purge C-011 avait supprimé `drizzle/meta/0005_snapshot.json` → `db:generate` produisait une migration folle (rebuild de tables déjà en base) et `db:ensure` échouait sur les PRAGMA | Corrigé : colonne `users.token_version` (migration 0006 propre, après reconstruction du snapshot 0005 depuis la chaîne prevId), incrémentée au changement/reset de mdp, vérifiée en base à chaque requête (callback jwt + contrôle dans `proxy.ts`) → session révoquée ; testé en runtime : login → GET / 200, bump token_version → GET / 307 /login, /login et /api/health publics OK | Haute |
 
+| C-050 | 2026-11-02 | F07 — import de recette par URL | Le cahier des charges prévoyait l'import depuis Marmiton/750g sans outil : extraction Schema.org (JSON-LD) + fallback og: pour Marmiton/750g, prévisualisation avant création, doublon de titre suffixé, ingrédients inconnus créés au catalogue | Livré (branche `feature/f07-import-url`) : `lib/recipe-import.ts` (fetch 15 s max, 512 Ko max, parse durées ISO 8601 + lignes d'ingrédients), `app/actions/import-recipe.ts` (preview + confirm en transaction synchrone), `app/recipes/import/**`, bouton « Importer une URL » ; testé en runtime : 16 PASS (`npm run test:import`, serveur HTTP local avec JSON-LD) + `npm test` 9 PASS | Haute |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -39,7 +41,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 49 (C-001 → C-049) |
+| Corrections enregistrées | 50 (C-001 → C-050) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
