@@ -163,7 +163,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 ## 🚀 Phase 4 — Fonctionnalités restantes (prochaine vague)
 
-### F07 - Import de Recettes depuis URL — 🟡 livré en branche `feature/f07-import-url` (C-050, PR à venir)
+### F07 - Import de Recettes depuis URL — 🟢 mergé sur `beta` (PR #25, 05/11/2026)
 - ✅ Extraction Schema.org (JSON-LD Recipe), fallback og: Marmiton/750g, prévisualisation avant import, doublon de titre suffixé, ingrédients inconnus créés au catalogue
 - ✅ Fichiers : `lib/recipe-import.ts`, `app/actions/import-recipe.ts`, `app/recipes/import/` ; test runtime 16 PASS en CI (`test:import`)
 - Reste : validation humaine sur CT beta + vraies pages Marmiton/750g
@@ -193,7 +193,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 *Notes : HTTPS requis pour le SW (fourni par le tunnel Cloudflare) ; icônes générées en aplats (fond teal + disque) — remplaçables par un vrai logo.*
 
 
-### Licence par foyer + Stripe — 🟡 livrée en branche `feature/licence-stripe` (C-052, PR à venir)
+### Licence par foyer + Stripe — 🟢 mergé sur `beta` (PR #27, 05/11/2026) — reste : branchement Stripe réel en prod (payment link, secret webhook)
 - ✅ Schéma `licenses` + `license_audit` (migration 0007, contrat #24) ; essai 30 j puis lecture seule (garde `proxy.ts`)
 - ✅ Webhook Stripe : signature HMAC vérifiée (5 min anti-rejeu), idempotent, métadonnées `cgv_version`/`license_date` ; `charge.refunded` → suspension
 - ✅ `/activate` (clé MP-XXXX hashée) + `/admin/licenses` (suspension/réactivation tracée) ; lien d'achat via `STRIPE_PAYMENT_LINK`
