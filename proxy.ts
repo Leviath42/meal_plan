@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "./lib/auth";
 import { db } from "./lib/db";
 import { users } from "./lib/db/schema";
+import { isWriteAllowed } from "./lib/license";
 
 // CSP avec nonce par requête : le nonce est posé sur les en-têtes de la
 // requête (lu par le layout via headers() pour le script inline anti-flash
@@ -51,6 +52,8 @@ export default auth(async (req) => {
     '/register',
     '/public/calendar',
     '/api/calendar',
+    '/api/stripe',
+    '/activate',
     '/reset-password',
     '/_next/static',
     '/_next/image',
@@ -89,6 +92,22 @@ export default auth(async (req) => {
         new URL(`/login?callbackUrl=${encodeURIComponent(url)}`, req.url)
       )
     );
+  }
+
+  // Garde licence (vague 3) : essai expiré = lecture seule. Les requêtes
+  // d'écriture (POST/PUT/DELETE, dont les server actions) hors whitelist sont
+  // redirigées vers /activate. L'export et la lecture restent ouverts.
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    const writeFree = ['/api/auth', '/api/stripe', '/activate', '/login', '/register', '/reset-password', '/api/health'];
+    const free = writeFree.some((r) => url === r || url.startsWith(r + '/'));
+    if (!free && req.auth) {
+      const allowed = await isWriteAllowed();
+      if (!allowed) {
+        return respond(
+          NextResponse.redirect(new URL('/activate?expired=1', req.url))
+        );
+      }
+    }
   }
 
   return respond(NextResponse.next({ request: { headers: requestHeaders } }));

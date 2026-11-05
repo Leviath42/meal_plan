@@ -193,6 +193,13 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 *Notes : HTTPS requis pour le SW (fourni par le tunnel Cloudflare) ; icônes générées en aplats (fond teal + disque) — remplaçables par un vrai logo.*
 
 
+### Licence par foyer + Stripe — 🟡 livrée en branche `feature/licence-stripe` (C-052, PR à venir)
+- ✅ Schéma `licenses` + `license_audit` (migration 0007, contrat #24) ; essai 30 j puis lecture seule (garde `proxy.ts`)
+- ✅ Webhook Stripe : signature HMAC vérifiée (5 min anti-rejeu), idempotent, métadonnées `cgv_version`/`license_date` ; `charge.refunded` → suspension
+- ✅ `/activate` (clé MP-XXXX hashée) + `/admin/licenses` (suspension/réactivation tracée) ; lien d'achat via `STRIPE_PAYMENT_LINK`
+- ✅ Tests runtime 15 PASS (`test:license`, webhook signé/invalide/rejoué)
+- Reste : vraies clés Stripe (test d'abord) en `.env.local`, validation humaine CT beta, S05–S10
+
 ### OAuth (Google, GitHub) — en attente de variables d'environnement
 - Providers, boutons de connexion alternatifs, comptes liés
 - Estimation : 1 jour

@@ -48,6 +48,7 @@ jobs:
           npm test
           npm run test:import
           npm run test:onboarding
+          npm run test:license
 
   audit:
     name: Audit dépendances (production, high+)
