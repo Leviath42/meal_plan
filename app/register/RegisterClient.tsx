@@ -64,6 +64,11 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
       // Reset le formulaire avant le refresh
       formElement.reset();
       setShowCreateModal(false);
+      if (!session) {
+        // Inscription self-service : connexion directe demandée
+        router.push('/login?registered=1');
+        return;
+      }
       refreshUsers();
     }
   };
@@ -165,13 +170,14 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
 
   // Rediriger les non-admin dans un effet : un push pendant le rendu
   // est un anti-pattern React
+  // Page publique d'inscription : un utilisateur déjà connecté est renvoyé à l'accueil
   useEffect(() => {
-    if (session && session.user?.role !== 'ADMIN') {
+    if (session) {
       router.push('/');
     }
   }, [session, router]);
 
-  if (session && session.user?.role !== 'ADMIN') {
+  if (session) {
     return null;
   }
 
@@ -276,7 +282,7 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
             </form>
 
             <p className="mt-3 text-xs text-gray-500">
-              Votre compte sera validé par un administrateur avant de pouvoir vous connecter.
+              Le compte est actif immédiatement : connectez-vous avec votre email et votre mot de passe.
             </p>
           </div>
         )}

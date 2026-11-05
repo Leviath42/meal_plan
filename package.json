@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "tsx scripts/test-smoke.ts",
     "test:import": "tsx scripts/test-import-recipe.ts",
+    "test:onboarding": "tsx scripts/test-onboarding.ts",
     "format": "prettier --write .",
     "seed": "tsx lib/db/seed.ts",
     "seed:clear": "tsx lib/db/seed.ts --clear",
