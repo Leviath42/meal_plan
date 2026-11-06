@@ -61,4 +61,4 @@ Chaque worker, à la fin de sa mission, ajoute une ligne à son tableau ci-desso
 
 | Worker | Branche | Statut | Tests runtime | Reste |
 |---|---|---|---|---|
-| (à remplir par le chef de projet à chaque fusion) | | | | |
+| W1 — F10 notifications + F12 fin | `feature/f10-f12-notifications` | Livré (C-061) — push -u origin, en attente de fusion (dernier selon §4) | `scripts/test-notifications.ts` 27 PASS (sqlite jetable : upsert abonnement, exclusion `notify_time` null, repas du jour Paris, requête push VAPID chiffrée sur mock endpoint) ; smoke 9, import 32, onboarding 3, license 15 ; eslint + tsc + build OK | Chef de projet : `npm run test:notifications` + ligne CI à l'ajout (package.json/ci.yml interdits au worker) ; push réel vers Chrome à la validation humaine (N1→N3) ; O1→O4 à vérifier sur appareil ; clé VAPID de PROD à générer au CT (runbook `docs/deploiement-proxmox.md`), valeurs DEV jamais commitées |

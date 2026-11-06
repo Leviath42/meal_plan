@@ -429,3 +429,78 @@ pm2 start npm --name meal-plan -- start
 pm2 save && pm2 startup
 ip a   # noter l'IPv4 -> http://IPv4:3000 depuis le téléphone
 ```
+
+---
+
+## F10 — Notifications des repas (runbook VAPID + cron)
+
+Fonctionnement : chaque compte choisit une heure de rappel dans `/profile` (section « Notifications ») et abonne ses appareils (Web Push). Un cron système appelle l'endpoint push chaque minute ; l'application notifie les comptes dont l'heure de rappel correspond, avec les repas planifiés ce jour-là (fuseau `TZ=Europe/Paris`).
+
+### 1. Variables `.env.local` (conteneur `/opt/meal_plan`)
+
+Générer une paire de clés VAPID (une seule fois pour toute la vie de l'instance — si les clés changent, TOUS les abonnements push doivent être refaits sur chaque appareil) :
+
+```bash
+npx web-push generate-vapid-keys --json
+```
+
+Générer aussi le secret de l'endpoint push (l'appelant cron n'a pas de session) :
+
+```bash
+openssl rand -hex 32
+```
+
+Ajouter à `.env.local` :
+
+```
+VAPID_PUBLIC_KEY=<publicKey du generate-vapid-keys>
+VAPID_PRIVATE_KEY=<privateKey du generate-vapid-keys>
+VAPID_SUBJECT=mailto:ton@email.fr
+NOTIFICATIONS_SECRET=<secret généré>
+```
+
+Puis recharger l'application : `pm2 restart meal-plan`.
+
+| Variable | Rôle | Sans elle |
+|---|---|---|
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Clés VAPID qui signent les requêtes Web Push envoyées aux navigateurs | L'abonnement depuis `/profile` échoue (503), aucun envoi possible |
+| `VAPID_SUBJECT` | Contact émetteur exigé par les services push (`mailto:`) | Défaut `mailto:contact@mealplan.invalid` — valable mais impersonnel |
+| `NOTIFICATIONS_SECRET` | Secret partagé exigé par l'endpoint POST /api/notifications/push | L'endpoint refuse tout (401), cron inopérant |
+
+### 2. Cron (une fois, dans le conteneur)
+
+`crontab -e`, puis :
+
+```
+* * * * * curl -fsS -X POST -H "x-notifications-secret: NOTIFICATIONS_SECRET_ICI" "http://127.0.0.1:3000/api/notifications/push?time=$(TZ=Europe/Paris date +\%H:\%M)" >/dev/null 2>&1
+```
+
+- Le paramètre `time` filtre sur l'heure de rappel de chaque compte : la minute de déclenchement est exacte (07:00 → envoi entre 07:00 et 07:01).
+- Sans `?time=`, l'endpoint notifie TOUS les abonnés actifs — à réserver aux tests manuels.
+- Curl local (`127.0.0.1`) : le cron ne sort pas sur le tunnel Cloudflare ; l'endpoint est sinon indisponible de l'extérieur sans le secret (401).
+
+### 3. Vérifications
+
+```bash
+# authentification par secret exigée
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:3000/api/notifications/push
+# -> 401
+
+# un repas est planifié aujourd'hui + un compte est abonné à l'heure courante
+curl -s -X POST -H "x-notifications-secret: NOTIFICATIONS_SECRET_ICI" \
+  "http://127.0.0.1:3000/api/notifications/push"
+# -> {"mealPlanned":true,...,"recipients":N,"sent":N,...}
+
+# aucun repas planifié aujourd'hui : mealPlanned=false, rien n'est envoyé
+```
+
+Contre-vérification base : `sqlite3 data/sqlite.db 'SELECT endpoint, user_id FROM push_subscriptions;'` montre les appareils abonnés ; `SELECT email, notify_time FROM users;` les heures de rappel.
+
+### 4. Dépannage
+
+| Symptôme | Cause probable | Action |
+|---|---|---|
+| `sent: 0, recipients: 0` alors qu'un appareil est abonné | Heure de rappel du compte ≠ paramètre `time` du cron | Vérifier `users.notify_time` et la ligne crontab |
+| Abonnement `/profile` échoue | `VAPID_PUBLIC_KEY` absent du `.env.local` | L'ajouter (cf. §1) puis `pm2 restart meal-plan` |
+| Erreurs répétées 404/410 en log | Abonnement révoqué côté navigateur (notifications refusées/PWA désinstallée) | Rien à faire : la ligne `push_subscriptions` est purgée automatiquement à l'envoi |
+| Notifications jamais reçues alors que `sent > 0` | Notifications refusées au niveau de l'OS (Android/iOS) | Réautoriser par appareil dans les réglages du navigateur |

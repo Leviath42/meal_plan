@@ -31,6 +31,7 @@
     "next-auth": "^5.0.0-beta.32",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "web-push": "^4.0.0",
     "zod": "^4.6.6"
   },
   "devDependencies": {
@@ -39,14 +40,15 @@
     "@types/node": "^20.17.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/web-push": "^3.6.4",
     "drizzle-kit": "^0.31.11",
+    "eslint": "^10.13.0",
     "eslint-config-next": "16.4.2",
     "postcss": "^8.5.0",
     "prettier": "^3.5.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.0",
-    "eslint": "^10.13.0"
+    "typescript": "^5.7.0"
   },
   "overrides": {
     "braces": "^3.0.3",

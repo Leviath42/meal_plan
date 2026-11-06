@@ -48,6 +48,8 @@ export default auth(async (req) => {
   const publicRoutes = [
     '/api/auth',
     '/api/health',
+    '/api/notifications',
+    '/offline',
     '/login',
     '/register',
     '/public/calendar',

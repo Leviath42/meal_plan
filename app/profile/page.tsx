@@ -1,4 +1,5 @@
 import { auth } from '@/lib/auth';
+import { getNotificationsState } from '@/app/actions/notifications';
 import ProfileClient from './ProfileClient';
 
 export default async function ProfilePage() {
@@ -11,5 +12,10 @@ export default async function ProfilePage() {
     return <ProfileClient session={null} />;
   }
   
-  return <ProfileClient session={session} />;
+  // F10 — état des notifications pour la section dédiée
+  const notifications = session.user.id
+    ? await getNotificationsState(session.user.id)
+    : null;
+  
+  return <ProfileClient session={session} notifications={notifications} />;
 }
