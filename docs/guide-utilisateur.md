@@ -77,6 +77,21 @@ Bouton **Purger** : avec confirmation obligatoire. Par défaut, seuls les **arti
 
 ---
 
+## 🥫 Garde-manger (/pantry)
+
+Enregistre ce que tu as déjà dans tes placards : la **génération de courses déduit automatiquement ce stock** (une recette demande 500 g de farine dont 200 g en réserve → la liste n'en demande que 300 g ; un besoin entièrement couvert disparaît de la liste).
+
+### Ajouter du stock
+**+ Ajouter du stock** : recherche l'ingrédient dans le catalogue (mêmes suggestions que partout ailleurs), saisis la **quantité** (les décimales sont acceptées : 0,5…), l'**unité** (pré-remplie depuis le catalogue) et, si tu veux, la **date de péremption**. Une seule ligne par ingrédient : réenregistrer le même ingrédient met sa ligne à jour.
+
+### Modifier / supprimer
+Crayon sur la ligne : quantité, unité et péremption modifiables. Corbeille : la ligne disparaît et le stock n'est plus déduit des courses.
+
+### Péremption
+Une date passée (ou du jour) affiche un **badge rouge « Périmé »** sur la ligne et une alerte en haut de la page tant que la ligne n'est pas retirée.
+
+---
+
 ## 📊 Statistiques (/stats)
 
 La page **Stats** (barre de navigation) donne un aperçu de vos habitudes :

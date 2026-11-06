@@ -2,10 +2,11 @@
 
 import { db } from '@/lib/db';
 import { requireSession } from '@/lib/auth-guards';
-import { ingredients, mealPlans, recipeIngredients, recipes, shoppingItems } from '@/lib/db/schema';
+import { ingredients, shoppingItems } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
-import { and, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { manualShoppingItemInput, shoppingPeriodInput, type ShoppingFormState } from '@/lib/validators/shopping';
+import { generateShoppingRows } from '@/app/shopping-list/queries';
 
 // Helper pour convertir FormData en Record<string, string>
 function formDataToRecord(formData: FormData): Record<string, string> {
@@ -33,17 +34,10 @@ function periodEndDateStr(days: number): string {
   return toLocalDateStr(end);
 }
 
-// Arrondi à 3 décimales pour éviter les résidus flottants (0.1 + 0.2)
-function round3(value: number): number {
-  return Math.round(value * 1000) / 1000;
-}
-
 // Générer la liste de courses depuis les repas planifiés de la période.
-// - mise à l'échelle : quantité × (plan.servings / recipe.defaultServings),
-//   facteur 1 si defaultServings est absent/nul ou si les couverts coincident ;
-// - fusion par (ingrédient, unité) en sommant les quantités ;
-// - remplace les lignes générées (addedManually = false) sans toucher
-//   aux lignes ajoutées manuellement.
+// Le cœur (requêtes, mise à l'échelle, fusion, déduction du garde-manger,
+// remplacement atomique) vit dans app/shopping-list/queries.ts — module
+// partagé avec le test runtime (leçons C-047/C-055).
 export async function generateShoppingList(
   prevState: ShoppingFormState,
   formData: FormData
@@ -73,125 +67,27 @@ export async function generateShoppingList(
       endDate = periodEndDateStr(parsed.data.days as number);
     }
 
-    // Repas planifiés avec recette sur la période (les notes seules sont ignorées)
-    const plans = await db
-      .select({
-        recipeId: mealPlans.recipeId,
-        servings: mealPlans.servings,
-      })
-      .from(mealPlans)
-      .where(
-        and(
-          gte(mealPlans.date, startDate),
-          lte(mealPlans.date, endDate),
-          isNotNull(mealPlans.recipeId)
-        )
-      );
-
-    const recipeIds = [...new Set(plans.map((plan) => plan.recipeId as string))];
-
-    // Ingrédients de recette par recette, avec le nom et le rayon
-    const recipeIngredientRows = recipeIds.length
-      ? await db
-          .select({
-            recipeId: recipeIngredients.recipeId,
-            ingredientId: recipeIngredients.ingredientId,
-            ingredientName: ingredients.name,
-            category: ingredients.category,
-            quantity: recipeIngredients.quantity,
-            unit: recipeIngredients.unit,
-          })
-          .from(recipeIngredients)
-          .innerJoin(ingredients, eq(recipeIngredients.ingredientId, ingredients.id))
-          .where(inArray(recipeIngredients.recipeId, recipeIds))
-      : [];
-
-    // Couverts de référence de chaque recette (base de la mise à l'échelle)
-    const recipeRows = recipeIds.length
-      ? await db
-          .select({ id: recipes.id, defaultServings: recipes.defaultServings })
-          .from(recipes)
-          .where(inArray(recipes.id, recipeIds))
-      : [];
-    const defaultServingsById = new Map(recipeRows.map((row) => [row.id, row.defaultServings]));
-
-    // Ingrédients groupés par recette pour le parcours des plans
-    const ingredientsByRecipe = new Map<string, typeof recipeIngredientRows>();
-    for (const row of recipeIngredientRows) {
-      const list = ingredientsByRecipe.get(row.recipeId) ?? [];
-      list.push(row);
-      ingredientsByRecipe.set(row.recipeId, list);
-    }
-
-    // Mise à l'échelle + fusion par (ingrédient, unité)
-    const merged = new Map<string, { ingredientId: string; unit: string; quantity: number }>();
-    for (const plan of plans) {
-      const base = defaultServingsById.get(plan.recipeId as string);
-      const servings = plan.servings ?? base ?? 0;
-      // Facteur 1 si la recette n'a pas de couverts de référence (nul),
-      // ou si les couverts du plan correspondent à la référence
-      const factor = base && base > 0 && servings !== base ? servings / base : 1;
-
-      for (const row of ingredientsByRecipe.get(plan.recipeId as string) ?? []) {
-        const key = `${row.ingredientId}|${row.unit}`;
-        const existing = merged.get(key);
-        const scaled = row.quantity * factor;
-        if (existing) {
-          existing.quantity = round3(existing.quantity + scaled);
-        } else {
-          merged.set(key, {
-            ingredientId: row.ingredientId,
-            unit: row.unit,
-            quantity: round3(scaled),
-          });
-        }
-      }
-    }
-
-    const rowsToInsert = [...merged.values()].map((item) => ({
-      ingredientId: item.ingredientId,
-      quantity: item.quantity,
-      unit: item.unit,
-      isBought: false,
-      addedManually: false,
-    }));
-
-    // Remplacement atomique des lignes générées (les manuelles sont
-    // préservées), en conservant les coches des articles déjà achetés :
-    // régénérer en plein supermarché ne doit pas effacer le progrès d'achat.
-    db.transaction((tx) => {
-      const bought = tx
-        .select({ ingredientId: shoppingItems.ingredientId, unit: shoppingItems.unit })
-        .from(shoppingItems)
-        .where(and(eq(shoppingItems.addedManually, false), eq(shoppingItems.isBought, true)))
-        .all() as Array<{ ingredientId: string | null; unit: string }>;
-      const boughtKeys = new Set(bought.map((item) => `${item.ingredientId}|${item.unit}`));
-
-      tx.delete(shoppingItems).where(eq(shoppingItems.addedManually, false)).run();
-      if (rowsToInsert.length > 0) {
-        tx.insert(shoppingItems)
-          .values(
-            rowsToInsert.map((row) => ({
-              ...row,
-              isBought: boughtKeys.has(`${row.ingredientId}|${row.unit}`),
-            }))
-          )
-          .run();
-      }
-    });
+    const { rowCount, plannedMeals, deducted, excluded } = generateShoppingRows(startDate, endDate);
 
     revalidatePath('/shopping-list');
 
-    if (plans.length === 0) {
+    if (plannedMeals === 0) {
       return {
         success: true,
         message: 'Aucun repas planifié avec recette sur cette période — liste générée vidée',
       };
     }
 
+    // Le stock du garde-manger est déduit en amont : l'utilisateur voit
+    // tout de suite ce que la réserve a couvert (F11)
+    const stockNote =
+      deducted + excluded > 0
+        ? ` — garde-manger : ${deducted} article${deducted > 1 ? 's' : ''} réduit${deducted > 1 ? 's' : ''}, ${excluded} exclu${excluded > 1 ? 's' : ''}`
+        : '';
+
     return {
       success: true,
-      message: `Liste générée : ${rowsToInsert.length} article${rowsToInsert.length > 1 ? 's' : ''} du ${startDate} au ${endDate}`,
+      message: `Liste générée : ${rowCount} article${rowCount > 1 ? 's' : ''} du ${startDate} au ${endDate}${stockNote}`,
     };
   } catch (error) {
     console.error('Erreur lors de la génération de la liste de courses:', error);
@@ -226,7 +122,7 @@ export async function addManualShoppingItem(
 
     // Liaison optionnelle à un ingrédient existant : l'article hérite du
     // rayon de l'ingrédient (regroupement correct dans la liste) et d'un
-    // ingredientId (utile au futur garde-manger F11). Sinon article libre.
+    // ingredientId (utile au garde-manger F11). Sinon article libre.
     const ingredientId = (formData.get('ingredientId') as string | null)?.trim() || null;
     if (ingredientId) {
       const [ingredient] = await db
@@ -289,10 +185,11 @@ export async function deleteShoppingItem(
     revalidatePath('/shopping-list');
     return { success: true, message: '' };
   } catch (error) {
-    console.error("Erreur lors de la suppression d'un article:", error);
-    return { success: false, message: 'Impossible de supprimer cet article' };
+    console.error('Erreur lors de la suppression d\'un article:', error);
+    return { success: false, message: 'Impossible de supprimer l\'article' };
   }
 }
+
 // Purger la liste : supprime TOUS les articles (générés et manuels,
 // achetés ou non). Irréversible — la validation se fait côté UI
 // (ConfirmDialog) avant l'appel.
@@ -317,4 +214,3 @@ export async function purgeShoppingList(
     return { success: false, message: 'Impossible de purger la liste' };
   }
 }
-

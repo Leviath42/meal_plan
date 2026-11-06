@@ -188,6 +188,8 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - Fichiers : table `pantry_items` (schéma), `app/pantry/page.tsx`, migration
 - Estimation : 2-3 jours
 
+- [x] **Livré (vague 4a, worker W2 — C-057, branche `feature/f11-garde-manger`)** : page `/pantry` (CRUD stock une ligne par ingrédient, quantités décimales, unité pré-remplie du catalogue — SearchSelect partagé, péremption optionnelle avec badge rouge « Périmé » + alerte en page), génération de courses déduisant le stock par (ingrédient, unité) — 500 g demandés dont 200 g en réserve → 300 g, besoin couvert → article exclu, compteurs rendus dans le message de génération + infolettre dans le modal ; cœur de génération extrait dans `app/shopping-list/queries.ts` (module partagé avec le test runtime, C-055) ; helpers de production dans `app/pantry/queries.ts` ; test runtime `scripts/test-pantry.ts` — 29 PASS (P1→P5) ; reste : validation humaine CT beta (UI sombre/mobile, parcours GUEST en session réelle)
+
 ### F12 - Mode Hors-Ligne Partiel (PWA)
 
 **Partie 1 livrée — PWA installable** : `public/manifest.json` (thème teal, icônes 192/512 maskable), `public/sw.js` (coquille hors-ligne : assets cache-first, navigations réseau-avec-repli, `/api/` jamais interceptée), enregistrement dans le layout (`app/ServiceWorkerRegister.tsx`). Installation depuis Chrome Android (menu → « Installer l'application ») ou Safari iOS (« Sur l'écran d'accueil »).
