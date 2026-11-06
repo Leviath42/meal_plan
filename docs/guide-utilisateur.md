@@ -89,6 +89,19 @@ Les statistiques portent sur **tous les repas planifiés, y compris passés** �
 
 ---
 
+## 💬 Retours (/feedback)
+
+Un bug, une idée d'amélioration, une question (y compris sur le prix) : la page **Retours** (barre de navigation) envoie un message à l'équipe en **3 clics** :
+1. Choisissez une **catégorie** : Bug, Idée, Question ou Prix
+2. Écrivez votre **message** (1000 caractères max)
+3. **Envoyer**
+
+La page d'où vous écrivez et la version de l'application partent avec le retour (saisis automatiquement côté serveur) — pas besoin de préciser où le bug est arrivé. Limite : **5 retours par heure** et par compte.
+
+Côté ADMIN, `/admin/feedback` liste les retours avec **compteurs par catégorie et statut**, **filtres** (catégorie, statut) et **changement de statut** : Nouveau → Trié → Traité/Rejeté.
+
+---
+
 ## 🔗 Partager le planning (/share — ADMIN)
 
 1. Crée un **jeton** (durée 7/30/90 jours) — deux types : « Calendrier » (page publique à partager) ou « API » (Home Assistant)

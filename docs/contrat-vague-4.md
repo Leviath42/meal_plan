@@ -61,4 +61,4 @@ Chaque worker, à la fin de sa mission, ajoute une ligne à son tableau ci-desso
 
 | Worker | Branche | Statut | Tests runtime | Reste |
 |---|---|---|---|---|
-| (à remplir par le chef de projet à chaque fusion) | | | | |
+| W3 — F15 feedback | `feature/f15-feedback` | Prêt pour revue (eslint 0, tsc 0, build OK) | `scripts/test-feedback.ts` 24 PASS ; smoke 9, import 32, onboarding 3, license 15 PASS | Fusion par le chef (ordre §4 : après W2) ; validation humaine CT beta : F1 (referer → page_url), F4 (MEMBER refusé sur /admin/feedback), F5 (mode sombre) |
