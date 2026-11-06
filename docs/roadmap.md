@@ -167,7 +167,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 **Organisation** ([contrat-vague-4.md](contrat-vague-4.md), figé avant workers ; [test-plan-vague-4.md](test-plan-vague-4.md) pour les gates et le débogage) :
 - **Vague 4a (parallèle)** : W1 = F10+F12 (SW/push), W2 = F11 (garde-manger), W3 = F15 (feedback), W4 = F16 (standards), W5 = F18 (export/import JSON) — migration `0008` + nav figées dans le contrat. **🟢 Toute la 4a est mergée sur `beta` le 06/11/2026** (C-057 → C-061 ; tests runtime en CI : pantry 29, feedback 24, standards 19, export 34, notifications 27 PASS) — reste la validation humaine CT beta (scénarios du [test-plan-vague-4.md](test-plan-vague-4.md) §2) puis la vague 4b ;
-- **Vague 4b (séquentielle)** : W6 = **F17 multi-tenant** (chantier prioritaire confirmé le 06/11/2026 — cascade `household_id` sur toutes les tables, backfill foyer unique, isolation en requête ; seul, après les fusions 4a) ;
+- **Vague 4b (séquentielle)** : W6 = **F17 multi-tenant** (chantier prioritaire confirmé le 06/11/2026 — cascade `household_id` sur toutes les tables, backfill foyer unique, isolation en requête ; seul, après les fusions 4a). **🟡 Lancée le 06/11/2026** — contrat figé ([contrat-vague-4b.md](contrat-vague-4b.md) : rattachement table par table, backfill runtime idempotent, isolation via `lib/household.ts`, gardes `MULTI_HOUSEHOLDS`), worker W6 sur `feature/multi-tenant-household` ;
 - **OAuth** : bloqué sur les variables d'environnement propriétaire — hors vague.
 
 ### F07 - Import de Recettes depuis URL — 🟢 mergé sur `beta` (PR #25, 05/11/2026)
