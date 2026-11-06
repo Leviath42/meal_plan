@@ -19,7 +19,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:ensure": "tsx scripts/db-ensure.ts",
     "create-admin": "tsx scripts/create-admin.ts",
-    "test:pantry": "tsx scripts/test-pantry.ts"
+    "test:pantry": "tsx scripts/test-pantry.ts",
+    "test:feedback": "tsx scripts/test-feedback.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
