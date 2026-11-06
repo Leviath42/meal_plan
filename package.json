@@ -23,7 +23,8 @@
     "test:feedback": "tsx scripts/test-feedback.ts",
     "test:standards": "tsx scripts/test-standards.ts",
     "db:seed-standards": "tsx scripts/seed-standards.ts",
-    "test:export": "tsx scripts/test-export.ts"
+    "test:export": "tsx scripts/test-export.ts",
+    "test:notifications": "tsx scripts/test-notifications.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
