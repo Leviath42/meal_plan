@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition, type FormEvent } from 'react';
+import { useActionState, useState, useTransition, type FormEvent } from 'react';
 import Link from 'next/link';
 import { updateDefaultServings, updateMinDaysBetween, updateTheme } from '@/app/actions/settings';
+import { importAllData } from '@/app/actions/export';
 import { THEMES, getTheme, themeMealColors } from '@/lib/themes';
 
 interface SettingsClientProps {
@@ -34,6 +35,8 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
   const [themePending, startThemeTransition] = useTransition();
   const [minDaysFeedback, setMinDaysFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [isMinDaysPending, startMinDaysTransition] = useTransition();
+  // F18 export/import : action serveur ADMIN + état du formulaire d'import
+  const [importState, importFormAction, isImportPending] = useActionState(importAllData, null);
 
   const isAdmin = role === 'ADMIN';
   const roleLabel = role ? ROLE_LABELS[role] ?? role : 'Inconnu';
@@ -260,6 +263,61 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
           )}
         </div>
       </div>
+
+      {/* F18 : export/import JSON complet (ADMIN uniquement) */}
+      {isAdmin && (
+        <section className="border-t border-gray-200 pt-3 space-y-3">
+          <h2 className="text-sm font-medium text-gray-700">Export / Import</h2>
+
+          {/* Export : simple lien GET (lecture), il reste possible même en
+              essai expiré — les seules écritures y sont bloquées */}
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium text-gray-700">Exporter mes données</h3>
+            <p className="text-xs text-gray-500">
+              Télécharge tout le foyer en un fichier JSON : recettes, ingrédients, planning,
+              garde-manger et paramètres. Aucun mot de passe, jeton ni clé de licence n&apos;est inclus.
+            </p>
+            <a
+              href="/settings/export"
+              download
+              className="inline-block px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm"
+            >
+              Exporter (JSON)
+            </a>
+          </div>
+
+          {/* Import : transaction atomique — tout ou rien */}
+          <form action={importFormAction} className="space-y-2" encType="multipart/form-data">
+            <h3 className="text-sm font-medium text-gray-700">Importer un fichier</h3>
+            <p className="text-xs text-gray-500">
+              Restaure un fichier d&apos;export précédent. Tout se passe en une seule
+              transaction : en cas d&apos;erreur, rien n&apos;est écrit. Les recettes déjà
+              présentes ne sont jamais écrasées (doublons suffixés «&nbsp;(2)&nbsp;»).
+            </p>
+            <input
+              id="import-file"
+              type="file"
+              name="file"
+              accept="application/json,.json"
+              required
+              disabled={isImportPending}
+              className="block w-full text-sm text-gray-700 border rounded p-2 bg-white file:mr-3 file:px-3 file:py-1 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm"
+              disabled={isImportPending}
+            >
+              {isImportPending ? 'Import en cours...' : 'Importer'}
+            </button>
+            {!isImportPending && importState?.message && (
+              <p className={`text-sm ${importState.success ? 'text-green-600' : 'text-red-500'}`}>
+                {importState.message}
+              </p>
+            )}
+          </form>
+        </section>
+      )}
     </div>
   );
 }

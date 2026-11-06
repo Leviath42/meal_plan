@@ -62,3 +62,4 @@ Chaque worker, à la fin de sa mission, ajoute une ligne à son tableau ci-desso
 | Worker | Branche | Statut | Tests runtime | Reste |
 |---|---|---|---|---|
 | (à remplir par le chef de projet à chaque fusion) | | | | |
+| W5 — F18 export/import JSON | `feature/f18-export-import` | Livré sur la branche, prêt pour fusion | `scripts/test-export.ts` : 34 PASS (E1→E5) ; smoke 9, import 32, onboarding 3, licence 15 PASS ; eslint 0 erreur, tsc, build OK | `npm run test:export` + ligne CI à ajouter par le chef de projet (package.json hors périmètre worker) ; validation humaine UI `/settings` (section ADMIN) et parcours GET `/settings/export` en essai expiré ; mise à jour de `docs/test-plan-vague-4.md` §2 W5 statuts « vérifié » à la fusion |
