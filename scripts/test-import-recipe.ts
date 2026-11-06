@@ -41,6 +41,7 @@ async function main() {
   await new Promise<void>((resolve) => server.listen(PORT, '127.0.0.1', resolve));
 
   const { fetchRecipeFromUrl, normalizeRecipeUrl } = await import('../lib/recipe-import');
+  const { ingredientNameEqualsIgnoreCase, recipeTitleEqualsIgnoreCase } = await import('../lib/recipe-import-db');
   const { db } = await import('../lib/db');
   const { users, recipes, ingredients, recipeIngredients } = await import('../lib/db/schema');
   const { eq } = await import('drizzle-orm');
@@ -81,7 +82,9 @@ async function main() {
       })
       .returning({ id: recipes.id }).get();
     for (const ing of recipeData!.ingredients) {
-      const foundRows = tx.select({ id: ingredients.id }).from(ingredients).where(eq(ingredients.name, ing.name)).limit(1).all();
+      // Même helper que l'action réelle (via lib/recipe-import-db) : le test
+      // exécute la requête de production, pas une réplique (C-055)
+      const foundRows = tx.select({ id: ingredients.id }).from(ingredients).where(ingredientNameEqualsIgnoreCase(ing.name)).limit(1).all();
       const found = foundRows[0];
       let id = found?.id;
       if (!id) id = tx.insert(ingredients).values({ name: ing.name, category: 'Importé', defaultUnit: ing.unit ?? 'pièce' }).returning({ id: ingredients.id }).get().id;
@@ -94,6 +97,12 @@ async function main() {
   check('titre en base', row.title === 'Tarte aux pommes importée');
   const ings = await db.select().from(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId));
   check('4 ingrédients liés, tous avec quantité', ings.length === 4 && ings.every((i) => i.quantity > 0));
+  // Recherche de doublon insensible à la casse — même helper que l'action
+  // réelle : sans ça, le titre existant n'était pas retrouvé (C-055)
+  await db.insert(recipes).values({ title: 'Souffle au Chocolat', prepTime: 10, cookTime: 15, instructions: 'x' });
+  const doublons = await db.select({ title: recipes.title }).from(recipes).where(recipeTitleEqualsIgnoreCase('SOUFFLE AU CHOCOLAT'));
+  check('doublon de titre trouvé sans tenir de la casse', doublons.some((d) => d.title === 'Souffle au Chocolat'));
+
   const cats = await db.select().from(ingredients);
   check('ingrédients créés au catalogue', cats.some((c) => c.name === 'pommes' || c.name === 'sucre'));
 

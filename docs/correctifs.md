@@ -39,6 +39,8 @@
 
 | C-054 | 2026-11-06 | F07 — import de recette (crash post-import) | Après le scraping et la confirmation, l'app affichait « This page couldn't load » : la recette était bien créée en base, mais le composant client `ImportRecipeForm` appelait `router.push()` PENDANT le rendu React (effet de bord interdit) — l'exception remontait dans l'error boundary Next dès que `confirmState.recipeId` était posé | Corrigé : la redirection déplacée dans un `useEffect` (déclenché quand `recipeId` arrive) — plus aucun effet de bord au rendu ; vérifié : `tsc --noEmit` OK, `next build` complet OK (l'action serveur, non modifiée, reste couverte par `test:import` en CI) | Haute |
 
+| C-055 | 2026-11-06 | F07 — import de recette (crash à la confirmation) | La confirmation d'import plantait systématiquement (« This page couldn't load ») alors que le scraping fonctionnait : `confirmRecipeImport` utilisait `ilike()` de drizzle-orm, opérateur **PostgreSQL** inexistant en SQLite — drizzle générait `title ilike ?` → `SqliteError: near "ilike": syntax error`. La CI ne l'avait pas vu : `test:import` répliquait la requête avec `eq(...)` au lieu du `ilike` réel. (C-054, `router.push` au rendu, était un second bug latent corrigé au passage) | Corrigé : comparaisons insensibles à la casse via `LOWER(col) = LOWER(?)` dans `lib/recipe-import-db.ts` (`recipeTitleEqualsIgnoreCase`, `ingredientNameEqualsIgnoreCase`), helpers partagés entre l'action (`app/actions/import-recipe.ts` : doublon de titre + match d'ingrédient) et le test runtime (`scripts/test-import-recipe.ts` exécute désormais les MÊMES requêtes, plus de réplique divergente — +2 tests). Vérifié EN EXÉCUTION sur serveur réel : build + `npm run start` sur base jetable, login NextAuth, POST de l'action `confirmRecipeImport` → recette créée, ingrédients inconnus catalogués, doublon « TARTE AUX COURGETTES » → « (2) », GET `/recipes/<id>` 200, aucun SqliteError en log ; tsc + build OK | Haute |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -47,7 +49,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 54 (C-001 → C-054, C-050/C-051 mergées sur beta) |
+| Corrections enregistrées | 55 (C-001 → C-055, C-050/C-051 mergées sur beta) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |

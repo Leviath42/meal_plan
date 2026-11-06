@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { requireSession } from '@/lib/auth-guards';
 import { recipes, ingredients, recipeIngredients } from '@/lib/db/schema';
 import { importedRecipeSchema, fetchRecipeFromUrl } from '@/lib/recipe-import';
-import { ilike, eq } from 'drizzle-orm';
+import { recipeTitleEqualsIgnoreCase, ingredientNameEqualsIgnoreCase } from '@/lib/recipe-import-db';
 import { revalidatePath } from 'next/cache';
 
 export type ImportPreviewState = {
@@ -80,7 +80,7 @@ export async function confirmRecipeImport(
   const existing = await db
     .select({ title: recipes.title })
     .from(recipes)
-    .where(ilike(recipes.title, recipeData.title));
+    .where(recipeTitleEqualsIgnoreCase(recipeData.title));
   let title = recipeData.title;
   if (existing.some((r) => r.title.toLowerCase() === title.toLowerCase())) {
     let n = 2;
@@ -111,7 +111,7 @@ export async function confirmRecipeImport(
       const foundRows = tx
         .select({ id: ingredients.id })
         .from(ingredients)
-        .where(ilike(ingredients.name, ing.name))
+        .where(ingredientNameEqualsIgnoreCase(ing.name))
         .limit(1)
         .all();
       let ingredientId = foundRows[0]?.id;
