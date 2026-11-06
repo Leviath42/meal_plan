@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { recipes, recipeIngredients, ingredients } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+import { getCurrentHouseholdId } from '@/lib/auth-guards';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatQuantity, formatNumericDate, formatDayMonthYear } from '@/lib/format';
@@ -8,10 +9,13 @@ import { formatQuantity, formatNumericDate, formatDayMonthYear } from '@/lib/for
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
+  // F17 (C-062) : la recette doit appartenir au FOYER de session —
+  // introuvable ailleurs (404), jamais de fuite de détail
+  const householdId = await getCurrentHouseholdId();
   const [recipe] = await db
     .select()
     .from(recipes)
-    .where(eq(recipes.id, id));
+    .where(and(eq(recipes.id, id), eq(recipes.householdId, householdId)));
 
   if (!recipe) {
     notFound();
@@ -30,7 +34,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
     })
     .from(recipeIngredients)
     .leftJoin(ingredients, eq(recipeIngredients.ingredientId, ingredients.id))
-    .where(eq(recipeIngredients.recipeId, id));
+    .where(and(eq(recipeIngredients.recipeId, id), eq(recipeIngredients.householdId, householdId)));
 
   const totalTime = recipe.prepTime + recipe.cookTime;
 

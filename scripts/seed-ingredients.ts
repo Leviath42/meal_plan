@@ -2,30 +2,32 @@
 //
 // Enrichit le catalogue d'ingrédients (~250 entrées, 12 rayons) sans jamais
 // toucher aux données existantes :
-//   - idempotent : INSERT OR IGNORE sur le nom (les doublons sont ignorés,
-//     y compris les ingrédients saisis manuellement par la famille) ;
+//   - idempotent : anti-doublon sur (foyer, nom) — l'UNIQUE par foyer posé par
+//     la migration 0009 (F17, C-062) ignore les doublons, y compris les
+//     ingrédients saisis manuellement par la famille ;
 //   - non destructif : aucune recette, association, plan ou article de
 //     courses n'est modifié ;
 //   - sûr sur une base en service : aucune migration, simple insertion.
 //
-// Usage : npm run db:seed-ingredients   (applicable autant de fois que voulu,
-// sur une base vierge comme sur une base de production)
+// F17 multi-tenant (C-062, contrat 4b §1.4) : le point d'entrée réutilisable
+// est seedIngredientLibraryForHousehold(householdId) — les inscriptions du
+// mode MULTI_HOUSEHOLDS=ON démarrent avec un catalogue vide, le bouton
+// « remplir le catalogue » de /welcome appelle cette fonction pour LE foyer.
+//
+// CLI : npm run db:seed-ingredients (applicable autant de fois que voulu,
+// sur une base vierge comme sur une base de production) — cible le FOYER
+// PRINCIPAL via la base applicative (SQLITE_PATH). Ce module n'ouvre AUCUNE
+// base à l'import : il est réutilisé par l'action serveur de /welcome, et le
+// main() ne s'exécute que si c'est bien lui le point d'entrée (argv).
 
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
-import * as schema from '../lib/db/schema';
-import { mkdirSync } from 'fs';
-import path from 'path';
+import { db } from '../lib/db';
+import { ingredients } from '../lib/db/schema';
+import { ensurePrimaryHousehold } from '../lib/household';
 
-// Dossier de la base avant ouverture (cf. C-034)
-const dbPath = path.join(process.cwd(), 'data', 'sqlite.db');
-mkdirSync(path.dirname(dbPath), { recursive: true });
-
-const sqlite = new Database(dbPath);
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('busy_timeout = 5000');
-const db = drizzle(sqlite, { schema });
-const { ingredients } = schema;
+export type SeedHouseholdResult = {
+  inserted: number;
+  skipped: number;
+};
 
 // Rayons de supermarché (mêmes noms que le seed de démo)
 const R = {
@@ -82,34 +84,47 @@ const LIBRARY: { name: string; category: string; defaultUnit: string }[] = [
   ...['Épinards surgelés', 'Haricots verts surgelés', 'Petits pois surgelés', 'Brocolis surgelés', 'Mix de légumes surgelés', 'Frites surgelées', 'Pommes dauphines surgelées', 'Crevettes surgelées', 'Poisson pané surgelé', 'Poulet surgelé', 'Viande hachée surgelée', 'Glace vanille', 'Glace chocolat', 'Sorbet', 'Fruits rouges surgelés', 'Pain au surgelé', 'Pâte brisée surgelée', 'Boules de glace', 'Gaufres surgelées', 'Herbes surgelées', 'Gingembre surgelé'].map((name) => ({ name, category: R.surgeles, defaultUnit: 'g' })),
 ];
 
-async function main() {
-  console.log('Bibliothèque d’ingrédients de référence');
-  console.log(`${LIBRARY.length} entrées dans ${new Set(LIBRARY.map((i) => i.category)).size} rayons\n`);
-
+// Insère la bibliothèque dans le catalogue DU foyer — anti-doublon
+// (household_id, name), transaction SYNCHRONE better-sqlite3, idempotent.
+export function seedIngredientLibraryForHousehold(householdId: string): SeedHouseholdResult {
   let inserted = 0;
   let skipped = 0;
-
-  const run = sqlite.transaction(() => {
+  db.transaction((tx) => {
     for (const item of LIBRARY) {
-      const result = sqlite
-        .prepare(
-          'INSERT OR IGNORE INTO ingredients (id, name, category, default_unit) VALUES (?,?,?,?)'
-        )
-        .run(crypto.randomUUID(), item.name, item.category, item.defaultUnit);
+      const result = tx
+        .insert(ingredients)
+        .values({
+          name: item.name,
+          category: item.category,
+          defaultUnit: item.defaultUnit,
+          householdId,
+        })
+        .onConflictDoNothing()
+        .run();
       if (result.changes > 0) inserted++;
       else skipped++;
     }
   });
-  run();
-
-  console.log(`  ✓ ${inserted} ingrédients ajoutés`);
-  console.log(`  • ${skipped} déjà présents (ignorés — aucune donnée modifiée)`);
-  const [{ total }] = sqlite.prepare('SELECT COUNT(*) as total FROM ingredients').all() as { total: number }[];
-  console.log(`\nCatalogue total : ${total} ingrédients`);
-  sqlite.close();
+  return { inserted, skipped };
 }
 
-main().catch((error) => {
-  console.error('Erreur :', error);
-  process.exit(1);
-});
+// CLI : foyer principal (famille unique de l'instance auto-hébergée). Le
+// backfill y rattache aussi les éventuelles lignes orphelines pré-0009.
+function main() {
+  console.log('Bibliothèque d’ingrédients de référence');
+  console.log(`${LIBRARY.length} entrées dans ${new Set(LIBRARY.map((i) => i.category)).size} rayons`);
+
+  const householdId = ensurePrimaryHousehold();
+  const { inserted, skipped } = seedIngredientLibraryForHousehold(householdId);
+
+  console.log(`  ✓ ${inserted} ingrédients ajoutés (foyer principal ${householdId})`);
+  console.log(`  • ${skipped} déjà présents (ignorés — aucune donnée modifiée)`);
+  const total = db.select({ id: ingredients.id }).from(ingredients).all().length;
+  console.log(`\nCatalogue total : ${total} ingrédients`);
+}
+
+// N'exécuter le main QUE si c'est ce script qui est invoqué (npm run
+// db:seed-ingredients / npx tsx) — PAS à l'import par l'action /welcome.
+if (process.argv[1]?.replace(/\\/g, '/').endsWith('scripts/seed-ingredients.ts')) {
+  main();
+}

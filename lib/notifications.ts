@@ -8,6 +8,7 @@ import { and, eq, isNotNull } from 'drizzle-orm';
 import { sendNotification } from 'web-push';
 import { db } from '@/lib/db';
 import { mealPlans, pushSubscriptions, recipes, users } from '@/lib/db/schema';
+import { ensurePrimaryHousehold } from '@/lib/household';
 
 // Heure « HH:MM » valide (fuseau local du foyer — Europe/Paris en prod via TZ)
 const HHMM_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -113,9 +114,12 @@ export async function hasPushSubscription(userId: string): Promise<boolean> {
 // même lecture que le calendrier : titre = recette, sinon note, sinon type.
 const MEAL_TYPE_ORDER = ['Petit-déjeuner', 'Midi', 'Goûter', 'Soir'];
 
-export async function getTodayMeals(dateStr: string): Promise<
+export async function getTodayMeals(dateStr: string, householdId?: string): Promise<
   { mealType: string; label: string }[]
 > {
+  // F17 (C-062) : repas du jour DU FOYER. L'argument optionnel (tests runtime,
+  // base mono-foyer) retombe sur le foyer principal via le backfill idempotent.
+  const hid = householdId ?? ensurePrimaryHousehold();
   const rows = await db
     .select({
       mealType: mealPlans.mealType,
@@ -124,7 +128,7 @@ export async function getTodayMeals(dateStr: string): Promise<
     })
     .from(mealPlans)
     .leftJoin(recipes, eq(mealPlans.recipeId, recipes.id))
-    .where(eq(mealPlans.date, dateStr));
+    .where(and(eq(mealPlans.date, dateStr), eq(mealPlans.householdId, hid)));
 
   return rows
     .sort((a, b) => {
@@ -148,8 +152,9 @@ export interface DailyMealPayload {
 // « Aujourd'hui : [repas] » — null si aucun repas planifié (rien à envoyer)
 export async function buildDailyMealPayload(
   dateStr: string = getParisDateStr(),
+  householdId?: string,
 ): Promise<DailyMealPayload | null> {
-  const meals = await getTodayMeals(dateStr);
+  const meals = await getTodayMeals(dateStr, householdId);
   if (meals.length === 0) return null;
 
   const listed = meals.map((m) => `${m.label} (${m.mealType})`).join(', ');
@@ -189,6 +194,9 @@ export interface PushSubscriberRow {
   endpoint: string;
   p256dh: string;
   auth: string;
+  // F17 (C-062) : foyer du compte abonné (transitif via user_id, contrat 4b
+  // §1.1) — le rappel push ne sert que le planning de CE foyer
+  householdId: string | null;
 }
 
 export async function listPushRecipients(time?: string): Promise<PushSubscriberRow[]> {
@@ -199,6 +207,7 @@ export async function listPushRecipients(time?: string): Promise<PushSubscriberR
       endpoint: pushSubscriptions.endpoint,
       p256dh: pushSubscriptions.p256dh,
       auth: pushSubscriptions.auth,
+      householdId: users.householdId,
     })
     .from(pushSubscriptions)
     .innerJoin(users, eq(pushSubscriptions.userId, users.id))
@@ -237,23 +246,37 @@ export interface DailyPushResult {
 
 // Envoi du rappel du jour. Ne fait rien s'il n'y a aucun repas planifié.
 // Supprime les abonnements morts (404/410) pour ne pas encombrer le service.
+// F17 (C-062) : le rappel est construit PAR FOYER — un abonné ne reçoit que
+// le repas du jour DE SON foyer (les abonnements sont portés par user_id,
+// le foyer est transitif). Un abonné dont le foyer n'a rien de prévu
+// n'est pas notifié même si un autre foyer a un repas ce jour-là.
 export async function sendDailyPushNotifications(opts?: {
   time?: string;
 }): Promise<DailyPushResult> {
-  const payload = await buildDailyMealPayload();
+  const recipients = await listPushRecipients(opts?.time);
+
+  // Payload par foyer (les souscriptions partagent souvent le même foyer :
+  // une seule lecture du planning par foyer, pas par abonné)
+  const payloadByHousehold = new Map<string, DailyMealPayload | null>();
+  for (const hid of new Set(recipients.map((r) => r.householdId ?? ensurePrimaryHousehold()))) {
+    payloadByHousehold.set(hid, await buildDailyMealPayload(undefined, hid));
+  }
+  const anyMeal = [...payloadByHousehold.values()].some((p) => p !== null);
+
   const result: DailyPushResult = {
-    mealPlanned: payload !== null,
+    mealPlanned: anyMeal,
     recipients: 0,
     sent: 0,
     removed: 0,
     failed: 0,
   };
-  if (!payload) return result;
-
-  const recipients = await listPushRecipients(opts?.time);
+  if (!anyMeal || recipients.length === 0) return result;
   result.recipients = recipients.length;
 
   for (const sub of recipients) {
+    const payload = payloadByHousehold.get(sub.householdId ?? ensurePrimaryHousehold());
+    // Foyer sans repas prévu aujourd'hui : rien à annoncer à cet abonné
+    if (!payload) continue;
     try {
       await pushToSubscription(sub, payload);
       result.sent++;

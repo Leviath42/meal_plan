@@ -9,8 +9,14 @@
 // couverts SAISIS (100 g/pers → 4 couverts = 400 g), reste ajustable à la
 // main (la valeur saisie est seule enregistrée) et l'absence de standard
 // laisse le formulaire strictement inchangé.
+//
+// F17 (C-062) : les standards sont isolés par foyer. L'argument optionnel
+// (tests runtime historiques, base mono-foyer) retombe sur le foyer
+// principal via le backfill idempotent — aucune lecture sans foyer.
 import { db } from '@/lib/db';
 import { ingredientStandards } from '@/lib/db/schema';
+import { ensurePrimaryHousehold } from '@/lib/household';
+import { eq } from 'drizzle-orm';
 import type { IngredientStandard } from './standards-quantity';
 
 export type {
@@ -22,7 +28,8 @@ export {
   formatStandardQuantity,
 } from './standards-quantity';
 
-export async function getIngredientStandards(): Promise<IngredientStandard[]> {
+export async function getIngredientStandards(householdId?: string): Promise<IngredientStandard[]> {
+  const hid = householdId ?? ensurePrimaryHousehold();
   const rows = await db
     .select({
       ingredientId: ingredientStandards.ingredientId,
@@ -30,16 +37,17 @@ export async function getIngredientStandards(): Promise<IngredientStandard[]> {
       unit: ingredientStandards.unit,
       servingsRef: ingredientStandards.servingsRef,
     })
-    .from(ingredientStandards);
+    .from(ingredientStandards)
+    .where(eq(ingredientStandards.householdId, hid));
   return rows;
 }
 
 // Index par ingredient_id, consommé par les pages de création/édition
-export async function getIngredientStandardsMap(): Promise<
+export async function getIngredientStandardsMap(householdId?: string): Promise<
   Record<string, IngredientStandard>
 > {
   const map: Record<string, IngredientStandard> = {};
-  for (const standard of await getIngredientStandards()) {
+  for (const standard of await getIngredientStandards(householdId)) {
     map[standard.ingredientId] = standard;
   }
   return map;

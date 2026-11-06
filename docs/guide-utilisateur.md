@@ -172,3 +172,16 @@ Côté ADMIN, `/admin/feedback` liste les retours avec **compteurs par catégori
 **Je ne peux pas supprimer un repas d'hier.** Normal : les repas passés sont figés pour que l'historique reste fiable.
 
 **Le badge « • » ne disparaît pas.** Il indique « servi dans les 30 derniers jours » et se mettra à jour à la prochaine planification de cette recette (ou disparaîtra au fil du temps).
+
+## 🔒 Plusieurs foyers sur la même instance (option hébergeur — F17)
+
+Par défaut, une instance = une seule famille : chaque nouvelle inscription rejoint le foyer principal et tout le monde voit le même planning, le même catalogue et les mêmes listes. Rien n'a changé.
+
+L'hébergeur peut activer le mode multi-foyers avec la variable `MULTI_HOUSEHOLDS=true` dans `.env.local` (voir [deploiement-proxmox.md](deploiement-proxmox.md)). Alors :
+
+- **chaque inscription crée un foyer séparé** : deux foyers sur la même instance ne voient RIEN l'un de l'autre (recettes, ingrédients, calendrier, liste de courses, garde-manger, retours et liens de partage) ;
+- le nouveau foyer démarre avec un **catalogue vide** — la page d'accueil post-inscription propose le bouton « Remplir mon catalogue d'ingrédients » (568 ingrédients courants en un clic, cliquable autant de fois que voulu, sans effet sur les autres foyers) ;
+- un même nom d'ingrédient peut exister dans les deux foyers (par ex. chacun sa « Farine ») sans aucun conflit ;
+- les liens de partage (page publique, calendrier ICS, JSON) ne servent jamais le planning d'un autre foyer : un jeton appartient au foyer qui l'a créé.
+
+Les comptes restent gérés par l'administrateur **de son propre foyer** (page `/register`) : les membres des autres foyers ne sont ni listés ni modifiables depuis le vôtre.

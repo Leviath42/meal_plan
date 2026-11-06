@@ -1,12 +1,18 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { requireSession } from '@/lib/auth-guards';
+import { requireHousehold } from '@/lib/auth-guards';
+import { multiHouseholdsEnabled } from '@/lib/household';
+import { seedIngredientLibraryForHousehold } from '../../scripts/seed-ingredients';
 import { ingredients } from '@/lib/db/schema';
 import { ingredientInput } from '@/lib/validators/ingredients';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
+// F17 (C-062) : catalogue isolé par foyer (contrat 4b §1.1) — l'UNIQUE de nom
+// d'ingrédient est porté par (household_id, name) en base ; toute requête
+// filtre par le foyer de session.
 
 export type IngredientFormState = {
   errors?: Record<string, string[]>;
@@ -28,7 +34,7 @@ export async function createIngredient(
   prevState: IngredientFormState,
   formData: FormData
 ): Promise<IngredientFormState> {
-  await requireSession();
+  const { householdId } = await requireHousehold();
   const rawData = formDataToRecord(formData);
   const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
@@ -39,8 +45,9 @@ export async function createIngredient(
   }
 
   try {
-    await db.insert(ingredients).values(parsed.data);
+    await db.insert(ingredients).values({ ...parsed.data, householdId });
   } catch {
+    // UNIQUE (household_id, name) : le nom existe déjà DANS CE FOYER
     return { errors: { name: ['Cet ingrédient existe déjà'] } };
   }
 
@@ -52,7 +59,7 @@ export async function updateIngredient(
   id: string,
   formData: FormData
 ): Promise<IngredientFormState> {
-  await requireSession();
+  const { householdId } = await requireHousehold();
   const rawData = formDataToRecord(formData);
   const parsed = ingredientInput.safeParse(rawData);
   if (!parsed.success) {
@@ -63,7 +70,10 @@ export async function updateIngredient(
   }
 
   try {
-    await db.update(ingredients).set(parsed.data).where(eq(ingredients.id, id));
+    await db
+      .update(ingredients)
+      .set(parsed.data)
+      .where(and(eq(ingredients.id, id), eq(ingredients.householdId, householdId)));
     revalidatePath('/ingredients');
     return null;
   } catch {
@@ -73,8 +83,10 @@ export async function updateIngredient(
 
 export async function deleteIngredient(id: string): Promise<{ error?: string }> {
   try {
-    await requireSession();
-    await db.delete(ingredients).where(eq(ingredients.id, id));
+    const { householdId } = await requireHousehold();
+    await db
+      .delete(ingredients)
+      .where(and(eq(ingredients.id, id), eq(ingredients.householdId, householdId)));
     revalidatePath('/ingredients');
     return {};
   } catch {
@@ -95,7 +107,7 @@ export async function quickCreateIngredient(
   category: string,
   defaultUnit: string
 ): Promise<QuickIngredientResult> {
-  await requireSession();
+  const { householdId } = await requireHousehold();
   const parsed = ingredientInput.safeParse({ name, category, defaultUnit });
   if (!parsed.success) {
     return { success: false, message: parsed.error.issues[0]?.message ?? 'Valeur invalide' };
@@ -104,7 +116,7 @@ export async function quickCreateIngredient(
   try {
     const [created] = await db
       .insert(ingredients)
-      .values(parsed.data)
+      .values({ ...parsed.data, householdId })
       .returning({
         id: ingredients.id,
         name: ingredients.name,
@@ -115,6 +127,23 @@ export async function quickCreateIngredient(
     revalidatePath('/recipes/new');
     return { success: true, ingredient: created };
   } catch {
+    // UNIQUE (household_id, name) : déjà présent dans CE foyer
     return { success: false, message: 'Cet ingrédient existe déjà' };
   }
+}
+
+// F17 (C-062, MULTI_HOUSEHOLDS=ON, contrat 4b §1.4) : remplir le catalogue du
+// foyer de session avec la bibliothèque de référence (~250 ingrédients), via
+// scripts/seed-ingredients.ts en mode ciblé par foyer. Anti-doublon sur
+// (household_id, name) : idempotent, répétée la commande n'ajoute rien.
+export async function seedHouseholdCatalog(): Promise<void> {
+  const { householdId } = await requireHousehold();
+  if (!multiHouseholdsEnabled()) {
+    // Bouton affiché uniquement en mode multi-foyers : sans MULTI_HOUSEHOLDS
+    // le foyer principal partage déjà le catalogue de l'instance.
+    return;
+  }
+  seedIngredientLibraryForHousehold(householdId);
+  revalidatePath('/welcome');
+  revalidatePath('/ingredients');
 }

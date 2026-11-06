@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
     })
     .from(mealPlans)
     .leftJoin(recipes, eq(mealPlans.recipeId, recipes.id))
-    .where(and(gte(mealPlans.date, start), lte(mealPlans.date, endStr)))
+    // F17 (C-062) : le jeton ne sert QUE le planning de SON foyer
+    .where(and(eq(mealPlans.householdId, record.householdId), gte(mealPlans.date, start), lte(mealPlans.date, endStr)))
     .orderBy(asc(mealPlans.date));
 
   // Tri chronologique : date d'abord (comparaison ISO fiable), puis ordre

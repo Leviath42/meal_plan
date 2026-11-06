@@ -45,6 +45,12 @@ export const recipes = sqliteTable("recipes", {
   // Date de création et de dernière modification (gérées automatiquement)
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+
+  // F17 multi-tenant (vague 4b) : recette du foyer. La colonne reste nullable
+  // en base (ALTER SQLite) mais est TOUJOURS posée par le code applicatif ;
+  // les lignes préexistantes sont rattachées au foyer principal par le
+  // backfill runtime idempotent (lib/household.ts, contrat 4b §1.2).
+  householdId: text("household_id"),
 });
 
 
@@ -54,9 +60,12 @@ export const recipes = sqliteTable("recipes", {
 // Ne contient aucune quantité. C'est juste la liste de ce qui existe au supermarché.
 export const ingredients = sqliteTable("ingredients", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  
-  // Nom générique (ex: "Tomate", "Farine T55"). Unique pour éviter les doublons.
-  name: text("name").notNull().unique(),
+
+  // Nom générique (ex: "Tomate", "Farine T55"). L'UNIQUE global historique
+  // devient PAR FOYER (contrat 4b §1.1) : deux foyers peuvent avoir chacun
+  // leur "Farine" — la contrainte uniqueIndex en fin de table porte
+  // (household_id, name).
+  name: text("name").notNull(),
   
   // Crucial pour le supermarché : permet de trier la liste de courses par rayon 
   // (ex: "Fruits & Légumes", "Boucherie", "Épicerie Salée")
@@ -64,7 +73,14 @@ export const ingredients = sqliteTable("ingredients", {
   
   // L'unité classique avec laquelle on achète ce produit (ex: "kg", "pièce", "litre")
   defaultUnit: text("default_unit").notNull(),
-});
+
+  // F17 multi-tenant : catalogue du foyer (nullable en base, backfill runtime)
+  householdId: text("household_id"),
+}, (table) => [
+  // Un même nom d'ingrédient ne peut exister deux fois au sein d'un foyer ;
+  // deux foyers peuvent partager le même nom sans collision.
+  uniqueIndex('ingredients_household_name_unique').on(table.householdId, table.name),
+]);
 
 
 // ============================================================================
@@ -89,6 +105,10 @@ export const recipeIngredients = sqliteTable("recipe_ingredients", {
   
   // Lien vers le dictionnaire d'ingrédients
   ingredientId: text("ingredient_id").notNull().references(() => ingredients.id),
+
+  // F17 multi-tenant : dénormalisation volontaire (contrat 4b §1.1) — les
+  // jointures recette↔ingrédient filtrent par foyer sans traverse.
+  householdId: text("household_id"),
 }, (table) => [
   // Requêtes chaudes : détail/édition de recette, agrégation liste de courses
   index('recipe_ingredients_recipe_idx').on(table.recipeId),
@@ -124,6 +144,9 @@ export const mealPlans = sqliteTable("meal_plans", {
   // Timestamps pour le suivi
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
+
+  // F17 multi-tenant : planning du foyer (nullable en base, backfill runtime)
+  householdId: text("household_id"),
 }, (table) => [
   // Navigation du calendrier, liste de courses, exports ICS/API :
   // toutes filtrent sur la date
@@ -133,7 +156,9 @@ export const mealPlans = sqliteTable("meal_plans", {
   // Un même repas (recette + créneau) ne peut pas être planifié deux fois :
   // évite les doublons de quantités dans la liste de courses. Les repas sans
   // recette (recipe_id NULL) restent multiples (NULL ignoré par UNIQUE).
-  uniqueIndex('meal_plans_slot_unique').on(table.date, table.mealType, table.recipeId),
+  // Le créneau unique est PAR FOYER (contrat 4b §1.1).
+  // ANTI-DOUBLON: préfixe stable des index chauds date/recette.
+  uniqueIndex('meal_plans_slot_household_unique').on(table.householdId, table.date, table.mealType, table.recipeId),
 ]);
 
 
@@ -162,6 +187,9 @@ export const shoppingItems = sqliteTable("shopping_items", {
   // Lien vers l'ingrédient de référence (pour récupérer son nom et sa catégorie de rayon)
   // Peut être vide si c'est un article ajouté manuellement (addedManually = true)
   ingredientId: text("ingredient_id").references(() => ingredients.id),
+
+  // F17 multi-tenant : liste de courses du foyer (nullable, backfill runtime)
+  householdId: text("household_id"),
 });
 
 
@@ -282,6 +310,10 @@ export const accessTokens = sqliteTable("access_tokens", {
   // Null = actif. Renseigné à la révocation
   revokedAt: text("revoked_at"),
 
+  // F17 multi-tenant : le jeton ne sert QUE le planning du foyer (contrat 4b
+  // §1.3 — page publique, ICS et JSON Home Assistant filtent par ce foyer)
+  householdId: text("household_id"),
+
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -391,6 +423,14 @@ export const pantryItems = sqliteTable("pantry_items", {
   expiresAt: text("expires_at"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+
+  // F17 multi-tenant : stock du foyer (nullable, backfill runtime). NB : la
+  // contrainte unique reste portée par ingredient_id seul — ingredient_id est
+  // désormais propre à un foyer (table ingredients scopée), donc
+  // UNIQUE(ingredient_id) est STRICTEMENT PLUS FORT que UNIQUE(household_id,
+  // ingredient_id) : même garantie d'isolation, sans casser l'upsert par
+  // ingrédient (onConflictDoUpdate, garde-manger et import) — décision C-062.
+  householdId: text("household_id"),
 });
 
 // ============================================================================
@@ -409,6 +449,10 @@ export const feedback = sqliteTable("feedback", {
   status: text("status", { enum: ["nouveau", "trie", "traite", "rejete"] })
     .notNull()
     .default("nouveau"),
+
+  // F17 multi-tenant : retour du foyer (spéc F15 §1.1 — admin du foyer seul)
+  householdId: text("household_id"),
+
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -425,5 +469,11 @@ export const ingredientStandards = sqliteTable("ingredient_standards", {
   quantity: real("quantity").notNull(),
   unit: text("unit").notNull(),
   servingsRef: integer("servings_ref").notNull().default(4),
+
+  // F17 multi-tenant : standard du foyer (nullable, backfill runtime). La
+  // contrainte unique reste ingredient_id seul — scopé foyer via ingrédients,
+  // même garant strict que (household_id, ingredient_id) (décision C-062).
+  householdId: text("household_id"),
+
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

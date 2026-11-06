@@ -5,8 +5,9 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { accessTokens, users } from '@/lib/db/schema';
 import { requireAdmin } from '@/lib/auth-guards';
+import { ensurePrimaryHousehold } from '@/lib/household';
 import { revalidatePath } from 'next/cache';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 
 // Jetons d'accès stockés HACHÉS (sha256, préfixe « sha256: ») : la lecture de
 // la base, d'une sauvegarde ou de l'historique git ne permet plus de les
@@ -24,6 +25,9 @@ export type AccessTokenData = {
   expiresAt: string;
   revokedAt: string | null;
   createdAt: string;
+  // F17 (C-062) : foyer que ce jeton est autorisé à servir — page publique,
+  // ICS et JSON Home Assistant ne servent QUE ce foyer (contrat 4b §1.3)
+  householdId: string | null;
 };
 
 // Jeton tel que présenté dans l'interface d'administration : la valeur du
@@ -60,6 +64,10 @@ export async function createAccessToken(
 ): Promise<{ success: boolean; message?: string; clearToken?: string }> {
   try {
     const session = await requireAdmin();
+    const householdId = (session.user as { householdId?: string }).householdId;
+    if (!householdId) {
+      return { success: false, message: 'Session invalide : compte sans foyer' };
+    }
 
     const parsedDuration = expiresInDaysInput.safeParse(expiresInDays);
     if (!parsedDuration.success) {
@@ -76,6 +84,7 @@ export async function createAccessToken(
     await db.insert(accessTokens).values({
       token: hashToken(clearToken),
       createdByUserId: session.user.id,
+      householdId,
       type,
       expiresAt,
       revokedAt: null,
@@ -100,7 +109,12 @@ export async function listAccessTokens(): Promise<{
   tokens?: AccessTokenWithStatus[];
 }> {
   try {
-    await requireAdmin();
+    const adminSession = await requireAdmin();
+    // F17 (C-062) : un admin ne liste QUE les jetons de son foyer
+    const householdId = (adminSession.user as { householdId?: string }).householdId;
+    if (!householdId) {
+      return { success: false, tokens: [] };
+    }
 
     const rows = await db
       .select({
@@ -113,6 +127,7 @@ export async function listAccessTokens(): Promise<{
       })
       .from(accessTokens)
       .leftJoin(users, eq(accessTokens.createdByUserId, users.id))
+      .where(eq(accessTokens.householdId, householdId))
       .orderBy(desc(accessTokens.createdAt));
 
     const now = new Date().toISOString();
@@ -136,12 +151,16 @@ export async function revokeAccessToken(id: string): Promise<{
   message?: string;
 }> {
   try {
-    await requireAdmin();
+    const adminSession = await requireAdmin();
+    const householdId = (adminSession.user as { householdId?: string }).householdId;
+    if (!householdId) {
+      return { success: false, message: 'Session invalide : compte sans foyer' };
+    }
 
     await db
       .update(accessTokens)
       .set({ revokedAt: new Date().toISOString() })
-      .where(eq(accessTokens.id, id));
+      .where(and(eq(accessTokens.id, id), eq(accessTokens.householdId, householdId)));
 
     revalidatePath('/share');
     return { success: true };
@@ -171,6 +190,18 @@ export async function validateAccessToken(
   if (record.revokedAt) return null;
   if (record.expiresAt <= new Date().toISOString()) return null;
   if (!allowedTypes.includes(record.type)) return null;
+
+  // F17 (C-062) : jeton hérité d'avant le multi-tenant (household_id NULL) —
+  // backfill runtime idempotent : raccroché au foyer principal (base
+  // mono-famille historique), puis définitivement scopé à ce foyer.
+  if (!record.householdId) {
+    const householdId = ensurePrimaryHousehold();
+    await db
+      .update(accessTokens)
+      .set({ householdId })
+      .where(and(eq(accessTokens.id, record.id), isNull(accessTokens.householdId)));
+    record.householdId = householdId;
+  }
 
   return record as AccessTokenData;
 }

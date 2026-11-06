@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { requireSession } from '@/lib/auth-guards';
+import { requireHousehold } from '@/lib/auth-guards';
 import { recipes, ingredients, recipeIngredients } from '@/lib/db/schema';
 import { importedRecipeSchema, fetchRecipeFromUrl } from '@/lib/recipe-import';
 import { recipeTitleEqualsIgnoreCase, ingredientNameEqualsIgnoreCase } from '@/lib/recipe-import-db';
@@ -22,7 +22,7 @@ export async function previewRecipeFromUrl(
   prevState: ImportPreviewState,
   formData: FormData
 ): Promise<ImportPreviewState> {
-  await requireSession();
+  await requireHousehold();
   const parsed = urlSchema.safeParse({ url: String(formData.get('url') ?? '') });
   if (!parsed.success) {
     return { error: 'URL requise.' };
@@ -52,7 +52,7 @@ export async function confirmRecipeImport(
   prevState: { recipeId?: string; error?: string } | null,
   formData: FormData
 ): Promise<{ recipeId?: string; error?: string } | null> {
-  const session = await requireSession();
+  const { session, householdId } = await requireHousehold();
   let ingredientsParsed: unknown;
   try {
     ingredientsParsed = JSON.parse(String(formData.get('ingredientsJson') ?? '[]'));
@@ -80,7 +80,7 @@ export async function confirmRecipeImport(
   const existing = await db
     .select({ title: recipes.title })
     .from(recipes)
-    .where(recipeTitleEqualsIgnoreCase(recipeData.title));
+    .where(recipeTitleEqualsIgnoreCase(recipeData.title, householdId));
   let title = recipeData.title;
   if (existing.some((r) => r.title.toLowerCase() === title.toLowerCase())) {
     let n = 2;
@@ -94,6 +94,7 @@ export async function confirmRecipeImport(
       .insert(recipes)
       .values({
         title,
+        householdId,
         description: recipeData.description,
         prepTime: recipeData.prepTime,
         cookTime: recipeData.cookTime,
@@ -111,21 +112,21 @@ export async function confirmRecipeImport(
       const foundRows = tx
         .select({ id: ingredients.id })
         .from(ingredients)
-        .where(ingredientNameEqualsIgnoreCase(ing.name))
+        .where(ingredientNameEqualsIgnoreCase(ing.name, householdId))
         .limit(1)
         .all();
       let ingredientId = foundRows[0]?.id;
       if (!ingredientId) {
         const created = tx
           .insert(ingredients)
-          .values({ name: ing.name, category: 'Importé', defaultUnit: ing.unit ?? 'pièce' })
+          .values({ name: ing.name, category: 'Importé', defaultUnit: ing.unit ?? 'pièce', householdId })
           .returning({ id: ingredients.id })
           .get();
         ingredientId = created.id;
       }
       if (ing.quantity) {
         tx.insert(recipeIngredients)
-          .values({ recipeId: recipe.id, ingredientId, quantity: ing.quantity, unit: ing.unit ?? 'pièce' })
+          .values({ recipeId: recipe.id, ingredientId, quantity: ing.quantity, unit: ing.unit ?? 'pièce', householdId })
           .run();
       }
     }

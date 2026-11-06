@@ -1,12 +1,15 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { requireSession } from '@/lib/auth-guards';
+import { requireHousehold } from '@/lib/auth-guards';
 import { ingredients, shoppingItems } from '@/lib/db/schema';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { manualShoppingItemInput, shoppingPeriodInput, type ShoppingFormState } from '@/lib/validators/shopping';
 import { generateShoppingRows } from '@/app/shopping-list/queries';
+
+// F17 (C-062) : toute requête filtre par le foyer de session — la liste de
+// courses est propre au foyer (contrat 4b §1.1/§1.3).
 
 // Helper pour convertir FormData en Record<string, string>
 function formDataToRecord(formData: FormData): Record<string, string> {
@@ -45,7 +48,7 @@ export async function generateShoppingList(
   const rawData = formDataToRecord(formData);
 
   try {
-    await requireSession();
+    const { householdId } = await requireHousehold();
 
     const parsed = shoppingPeriodInput.safeParse(rawData);
     if (!parsed.success) {
@@ -67,7 +70,7 @@ export async function generateShoppingList(
       endDate = periodEndDateStr(parsed.data.days as number);
     }
 
-    const { rowCount, plannedMeals, deducted, excluded } = generateShoppingRows(startDate, endDate);
+    const { rowCount, plannedMeals, deducted, excluded } = generateShoppingRows(startDate, endDate, householdId);
 
     revalidatePath('/shopping-list');
 
@@ -107,7 +110,7 @@ export async function addManualShoppingItem(
   const rawData = formDataToRecord(formData);
 
   try {
-    await requireSession();
+    const { householdId } = await requireHousehold();
 
     const parsed = manualShoppingItemInput.safeParse(rawData);
     if (!parsed.success) {
@@ -120,15 +123,15 @@ export async function addManualShoppingItem(
       };
     }
 
-    // Liaison optionnelle à un ingrédient existant : l'article hérite du
-    // rayon de l'ingrédient (regroupement correct dans la liste) et d'un
+    // Liaison optionnelle à un ingrédient existant DU FOYER : l'article hérite
+    // du rayon de l'ingrédient (regroupement correct dans la liste) et d'un
     // ingredientId (utile au garde-manger F11). Sinon article libre.
     const ingredientId = (formData.get('ingredientId') as string | null)?.trim() || null;
     if (ingredientId) {
       const [ingredient] = await db
         .select({ id: ingredients.id })
         .from(ingredients)
-        .where(eq(ingredients.id, ingredientId))
+        .where(and(eq(ingredients.id, ingredientId), eq(ingredients.householdId, householdId)))
         .limit(1);
       if (!ingredient) {
         return { success: false, message: 'Ingrédient introuvable', values: rawData };
@@ -137,6 +140,7 @@ export async function addManualShoppingItem(
     await db.insert(shoppingItems).values({
       manualName: parsed.data.name,
       ingredientId: ingredientId,
+      householdId,
       quantity: parsed.data.quantity,
       unit: parsed.data.unit,
       isBought: false,
@@ -155,15 +159,18 @@ export async function addManualShoppingItem(
   }
 }
 
-// Cocher / décocher un article (généré ou manuel)
+// Cocher / décocher un article (généré ou manuel) — uniquement dans son foyer
 export async function toggleShoppingItem(
   id: string,
   isBought: boolean
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await requireSession();
+    const { householdId } = await requireHousehold();
 
-    await db.update(shoppingItems).set({ isBought }).where(eq(shoppingItems.id, id));
+    await db
+      .update(shoppingItems)
+      .set({ isBought })
+      .where(and(eq(shoppingItems.id, id), eq(shoppingItems.householdId, householdId)));
 
     revalidatePath('/shopping-list');
     return { success: true, message: '' };
@@ -173,14 +180,16 @@ export async function toggleShoppingItem(
   }
 }
 
-// Supprimer un article de la liste (généré ou manuel)
+// Supprimer un article de la liste (généré ou manuel) — uniquement son foyer
 export async function deleteShoppingItem(
   id: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await requireSession();
+    const { householdId } = await requireHousehold();
 
-    await db.delete(shoppingItems).where(eq(shoppingItems.id, id));
+    await db
+      .delete(shoppingItems)
+      .where(and(eq(shoppingItems.id, id), eq(shoppingItems.householdId, householdId)));
 
     revalidatePath('/shopping-list');
     return { success: true, message: '' };
@@ -190,19 +199,19 @@ export async function deleteShoppingItem(
   }
 }
 
-// Purger la liste : supprime TOUS les articles (générés et manuels,
-// achetés ou non). Irréversible — la validation se fait côté UI
+// Purger la liste du foyer : supprime TOUS les articles du foyer (générés et
+// manuels, achetés ou non). Irréversible — la validation se fait côté UI
 // (ConfirmDialog) avant l'appel.
 export async function purgeShoppingList(
   boughtOnly: boolean,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await requireSession();
+    const { householdId } = await requireHousehold();
     // boughtOnly (défaut côté UI) : purge de fin de courses — on ne vide
     // que ce qui a été coché, la pending list survit. Sinon purge totale.
     const result = boughtOnly
-      ? await db.delete(shoppingItems).where(eq(shoppingItems.isBought, true))
-      : await db.delete(shoppingItems);
+      ? await db.delete(shoppingItems).where(and(eq(shoppingItems.householdId, householdId), eq(shoppingItems.isBought, true)))
+      : await db.delete(shoppingItems).where(eq(shoppingItems.householdId, householdId));
     revalidatePath('/shopping-list');
     const scope = boughtOnly ? 'achetés' : '';
     return {

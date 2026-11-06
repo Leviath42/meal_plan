@@ -5,10 +5,11 @@ import { requireAdmin, requireSession } from '@/lib/auth-guards';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { registerInput } from '@/lib/validators/auth';
+import { createHousehold, ensurePrimaryHousehold, multiHouseholdsEnabled } from '@/lib/household';
 import Argon2 from '@node-rs/argon2';
 import { rateLimit } from '@/lib/rate-limit';
 import { headers } from 'next/headers';
-import { eq, count, sql } from 'drizzle-orm';
+import { and, eq, count, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -72,12 +73,22 @@ export async function registerUser(
     const hashedPassword = await hashPassword(password);
 
     // Onboarding self-service (vague 3) : le compte est utilisable
-    // immédiatement (MEMBER) — plus de file d'attente GUEST
+    // immédiatement (MEMBER) — plus de file d'attente GUEST.
+    // F17 (C-062, contrat 4b §1.4) — MULTI_HOUSEHOLDS :
+    // - OFF (défaut) : le compte rejoint le foyer principal (famille unique,
+    //   UX actuelle de l'instance auto-hébergée inchangée) ;
+    // - ON : un NOUVEAU foyer est créé par inscription (design hébergement
+    //   mutualisé) — l'inscription démarre avec un catalogue vide, le bouton
+    //   « remplir le catalogue » est proposé sur /welcome.
+    const householdId = multiHouseholdsEnabled()
+      ? createHousehold(`Foyer de ${name.trim() || email}`)
+      : ensurePrimaryHousehold();
     await db.insert(users).values({
       email,
       name: name.trim(),
       password: hashedPassword,
       role: 'MEMBER',
+      householdId,
     });
 
     revalidatePath('/register');
@@ -95,10 +106,23 @@ export async function updateUserRole(
 ): Promise<FormState> {
   const session = await requireAdmin();
   const currentUserId = session.user.id;
+  const householdId = (session.user as { householdId?: string }).householdId;
 
   // Empêcher de modifier son propre compte (sauf pour ajouter un rôle plus élevé)
   if (userId === currentUserId && newRole !== 'ADMIN') {
     return { errors: { form: ['Vous ne pouvez pas modifier votre propre rôle'] } };
+  }
+
+  // F17 (C-062) : un admin ne gère que les comptes DE SON foyer
+  if (householdId) {
+    const [target] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, userId), eq(users.householdId, householdId)))
+      .limit(1);
+    if (!target) {
+      return { errors: { form: ['Cet utilisateur n\u2019appartient pas à votre foyer'] } };
+    }
   }
 
   try {
@@ -119,6 +143,19 @@ export async function updateUserRole(
 export async function deleteUser(userId: string): Promise<FormState> {
   const session = await requireAdmin();
   const currentUserId = session.user.id;
+  const householdId = (session.user as { householdId?: string }).householdId;
+
+  // F17 (C-062) : un admin ne supprime que les comptes DE SON foyer
+  if (householdId) {
+    const [target] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, userId), eq(users.householdId, householdId)))
+      .limit(1);
+    if (!target) {
+      return { errors: { form: ['Cet utilisateur n\u2019appartient pas à votre foyer'] } };
+    }
+  }
 
   // Empêcher la suppression de soi-même
   if (userId === currentUserId) {
@@ -154,7 +191,13 @@ export async function deleteUser(userId: string): Promise<FormState> {
 // les hashes de mots de passe et de réponses secrètes ne doivent jamais
 // voyager jusqu'au navigateur.
 export async function getAllUsers() {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  // F17 (C-062) : la gestion des comptes de /register est bornée au foyer —
+  // les membres des autres foyers de l'instance ne sont ni listés ni gérés
+  const householdId = (admin.user as { householdId?: string }).householdId;
+  if (!householdId) {
+    return [];
+  }
   return await db
     .select({
       id: users.id,
@@ -164,6 +207,7 @@ export async function getAllUsers() {
       createdAt: users.createdAt,
     })
     .from(users)
+    .where(eq(users.householdId, householdId))
     .orderBy(users.createdAt);
 }
 

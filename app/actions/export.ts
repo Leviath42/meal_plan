@@ -17,8 +17,13 @@ export type ExportImportFormState = { success?: boolean; message?: string } | nu
 // qui reste accessible en essai expiré (lecture seule ; les POST d'actions
 // sont bloqués par la garde du proxy).
 export async function exportAllData(): Promise<string> {
-  await requireAdmin();
-  return JSON.stringify(await buildExportEnvelope(), null, 2);
+  const admin = await requireAdmin();
+  // F17 (C-062) : export des données DU FOYER de session uniquement
+  const householdId = (admin.user as { householdId?: string }).householdId;
+  if (!householdId) {
+    throw new Error('Session invalide : compte sans foyer');
+  }
+  return JSON.stringify(await buildExportEnvelope(householdId), null, 2);
 }
 
 // Taille plafonnée : une base familiale tient loin de cette limite, un fichier
@@ -49,7 +54,13 @@ export async function importAllData(
       return { success: false, message: "Le fichier n'est pas un JSON valide." };
     }
 
-    const result = await importExportData(payload);
+    const admin = await requireAdmin();
+    const householdId = (admin.user as { householdId?: string }).householdId;
+    if (!householdId) {
+      return { success: false, message: 'Session invalide : compte sans foyer' };
+    }
+    // F17 (C-062) : l'import écrit TOUT dans le foyer de session
+    const result = await importExportData(payload, householdId);
     if (result.success) {
       // Le planning, les recettes, la page garde-manger et les paramètres
       // peuvent tous avoir changé : invalidation large.

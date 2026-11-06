@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { desc, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { getCurrentHouseholdId } from '@/lib/auth-guards';
 import { db } from '@/lib/db';
 import { feedback, users } from '@/lib/db/schema';
 import { changeFeedbackStatus } from '@/app/actions/feedback';
@@ -27,6 +28,9 @@ export default async function AdminFeedbackPage({
   // Non-admin (y compris GUEST et non connecté) : refus (F4)
   if (session?.user?.role !== 'ADMIN') redirect('/');
 
+  // F17 (C-062) : l'admin ne trie que les retours DE SON foyer
+  const householdId = await getCurrentHouseholdId();
+
   const params = await searchParams;
   const filterCategory = FEEDBACK_CATEGORIES.includes(params.category as FeedbackCategory)
     ? (params.category as FeedbackCategory)
@@ -51,6 +55,7 @@ export default async function AdminFeedbackPage({
     })
     .from(feedback)
     .innerJoin(users, eq(feedback.userId, users.id))
+    .where(eq(feedback.householdId, householdId))
     .orderBy(desc(feedback.createdAt));
 
   const visible = rows.filter(
