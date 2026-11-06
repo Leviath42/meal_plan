@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { recipes, ingredients, recipeIngredients } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
+import { getIngredientStandardsMap } from '@/lib/standards';
 import EditRecipeForm from './EditRecipeForm';
 
 export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,12 +41,16 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
     .from(recipeIngredients)
     .where(eq(recipeIngredients.recipeId, id));
 
+  // F16 : quantités standard des ingrédients (pré-remplissage par couverts)
+  const standards = await getIngredientStandardsMap();
+
   return (
     <EditRecipeForm
       recipe={recipe}
       availableIngredients={allIngredients}
       categories={categories}
       existingIngredients={recipeIngs}
+      standards={standards}
     />
   );
 }

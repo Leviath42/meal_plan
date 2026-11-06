@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { quickCreateIngredient } from '@/app/actions/ingredients';
 import CategorySelect from '@/app/components/CategorySelect';
 import SearchSelect from '@/app/components/SearchSelect';
 import { formatQuantity } from '@/lib/format';
+import {
+  formatStandardQuantity,
+  scaleStandardQuantity,
+  type IngredientStandard,
+  type IngredientStandardsMap,
+} from '@/lib/standards-quantity';
 
 interface Ingredient {
   id: string;
@@ -24,11 +30,17 @@ export default function IngredientsSelector({
   availableIngredients,
   existingIngredients = [],
   categories = [],
+  standards = {},
+  servings = null,
 }: {
   availableIngredients: Ingredient[];
   existingIngredients?: RecipeIngredient[];
   // Rayons existants (liste déroulante + création de nouveau rayon à la volée)
   categories?: string[];
+  // F16 : quantités standard par ingredient_id (pré-remplissage selon couverts)
+  standards?: IngredientStandardsMap;
+  // Couverts saisis dans le formulaire (null = pas de pré-remplissage)
+  servings?: number | null;
 }) {
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(existingIngredients);
   const [selectedIngredientId, setSelectedIngredientId] = useState('');
@@ -53,14 +65,55 @@ export default function IngredientsSelector({
     (i) => i.id === selectedIngredientId
   );
 
+  // F16 : dernière quantité standard pré-remplie pour l'ingrédient courant.
+  // Elle permet de recalculer en direct quand les couverts changent SANS
+  // écraser une saisie manuelle (Q2) : dès que la valeur saisie diffère,
+  // le pré-remplissage est désactivé.
+  const [autoQuantity, setAutoQuantity] = useState<string | null>(null);
+  const lastIngredientRef = useRef<string>('');
+
+  const selectedStandard = selectedIngredient
+    ? standards[selectedIngredient.id]
+    : undefined;
+
   // Mettre à jour l'unité quand on change d'ingrédient
+  // (le standard F16 impose sa propre unité, ex. « gousse » pour l'ail)
   useEffect(() => {
     if (selectedIngredient) {
-      setUnit(selectedIngredient.defaultUnit);
+      const standard = standards[selectedIngredient.id];
+      setUnit(standard ? standard.unit : selectedIngredient.defaultUnit);
     } else {
       setUnit('');
     }
-  }, [selectedIngredient]);
+  }, [selectedIngredient, standards]);
+
+  // Pré-remplissage F16 : quantité standard mise à l'échelle des couverts
+  // SAISIS (pâtes 100 g/pers → 400 g pour 4), recalculée en direct quand on
+  // change les couverts tant que la valeur n'a pas été ajustée à la main.
+  // Sans standard : comportement inchangé (Q3).
+  useEffect(() => {
+    if (!selectedIngredientId) {
+      setAutoQuantity(null);
+      lastIngredientRef.current = '';
+      return;
+    }
+    const ingredientChanged = lastIngredientRef.current !== selectedIngredientId;
+    lastIngredientRef.current = selectedIngredientId;
+    const standard = standards[selectedIngredientId];
+    if (!standard) {
+      setAutoQuantity(null);
+      return;
+    }
+    const scaled = scaleStandardQuantity(standard, servings);
+    if (scaled === null) {
+      return;
+    }
+    const text = formatStandardQuantity(scaled);
+    if (ingredientChanged || autoQuantity === quantity) {
+      setQuantity(text);
+      setAutoQuantity(text);
+    }
+  }, [selectedIngredientId, standards, servings, quantity, autoQuantity]);
 
   const addIngredient = () => {
     if (!selectedIngredientId) {
@@ -270,6 +323,11 @@ export default function IngredientsSelector({
                   }}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
+                {selectedStandard && autoQuantity !== null && autoQuantity === quantity && servings != null && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Quantité standard pour {servings} couvert{servings > 1 ? 's' : ''} — ajustable librement.
+                  </p>
+                )}
               </div>
               <div>
                 <label htmlFor="unit" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">

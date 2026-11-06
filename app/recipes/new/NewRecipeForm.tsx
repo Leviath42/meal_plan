@@ -1,9 +1,10 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { createRecipe } from '@/app/actions/recipes';
 import Link from 'next/link';
 import IngredientsSelector from '../IngredientsSelector';
+import type { IngredientStandardsMap } from '@/lib/standards-quantity';
 
 interface Ingredient {
   id: string;
@@ -20,11 +21,26 @@ function getFieldValue(state: any, fieldName: string, defaultValue: string | num
 export function NewRecipeForm({
   availableIngredients,
   categories = [],
+  standards = {},
 }: {
   availableIngredients: Ingredient[];
   categories?: string[];
+  // F16 : quantités standard pour pré-remplissage selon les couverts
+  standards?: IngredientStandardsMap;
 }) {
   const [state, formAction, pending] = useActionState(createRecipe, null);
+
+  // F16 : couverts saisis — contrôlés pour pré-remplir les quantités en direct
+  const stateServings = state?.values?.defaultServings as string | number | undefined;
+  const [servings, setServings] = useState<string>(String(stateServings ?? 4));
+  useEffect(() => {
+    if (stateServings != null) {
+      setServings(String(stateServings));
+    }
+  }, [stateServings]);
+  const parsedServings = Number.parseInt(servings, 10);
+  const scaledServings =
+    Number.isFinite(parsedServings) && parsedServings > 0 ? parsedServings : null;
 
   return (
     <main className="px-3 sm:px-6 py-4">
@@ -144,7 +160,8 @@ export function NewRecipeForm({
               name="defaultServings"
               type="number"
               min="1"
-              defaultValue={getFieldValue(state, 'defaultServings', 4)}
+              value={servings}
+              onChange={(e) => setServings(e.target.value)}
               required
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
@@ -154,10 +171,12 @@ export function NewRecipeForm({
           </div>
 
           {/* Ingrédients */}
-          <IngredientsSelector 
-            availableIngredients={availableIngredients} 
+          <IngredientsSelector
+            availableIngredients={availableIngredients}
             existingIngredients={state?.ingredients || []}
             categories={categories}
+            standards={standards}
+            servings={scaledServings}
           />
 
           {/* Instructions */}
