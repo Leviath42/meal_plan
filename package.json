@@ -20,7 +20,9 @@
     "db:ensure": "tsx scripts/db-ensure.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "test:pantry": "tsx scripts/test-pantry.ts",
-    "test:feedback": "tsx scripts/test-feedback.ts"
+    "test:feedback": "tsx scripts/test-feedback.ts",
+    "test:standards": "tsx scripts/test-standards.ts",
+    "db:seed-standards": "tsx scripts/seed-standards.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
