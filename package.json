@@ -22,7 +22,8 @@
     "test:pantry": "tsx scripts/test-pantry.ts",
     "test:feedback": "tsx scripts/test-feedback.ts",
     "test:standards": "tsx scripts/test-standards.ts",
-    "db:seed-standards": "tsx scripts/seed-standards.ts"
+    "db:seed-standards": "tsx scripts/seed-standards.ts",
+    "test:export": "tsx scripts/test-export.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
