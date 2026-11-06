@@ -49,6 +49,11 @@ jobs:
           npm run test:import
           npm run test:onboarding
           npm run test:license
+          npm run test:pantry
+          npm run test:feedback
+          npm run test:standards
+          npm run test:export
+          npm run test:notifications
 
   audit:
     name: Audit dépendances (production, high+)

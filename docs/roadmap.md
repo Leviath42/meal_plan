@@ -136,7 +136,7 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 56 (C-001 → C-056 — synthèse détaillée dans [correctifs.md](correctifs.md)) |
+| Corrections enregistrées | 61 (C-001 → C-061 — synthèse détaillée dans [correctifs.md](correctifs.md)) |
 | Corrigées et déployées | 33 en production ; vague 3 (C-046 → C-052) + correctifs F07 (C-053 → C-056) mergés sur `beta`, promotion `main` à valider |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
@@ -166,7 +166,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 ## 🚀 Phase 4 — Vague 4 lancée le 06/11/2026
 
 **Organisation** ([contrat-vague-4.md](contrat-vague-4.md), figé avant workers ; [test-plan-vague-4.md](test-plan-vague-4.md) pour les gates et le débogage) :
-- **Vague 4a (parallèle)** : W1 = F10+F12 (SW/push), W2 = F11 (garde-manger), W3 = F15 (feedback), W4 = F16 (standards), W5 = F18 (export/import JSON) — migration `0008` + nav figées dans le contrat ;
+- **Vague 4a (parallèle)** : W1 = F10+F12 (SW/push), W2 = F11 (garde-manger), W3 = F15 (feedback), W4 = F16 (standards), W5 = F18 (export/import JSON) — migration `0008` + nav figées dans le contrat. **🟢 Toute la 4a est mergée sur `beta` le 06/11/2026** (C-057 → C-061 ; tests runtime en CI : pantry 29, feedback 24, standards 19, export 34, notifications 27 PASS) — reste la validation humaine CT beta (scénarios du [test-plan-vague-4.md](test-plan-vague-4.md) §2) puis la vague 4b ;
 - **Vague 4b (séquentielle)** : W6 = **F17 multi-tenant** (chantier prioritaire confirmé le 06/11/2026 — cascade `household_id` sur toutes les tables, backfill foyer unique, isolation en requête ; seul, après les fusions 4a) ;
 - **OAuth** : bloqué sur les variables d'environnement propriétaire — hors vague.
 
