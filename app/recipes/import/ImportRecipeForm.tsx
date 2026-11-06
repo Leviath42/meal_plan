@@ -29,7 +29,7 @@ export function ImportRecipeForm() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://www.marmiton.org/recettes/…"
-          className="flex-1 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+          className="flex-1 rounded border border-gray-300 bg-white px-3 py-2 text-sm"
         />
         <button
           type="submit"
@@ -41,12 +41,12 @@ export function ImportRecipeForm() {
       </form>
 
       {previewState?.error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">{previewState.error}</p>
+        <p role="alert" className="text-sm text-red-600">{previewState.error}</p>
       )}
 
       {/* Étape 2 : prévisualisation + confirmation */}
       {preview && (
-        <form action={confirmAction} className="rounded border border-gray-300 dark:border-gray-700 p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
+        <form action={confirmAction} className="rounded border border-gray-300 p-4 space-y-3 bg-gray-50">
           <p className="text-xs text-gray-500">Source : {preview.host}</p>
           <input type="hidden" name="source" value={preview.source} />
           <input type="hidden" name="ingredientsJson" value={JSON.stringify(preview.ingredients)} />
@@ -54,46 +54,46 @@ export function ImportRecipeForm() {
           <label className="block text-xs font-medium">
             Titre
             <input name="title" defaultValue={preview.title} required maxLength={150}
-              className="mt-1 w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm" />
+              className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm" />
           </label>
 
           <label className="block text-xs font-medium">
             Description
             <textarea name="description" defaultValue={preview.description ?? ''} rows={2} maxLength={2000}
-              className="mt-1 w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm" />
+              className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm" />
           </label>
 
           <div className="grid grid-cols-3 gap-2">
             <label className="block text-xs font-medium">Prépa (min)
               <input name="prepTime" type="number" min={0} defaultValue={preview.prepTime}
-                className="mt-1 w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm" />
+                className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm" />
             </label>
             <label className="block text-xs font-medium">Cuisson (min)
               <input name="cookTime" type="number" min={0} defaultValue={preview.cookTime}
-                className="mt-1 w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm" />
+                className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm" />
             </label>
             <label className="block text-xs font-medium">Couverts
               <input name="defaultServings" type="number" min={1} defaultValue={preview.defaultServings}
-                className="mt-1 w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm" />
+                className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm" />
             </label>
           </div>
 
           <label className="block text-xs font-medium">
             Étapes
             <textarea name="instructions" defaultValue={preview.instructions} rows={5} maxLength={20000}
-              className="mt-1 w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm" />
+              className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm" />
           </label>
 
           <label className="block text-xs font-medium">
             Tags (séparés par des virgules)
             <input name="tags" defaultValue={preview.tags ?? ''} maxLength={300}
-              className="mt-1 w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm" />
+              className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm" />
           </label>
 
           {preview.ingredients.length > 0 && (
             <div className="text-xs">
               <p className="font-medium mb-1">Ingrédients extraits ({preview.ingredients.length}) :</p>
-              <ul className="list-disc pl-5 text-gray-600 dark:text-gray-400">
+              <ul className="list-disc pl-5 text-gray-600">
                 {preview.ingredients.map((ing, i) => (
                   <li key={i}>
                     {ing.quantity ? `${ing.quantity} ${ing.unit ?? ''} ` : ''}{ing.name}
@@ -104,7 +104,7 @@ export function ImportRecipeForm() {
           )}
 
           {confirmState?.error && (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">{confirmState.error}</p>
+            <p role="alert" className="text-sm text-red-600">{confirmState.error}</p>
           )}
 
           <div className="flex gap-2">
@@ -112,7 +112,7 @@ export function ImportRecipeForm() {
               className="bg-accent text-white rounded px-3 sm:px-4 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors disabled:opacity-50">
               {confirmPending ? 'Import…' : 'Importer cette recette'}
             </button>
-            <Link href="/recipes" className="rounded border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs sm:text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <Link href="/recipes" className="rounded border border-gray-300 px-3 py-2 text-xs sm:text-sm hover:bg-gray-100 transition-colors">
               Annuler
             </Link>
           </div>

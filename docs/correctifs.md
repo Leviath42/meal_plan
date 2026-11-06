@@ -35,6 +35,8 @@
 
 | C-052 | 2026-11-02 | Licence par foyer + Stripe (vague 3) | Aucun mécanisme de licence/paiement : modèle « licence à vie par foyer » à mettre en place avec traçabilité CGV (art. 19) et suspension tracée | Livré (branche `feature/licence-stripe`) : `lib/license.ts` (essai 30 j depuis le 1er compte, statut active/suspended/revoked), webhook Stripe signé HMAC vérifié + idempotent (`stripe_session_id` unique) avec métadonnées `cgv_version`/`license_date`, activation par clé hashée MP-XXXX…, page `/activate` (+ lien d'achat `STRIPE_PAYMENT_LINK`), admin `/admin/licenses` avec suspension/réactivation tracée dans `license_audit`, garde dans `proxy.ts` (essai expiré = lecture seule, écritures → /activate) ; test runtime 15 PASS (`test:license`) | Haute |
 
+| C-053 | 2026-11-02 | F07 — import de recette (mode sombre) | En mode sombre, la page `/recipes/import` affichait des surfaces claires (champs quasi blancs, encadré de prévisualisation clair, bordures brillantes) : le formulaire utilisait des variantes `dark:*` (bg-gray-800/900, border-gray-700), or le mode sombre de l'app remappe toute la palette Tailwind via `:root.dark` dans `styles/globals.css` (convention C-040 : mêmes classes dans les deux modes) — `dark:bg-gray-800` se résolvait donc en `#f3f4f6`, quasi blanc | Corrigé : tous les overrides `dark:*` retirés de `app/recipes/import/ImportRecipeForm.tsx` et `app/recipes/import/page.tsx` — champs, encadré, bordures, textes d'erreur et survols suivent désormais le remappage sombre comme le reste de l'app ; vérifié : plus aucun `dark:` dans ces fichiers, les classes restantes sont celles du mode clair inchangé | Basse |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -43,7 +45,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 52 (C-001 → C-052, C-050/C-051 mergées sur beta) |
+| Corrections enregistrées | 53 (C-001 → C-053, C-050/C-051 mergées sur beta) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |
