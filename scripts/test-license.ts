@@ -23,7 +23,7 @@ function check(name: string, cond: boolean) {
 }
 
 async function main() {
-  execFileSync('npx', ['tsx', 'scripts/db-ensure.ts', path.join(process.cwd(), 'drizzle'), dbPath], { stdio: 'inherit' });
+  execFileSync('npx', ['tsx', 'scripts/db-ensure.ts', path.join(process.cwd(), 'drizzle'), dbPath], { stdio: 'inherit', shell: process.platform === 'win32' });
 
   const { db } = await import('../lib/db');
   const { users, licenses, licenseAudit } = await import('../lib/db/schema');
@@ -107,7 +107,7 @@ async function main() {
   check('audit suspendu présent', audits.some((a) => a.action === 'suspended' && a.reason === 'Remboursement test'));
 
   console.log(`\n${passed} tests PASS`);
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* base jetable encore ouverte sous Windows */ }
   process.exit(0);
 }
 

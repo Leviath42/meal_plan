@@ -22,7 +22,7 @@ async function main() {
   execFileSync(
     'npx',
     ['tsx', 'scripts/db-ensure.ts', path.join(process.cwd(), 'drizzle'), dbPath],
-    { stdio: 'inherit' }
+    { stdio: 'inherit', shell: process.platform === 'win32' }
   );
 
   const { db } = await import('../lib/db');
@@ -91,7 +91,7 @@ async function main() {
   check('validateAccessToken refuse le jeton revoque', !(await validateAccessToken(clearToken, ['api'])));
 
   console.log(`\n${passed} tests PASS`);
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* base jetable encore ouverte sous Windows */ }
   process.exit(0);
 }
 

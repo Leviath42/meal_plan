@@ -41,6 +41,8 @@
 
 | C-055 | 2026-11-06 | F07 — import de recette (crash à la confirmation) | La confirmation d'import plantait systématiquement (« This page couldn't load ») alors que le scraping fonctionnait : `confirmRecipeImport` utilisait `ilike()` de drizzle-orm, opérateur **PostgreSQL** inexistant en SQLite — drizzle générait `title ilike ?` → `SqliteError: near "ilike": syntax error`. La CI ne l'avait pas vu : `test:import` répliquait la requête avec `eq(...)` au lieu du `ilike` réel. (C-054, `router.push` au rendu, était un second bug latent corrigé au passage) | Corrigé : comparaisons insensibles à la casse via `LOWER(col) = LOWER(?)` dans `lib/recipe-import-db.ts` (`recipeTitleEqualsIgnoreCase`, `ingredientNameEqualsIgnoreCase`), helpers partagés entre l'action (`app/actions/import-recipe.ts` : doublon de titre + match d'ingrédient) et le test runtime (`scripts/test-import-recipe.ts` exécute désormais les MÊMES requêtes, plus de réplique divergente — +2 tests). Vérifié EN EXÉCUTION sur serveur réel : build + `npm run start` sur base jetable, login NextAuth, POST de l'action `confirmRecipeImport` → recette créée, ingrédients inconnus catalogués, doublon « TARTE AUX COURGETTES » → « (2) », GET `/recipes/<id>` 200, aucun SqliteError en log ; tsc + build OK | Haute |
 
+| C-056 | 2026-11-06 | F07 — import : ingrédients mal découpés + sites en échec | Retour utilisateur : (1) les ingrédients importés arrivaient en vrac (« Lentilles corail / 250 g / rouge », « à soupe Coriandre / 1 cuillère ») — certains sites publient le NOM et la QUANTITÉ en entrées séparées de recipeIngredient, et le parseur découpait mal les unités multi-mots (« 1 cuillère à soupe Coriandre » → unit « cuillère », nom « à soupe Coriandre ») ; (2) tous les sites ne passaient pas : UA « bot » bloqué (403) et aucun fallback hors JSON-LD (le fallback og: était limité à Marmiton/750g) | Corrigé dans `lib/recipe-import.ts` : nouveau parseur d'ingrédients (rattache les fragments « quantité seule » à l'ingrédient précédent, qualificatifs culinaires isolés — liste fermée rouge/haché/fraîche… — suffixés à l'ingrédient suivant, un vrai ingrédient d'un mot n'est jamais avalé ; unités multi-mots normalisées vers le canon du catalogue : g/kg/ml/cl/l, cuillère à soupe/café, pincée, gousse, verre… ; décimales FR, fractions 1/2 et ½) ; fallback og:+microdata générique pour TOUS les sites (ingrédients + instructions itemprop, import étiqueté « partiel ») ; UA/en-têtes de navigateur réalistes + message dédié HTTP 403. Bonus : les scripts de test tournent désormais aussi sous Windows (spawnSync npx → shell win32, nettoyage temp en meilleur-effort). Vérifié en exécution : `test:import` 32 PASS (fixtures : lignes fragmentées, unités, fraction, site microdata sans JSON-LD) + smoke 9, onboarding 3, license 15 PASS ; tsc + build OK | Haute |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -49,7 +51,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 55 (C-001 → C-055, C-050/C-051 mergées sur beta) |
+| Corrections enregistrées | 56 (C-001 → C-056, C-050/C-051 mergées sur beta) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |

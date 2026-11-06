@@ -30,12 +30,41 @@ const HTML = `<!doctype html><html><head>
 "keywords":["dessert","pomme"],"url":"http://RECETTE/"}
 </script></head><body>ok</body></html>`;
 
+// Page 2 : site qui fragmente les lignes d'ingrédients (nom / quantité en
+// entrées SEPAREES, qualificatif isolé) + unités multi-mots (C-056)
+const HTML_FRAGMENTED = `<!doctype html><html><head>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Recipe","name":"Dhal de lentilles corail",
+"description":"Un dhal crémeux","prepTime":"PT10M","cookTime":"PT25M","recipeYield":"4 personnes",
+"recipeIngredient":["Lentilles corail","250 g","rouge","1 Oignon","Riz thaï","300 g","Lait de coco","200 ml",
+"2 cuillères à soupe de coriandre fraîche","1 cuillère à café Huile d'olive","50 GR de pulpe de tomate",
+"1/2 verre Bouillon","Piment","1 pincée"],
+"recipeInstructions":["Cuire les lentilles."],"url":"http://RECETTE2/"}
+</script></head><body>ok</body></html>`;
+
+// Page 3 : site SANS JSON-LD — recette en microdata + metas og: (C-056)
+const HTML_MICRODATA = `<!doctype html><html><head>
+<meta property="og:title" content="Cake aux olives | Blog test"/>
+<meta property="og:description" content="Un cake salé"/>
+</head><body>
+<ul>
+<li itemprop="recipeIngredient">200 g de farine</li>
+<li itemprop="recipeIngredient">3 œufs</li>
+<li itemprop="recipeIngredient">100 g d'olives vertes</li>
+</ul>
+<div itemprop="recipeInstructions"><p>Mélanger la farine et les œufs.</p></div>
+</body></html>`;
+
 async function main() {
-  execFileSync('npx', ['tsx', 'scripts/db-ensure.ts', path.join(process.cwd(), 'drizzle'), dbPath], { stdio: 'inherit' });
+  // shell:true sous Windows : spawnSync('npx') y échoue (ENOENT) car npm y
+  // expose npx.cmd, pas npx.exe — le test tourne ainsi aussi en local Windows
+  execFileSync('npx', ['tsx', 'scripts/db-ensure.ts', path.join(process.cwd(), 'drizzle'), dbPath], { stdio: 'inherit', shell: process.platform === 'win32' });
 
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    res.end(HTML.replace('http://RECETTE/', `http://127.0.0.1:${PORT}/tarte`));
+    if (req.url?.includes('/dhal')) res.end(HTML_FRAGMENTED.replace('http://RECETTE2/', `http://127.0.0.1:${PORT}/dhal`));
+    else if (req.url?.includes('/cake')) res.end(HTML_MICRODATA);
+    else res.end(HTML.replace('http://RECETTE/', `http://127.0.0.1:${PORT}/tarte`));
   });
   const PORT = 48123;
   await new Promise<void>((resolve) => server.listen(PORT, '127.0.0.1', resolve));
@@ -64,6 +93,33 @@ async function main() {
 
   const r2 = await fetchRecipeFromUrl('http://127.0.0.1:1/rien'); // port fermé
   check('site injoignable -> erreur propre', r2.ok === false);
+
+  // Lignes fragmentées + unités multi-mots (C-056)
+  const r3 = await fetchRecipeFromUrl(`http://127.0.0.1:${PORT}/dhal`);
+  check('fetch OK sur lignes fragmentées', r3.ok === true);
+  if (r3.ok) {
+    const ings = r3.recipe.ingredients;
+    const find = (frag: string) => ings.find((i) => i.name.includes(frag));
+    check('quantité séparée rattachée au nom', find('Lentilles corail')?.quantity === 250 && find('Lentilles corail')?.unit === 'g');
+    check('qualificatif isolé suffixé à l’ingrédient suivant', find('Oignon')?.name === 'Oignon rouge');
+    check('ligne nom + quantité rapprochées', find('Riz thaï')?.quantity === 300 && find('Riz thaï')?.unit === 'g');
+    check('ingrédient sans unité unitaire', find('Oignon')?.quantity === 1 && !find('Oignon')?.unit);
+    check('unité multi-mots normalisée', find('coriandre')?.unit === 'cuillère à soupe' && find('coriandre')?.quantity === 2);
+    check('GR normalisé en g', find('pulpe de tomate')?.unit === 'g' && find('pulpe de tomate')?.quantity === 50);
+    check('fraction 1/2 parsée', find('Bouillon')?.quantity === 0.5 && find('Bouillon')?.unit === 'verre');
+    check('pincée = unité', find('Piment')?.unit === 'pincée');
+    check('plus aucun fragment orphelin', !ings.some((i) => /^\d/.test(i.name) || /^à (soupe|café)/.test(i.name)));
+  }
+
+  // Site sans JSON-LD : fallback og: + microdata (C-056)
+  const r4 = await fetchRecipeFromUrl(`http://127.0.0.1:${PORT}/cake`);
+  check('fetch OK sur site sans JSON-LD', r4.ok === true);
+  if (r4.ok) {
+    check('titre og: extrait', r4.recipe.title.startsWith('Cake aux olives'));
+    check('ingrédients microdata extraits', r4.recipe.ingredients.length === 3 && r4.recipe.ingredients.some((i) => i.name === 'farine'));
+    check('instructions microdata extraites', r4.recipe.instructions.includes('Mélanger'));
+    check('étiqueté import partiel', (r4.recipe.tags ?? '').includes('partiel'));
+  }
 
   // Confirm : écriture réelle en base (transaction synchrone)
   const hash = await Argon2.hash('x');
@@ -108,7 +164,9 @@ async function main() {
 
   server.close();
   console.log(`\n${passed} tests PASS`);
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  // Meilleur effort : sous Windows la base jetable peut encore être ouverte par
+  // better-sqlite3 au moment du nettoyage (EPERM) — pas bloquant, dossier temp
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* best effort */ }
   process.exit(0);
 }
 
