@@ -56,7 +56,9 @@ export default function Nav({ session }: { session: Session | null }) {
                   Ingrédients
                 </Link>
                 <Link href="/shopping-list" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
+                <Link href="/pantry" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/pantry') ? 'font-medium text-accent' : ''}`}>Garde-manger</Link>
                 <Link href="/stats" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/stats') ? 'font-medium text-accent' : ''}`}>Stats</Link>
+                <Link href="/feedback" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/feedback') ? 'font-medium text-accent' : ''}`}>Retours</Link>
                 <Link href="/settings" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
                 <Link href="/admin/licenses" className="text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap">Licences</Link>
                 <span className="text-gray-300 hidden lg:inline">|</span>
@@ -106,7 +108,9 @@ export default function Nav({ session }: { session: Session | null }) {
                 Ingrédients
               </Link>
               <Link href="/shopping-list" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
+              <Link href="/pantry" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 whitespace-nowrap ${pathname.startsWith('/pantry') ? 'font-medium text-accent' : ''}`}>Garde-manger</Link>
               <Link href="/stats" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/stats') ? 'font-medium text-accent' : ''}`}>Stats</Link>
+              <Link href="/feedback" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/feedback') ? 'font-medium text-accent' : ''}`}>Retours</Link>
               <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
 
               <div className="border-t border-gray-200 pt-2 mt-1">

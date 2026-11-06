@@ -218,6 +218,12 @@ export const users = sqliteTable("users", {
   // d'intervalle. 0 = controle desactive. Defaut : 7 jours.
   minDaysBetween: integer("min_days_between").notNull().default(7),
   tokenVersion: integer("token_version").notNull().default(0),
+  // F17 multi-tenant (vague 4) : foyer du compte. Null tant que la vague 4b
+  // n'a pas fait son backfill ; roles/isolation appliqués par la feature.
+  householdId: text("household_id"),
+  // F10 notifications : heure locale « HH:MM » du rappel du repas du jour
+  // (null = notifications desactivées pour ce compte)
+  notifyTime: text("notify_time"),
   createdAt: text("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
@@ -344,4 +350,80 @@ export const licenseAudit = sqliteTable("license_audit", {
   reason: text("reason"),
   byUserId: text("by_user_id").references(() => users.id, { onDelete: "set null" }),
   at: text("at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// ============================================================================
+// Vague 4 — households (F17 multi-tenant, contrat vague 4 figé en 0008)
+// ============================================================================
+export const households = sqliteTable("households", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// ============================================================================
+// F10 — Notifications du repas du jour (contrat vague 4)
+// Abonnements Web Push par utilisateur (VAPID côté serveur, cf. .env.local)
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// ============================================================================
+// F11 — Garde-manger (contrat vague 4)
+// Quantité disponible par ingrédient du catalogue (un foyer = une instance
+// jusqu'à F17 ; la clef household sera ajoutée par la migration 4b)
+export const pantryItems = sqliteTable("pantry_items", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ingredientId: text("ingredient_id")
+    .notNull()
+    .unique()
+    .references(() => ingredients.id, { onDelete: "cascade" }),
+  quantity: real("quantity").notNull(),
+  unit: text("unit").notNull(),
+  // Date de péremption optionnelle, ISO « YYYY-MM-DD »
+  expiresAt: text("expires_at"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// ============================================================================
+// F15 — Retours clients / feedback (contrat vague 4)
+export const feedback = sqliteTable("feedback", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  // bug | idee | question | prix
+  category: text("category", { enum: ["bug", "idee", "question", "prix"] }).notNull(),
+  message: text("message").notNull(),
+  pageUrl: text("page_url"),
+  appVersion: text("app_version"),
+  // nouveau | trie | traite | rejete (statuts de tri admin)
+  status: text("status", { enum: ["nouveau", "trie", "traite", "rejete"] })
+    .notNull()
+    .default("nouveau"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// ============================================================================
+// F16 — Quantités standard par ingrédient (contrat vague 4)
+// « 100 g de pâtes pour 1 personne » : quantity/servingsRef sert de base au
+// pré-remplissage des formulaires de recette, ajustable manuellement
+export const ingredientStandards = sqliteTable("ingredient_standards", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ingredientId: text("ingredient_id")
+    .notNull()
+    .unique()
+    .references(() => ingredients.id, { onDelete: "cascade" }),
+  quantity: real("quantity").notNull(),
+  unit: text("unit").notNull(),
+  servingsRef: integer("servings_ref").notNull().default(4),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

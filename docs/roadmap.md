@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-11-06 (v3.15)*
-*Version : 3.15 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-11-06 (v3.16)*
+*Version : 3.16 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -163,7 +163,12 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 ---
 
-## 🚀 Phase 4 — Fonctionnalités restantes (prochaine vague)
+## 🚀 Phase 4 — Vague 4 lancée le 06/11/2026
+
+**Organisation** ([contrat-vague-4.md](contrat-vague-4.md), figé avant workers ; [test-plan-vague-4.md](test-plan-vague-4.md) pour les gates et le débogage) :
+- **Vague 4a (parallèle)** : W1 = F10+F12 (SW/push), W2 = F11 (garde-manger), W3 = F15 (feedback), W4 = F16 (standards), W5 = F18 (export/import JSON) — migration `0008` + nav figées dans le contrat ;
+- **Vague 4b (séquentielle)** : W6 = **F17 multi-tenant** (chantier prioritaire confirmé le 06/11/2026 — cascade `household_id` sur toutes les tables, backfill foyer unique, isolation en requête ; seul, après les fusions 4a) ;
+- **OAuth** : bloqué sur les variables d'environnement propriétaire — hors vague.
 
 ### F07 - Import de Recettes depuis URL — 🟢 mergé sur `beta` (PR #25, 05/11/2026)
 - ✅ Extraction Schema.org (JSON-LD Recipe), fallback og: Marmiton/750g, prévisualisation avant import, doublon de titre suffixé, ingrédients inconnus créés au catalogue
@@ -203,6 +208,18 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - ✅ Tests runtime 15 PASS (`test:license`, webhook signé/invalide/rejoué)
 - Reste : vraies clés Stripe (test d'abord) en `.env.local`, validation humaine CT beta, S05–S10
 
+### F17 - Multi-tenant par foyer (household_id) — 🟡 prioritaire, vague 4b (séquentielle)
+- **Décision du 06/11/2026** : le chantier reste prioritaire (option A du CDC §5) malgré le modèle auto-hébergé « un CT/foyer » — l'isolation `household_id` sécurise l'ouverture future à l'hébergement mutualisé et fiabilise les données multi-foyers sur une même instance
+- Table `households` + `users.household_id` déjà posées en 0008 (contrat vague 4) ; le RESTE de la cascade relève de W6 : `household_id` sur TOUTES les tables métier, backfill (toutes les données préexistantes → un foyer unique), isolation stricte requête par requête (aucune fuite inter-foyers : recettes, planning, courses, stock, feedback, jetons), rollback documenté
+- Contrat dédié à écrire avant le lancement de W6 (après les fusions 4a)
+- Estimation : 3-4 jours — **jamais en parallèle d'autres workers**
+
+### F18 - Export/import JSON complet — 🟡 prioritaire, worker W5 (vague 4a)
+- Export d'un JSON daté+versionné de tout le contenu familial (recettes, liaisons, ingrédients, planning, garde-manger, paramètres) — **jamais** mots de passe/jetons/clés ; cohérent avec le contrat v3 : export autorisé même en essai expiré
+- Import transactionnel atomique (tout ou rien), doublons de titre suffixés
+- Enjeu commercial : portabilité des données (départ sans vendor lock-in), conformité au positionnement auto-hébergé
+- Fichiers : `lib/export.ts`, `lib/import.ts`, action + section ADMIN `/settings`
+
 ### OAuth (Google, GitHub) — en attente de variables d'environnement
 - Providers, boutons de connexion alternatifs, comptes liés
 - Estimation : 1 jour
@@ -213,7 +230,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 **Périmètre v1 — moyens du bord, zéro service tiers** (pas de SaaS de feedback, cohérent avec le positionnement vie privée / auto-hébergé) :
 
-- Table *feedback* (migration) : id, household_id, user_id, catégorie (bug / idée / question / ressenti prix), message, page/URL d'origine, version de l'app, created_at, statut (nouveau / trié / traité / rejeté)
+- Table *feedback* (**migration 0008, figée par le contrat vague 4**) : id, user_id, catégorie (bug / idée / question / ressenti prix), message, page/URL d'origine, version de l'app, created_at, statut (nouveau / trié / traité / rejeté) — la colonne `household_id` suivra la cascade F17 (4b)
 - Bouton « Retours » permanent (nav ou footer) → modal /feedback : 3 clics maximum (catégorie, message, envoyer), server action + validation Zod, rate-limit simple par utilisateur
 - Page ADMIN /admin/feedback : liste triable, changement de statut, compteur par catégorie — base du tri hebdomadaire
 - Enquêtes par email (si SMTP configuré, sinon relance manuelle) :
@@ -223,11 +240,9 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - Vie privée : aucune donnée personnelle au-delà du compte existant ; mention dans la politique de confidentialité (finalité « amélioration du produit »)
 - Option (plus tard) : suggestion de créer une issue publique sur le repo pour les idées de fonctionnalités
 
-**Fichiers** : app/feedback/ (modal + action), app/admin/feedback/page.tsx, migration 0006 (table feedback), éventuellement lib/email (réutilisation F10)
+**Fichiers** : app/feedback/ (modal + action), app/admin/feedback/page.tsx, table `feedback` (contrat vague 4, migration 0008), éventuellement lib/email (réutilisation F10)
 
-**Estimation : 1-2 jours** — parallélisable avec F07/F10/F11 (fichiers majoritairement nouveaux)
-
-*Contrat de la vague 3 à prévoir : table `pantry_items` au schéma (F11). F07, F10 et F12 sont majoritairement des fichiers nouveaux → parallélisables en 3 workers ; F11 en 4ᵉ position ou en parallèle avec son contrat.*
+**Estimation : 1-2 jours** — worker W3 de la vague 4a (fichiers majoritairement nouveaux)
 
 ---
 
@@ -293,4 +308,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.12 (archivée) | 2026-10-26 | Conformité : ajout du suivi des versions des CGV (art. 19) + liaison licence ↔ version CGV acceptée à chaque vente |
 | **V3.13 (archivée)** | 2026-10-26 | Précision d'implémentation CGV (métadonnées `cgv_version`/`license_date` au webhook) + suspension/réactivation de licence (action admin tracée) |
 | **V3.14 (archivée)** | 2026-10-30 | Ajout **F16 — règles de quantité standard par ingrédient** en Phase 4 (suggestion de quantité selon le nombre de couverts, pour faciliter la création de recettes) |
-| **V3.15 (ce document)** | 2026-11-06 | Point post-vague 3 : corrections 46→56, onboarding self-service (C-051, PR #26) et CT démo publique (PR #17, `main`) enregistrés au tableau des livrés, F07 durci après validation humaine (C-053 → C-056, `test:import` 32 PASS) |
+| **V3.15 (archivée)** | 2026-11-06 | Point post-vague 3 : corrections 46→56, onboarding self-service (C-051, PR #26) et CT démo publique (PR #17, `main`) enregistrés au tableau des livrés, F07 durci après validation humaine (C-053 → C-056, `test:import` 32 PASS) |
+| **V3.16 (ce document)** | 2026-11-06 | **Lancement vague 4** : F17 multi-tenant et F18 export/import confirmés prioritaires en Phase 4 ; contrat figé ([contrat-vague-4.md](contrat-vague-4.md) — migration 0008, nav, workers W1-W5, fusion séquentielle, 4b multi-tenant seul) ; gates qualité étendues + plan de test/débogage ([test-plan-vague-4.md](test-plan-vague-4.md)) |

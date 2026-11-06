@@ -57,6 +57,13 @@
       "when": 1793649759252,
       "tag": "0007_flat_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793994572979,
+      "tag": "0008_talented_chat",
+      "breakpoints": true
     }
   ]
 }
