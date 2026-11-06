@@ -135,6 +135,7 @@ Côté ADMIN, `/admin/feedback` liste les retours avec **compteurs par catégori
 - **Palette de couleurs** (ADMIN) : 5 thèmes — teal, indigo, rose, ambre, vert forêt. Chaque aperçu montre les étiquettes du calendrier. La palette teinte boutons, liens et étiquettes, en mode clair comme sombre
 - Thème clair/sombre : bascule dans la barre de navigation
 - ADMIN : liens vers Utilisateurs (créer/valider/promouvoir des comptes), Partage, et Update
+- ADMIN : **Export / Import** — « Exporter (JSON) » télécharge tout le foyer (recettes, ingrédients, planning, garde-manger, paramètres ; jamais de mots de passe ni clés) dans un fichier daté `meal-plan-export-AAAA-MM-JJ.json`. « Importer un fichier » restaure un export précédent en une seule transaction : en cas d'erreur rien n'est écrit, les recettes déjà présentes ne sont jamais écrasées (les doublons de titre sont suffixés « (2) »). L'export reste possible même en essai expiré ; l'import, lui, nécessite une licence active ou un essai en cours
 
 ---
 
