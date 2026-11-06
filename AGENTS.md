@@ -47,6 +47,8 @@ docs/            toute la documentation (kebab-case)
 - **Correctifs numérotés C-xxx** : toute modification non triviale = une entrée dans `docs/correctifs.md` (problème → correctif → tests → fichiers) + docs associées mises à jour dans le même commit.
 - Migrations toujours par `db:generate` ; toute action serveur qui écrit en base est testée **en exécution** (tsc/build ne suffisent pas).
 - **Racine du repo : uniquement `README.md` et ce fichier.** Toute la documentation dans `docs/`, kebab-case sans MAJUSCULES ni accents.
+- **Sécurité** : aucun secret (token, clé API, mot de passe) dans le code, les commits ou les logs ; `.env.local` jamais commité. Un secret exposé ailleurs = alerte + révocation immédiate, puis nettoyage de l'historique si nécessaire.
+- **Gate de sortie** (avant tout commit/PR) : `tsc` clean, tests runtime concernés au vert, entrée C-xxx si modification non triviale, docs associées à jour dans le même commit.
 - Env : `AUTH_SECRET` obligatoire en production ; `AUTH_TRUST_HOST=true` ; `TZ=Europe/Paris` (fuseau critique pour les dates de repas). En commercialisation : `STRIPE_WEBHOOK_SECRET` (webhook signé) + `STRIPE_PAYMENT_LINK` (lien d'achat) dans `.env.local`.
 
 ## Routage documentaire — ne lire QUE ce qui est utile à la tâche
@@ -62,6 +64,8 @@ docs/            toute la documentation (kebab-case)
 | Recette métier (parcours à tester) | `docs/test-scenarios.md` |
 | Roadmaps historiques | `docs/archives/` |
 
-## Travaux en cours (voir docs/roadmap.md)
+## État du projet — SSOT : `docs/roadmap.md`
 
-Phase 4 : import de recettes par URL (F07), notifications (F10), garde-manger (F11), PWA hors-ligne (F12), OAuth. **Préparation commercialisation (phase 0)** : multi-tenant `household_id` (chantier prioritaire — schéma encore mono-famille), onboarding self-service (suppression de la validation ADMIN), export/import JSON complet. **Angles morts connus** : endpoint `/api/health` livré (C-046) mais le moniteur Uptime Kuma pointe encore sur `/login` (à repointer, CT 111) ; licence du code non actée (reco : FSL-1.1).
+Ce fichier **ne reflète jamais l'état d'avancement** du projet : la source unique est `docs/roadmap.md`, mise à jour à chaque merge. Ne pas dupliquer ici les travaux en cours (une liste dupliquée = une dérive en sursis).
+
+**Angles morts persistants** (ops, vérifiés le 06/11/2026) : le moniteur Uptime Kuma pointe encore sur `/login` au lieu de `/api/health` (à repointer, CT 111) ; licence du code non actée (reco : FSL-1.1).
