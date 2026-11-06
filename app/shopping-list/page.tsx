@@ -1,14 +1,18 @@
 import { db } from '@/lib/db';
 import { ingredients, shoppingItems } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+import { getCurrentHouseholdId } from '@/lib/auth-guards';
 import ShoppingListClient from './ShoppingListClient';
 import type { ShoppingItemView } from '@/lib/validators/shopping';
 
 export default async function ShoppingListPage() {
+  // F17 (C-062) : catalogue et liste du FOYER de session uniquement
+  const householdId = await getCurrentHouseholdId();
   // Ingrédients du catalogue pour la recherche à l'ajout manuel
   const catalogIngredients = await db
     .select({ id: ingredients.id, name: ingredients.name, category: ingredients.category, defaultUnit: ingredients.defaultUnit })
     .from(ingredients)
+    .where(eq(ingredients.householdId, householdId))
     .orderBy(ingredients.name);
 
   // Articles de la liste avec le nom et le rayon de l'ingrédient lié
@@ -25,7 +29,8 @@ export default async function ShoppingListPage() {
       category: ingredients.category,
     })
     .from(shoppingItems)
-    .leftJoin(ingredients, eq(shoppingItems.ingredientId, ingredients.id));
+    .leftJoin(ingredients, eq(shoppingItems.ingredientId, ingredients.id))
+    .where(eq(shoppingItems.householdId, householdId));
 
   const items: ShoppingItemView[] = rows.map((row) => ({
     id: row.id,

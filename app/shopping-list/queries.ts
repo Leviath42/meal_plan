@@ -6,9 +6,15 @@
 // pas une réplique (leçons C-047 et C-055). PAS un fichier « use server » :
 // la garde de session reste dans l'action. Transactions better-sqlite3
 // synchrones uniquement.
+//
+// F17 multi-tenant (C-062) : `householdId` en dernier argument. L'action
+// applicative passe TOUJOURS le foyer de session (requireSession) ; l'argument
+// optionnel (tests runtime historiques, base mono-foyer) retombe sur le foyer
+// principal via le backfill idempotent — aucune requête ne court sans foyer.
 
 import { db } from '@/lib/db';
 import { ingredients, mealPlans, recipeIngredients, recipes, shoppingItems } from '@/lib/db/schema';
+import { ensurePrimaryHousehold } from '@/lib/household';
 import { and, eq, gte, isNotNull, lte, inArray } from 'drizzle-orm';
 import { deductPantryStock, fetchPantryStock } from '@/app/pantry/queries';
 
@@ -38,17 +44,20 @@ export interface GenerationResult {
 //   la correspondance se fait par (ingrédient, unité) à l'identique ;
 // - remplace les lignes générées (addedManually = false) sans toucher aux
 //   lignes ajoutées manuellement, en conservant les coches d'achat.
-export function generateShoppingRows(startDate: string, endDate: string): GenerationResult {
+export function generateShoppingRows(startDate: string, endDate: string, householdId?: string): GenerationResult {
+  const hid = householdId ?? ensurePrimaryHousehold();
+
   // Repas planifiés avec recette sur la période (les notes seules sont ignorées)
   const plans = db
     .select({ recipeId: mealPlans.recipeId, servings: mealPlans.servings })
     .from(mealPlans)
-    .where(and(gte(mealPlans.date, startDate), lte(mealPlans.date, endDate), isNotNull(mealPlans.recipeId)))
+    .where(and(eq(mealPlans.householdId, hid), gte(mealPlans.date, startDate), lte(mealPlans.date, endDate), isNotNull(mealPlans.recipeId)))
     .all();
 
   const recipeIds = [...new Set(plans.map((plan) => plan.recipeId as string))];
 
-  // Ingrédients de recette par recette, avec le nom et le rayon
+  // Ingrédients de recette par recette, avec le nom et le rayon (recettes du
+  // foyer uniquement — les liaisons dénormalisées portent le même foyer)
   const recipeIngredientRows = recipeIds.length
     ? db
         .select({
@@ -61,13 +70,13 @@ export function generateShoppingRows(startDate: string, endDate: string): Genera
         })
         .from(recipeIngredients)
         .innerJoin(ingredients, eq(recipeIngredients.ingredientId, ingredients.id))
-        .where(inArray(recipeIngredients.recipeId, recipeIds))
+        .where(and(eq(recipeIngredients.householdId, hid), inArray(recipeIngredients.recipeId, recipeIds)))
         .all()
     : [];
 
   // Couverts de référence de chaque recette (base de la mise à l'échelle)
   const recipeRows = recipeIds.length
-    ? db.select({ id: recipes.id, defaultServings: recipes.defaultServings }).from(recipes).where(inArray(recipes.id, recipeIds)).all()
+    ? db.select({ id: recipes.id, defaultServings: recipes.defaultServings }).from(recipes).where(and(eq(recipes.householdId, hid), inArray(recipes.id, recipeIds))).all()
     : [];
   const defaultServingsById = new Map(recipeRows.map((row) => [row.id, row.defaultServings]));
 
@@ -105,9 +114,10 @@ export function generateShoppingRows(startDate: string, endDate: string): Genera
   }
 
   // Garde-manger : déduction du stock (lecture récente en base, aucun cache)
-  const { rows: afterStock, deducted, excluded } = deductPantryStock([...merged.values()], fetchPantryStock());
+  const { rows: afterStock, deducted, excluded } = deductPantryStock([...merged.values()], fetchPantryStock(hid));
   const rowsToInsert = afterStock.map((item) => ({
     ingredientId: item.ingredientId,
+    householdId: hid,
     quantity: item.quantity,
     unit: item.unit,
     isBought: false,
@@ -121,11 +131,11 @@ export function generateShoppingRows(startDate: string, endDate: string): Genera
     const bought = tx
       .select({ ingredientId: shoppingItems.ingredientId, unit: shoppingItems.unit })
       .from(shoppingItems)
-      .where(and(eq(shoppingItems.addedManually, false), eq(shoppingItems.isBought, true)))
+      .where(and(eq(shoppingItems.householdId, hid), eq(shoppingItems.addedManually, false), eq(shoppingItems.isBought, true)))
       .all() as Array<{ ingredientId: string | null; unit: string }>;
     const boughtKeys = new Set(bought.map((item) => `${item.ingredientId}|${item.unit}`));
 
-    tx.delete(shoppingItems).where(eq(shoppingItems.addedManually, false)).run();
+    tx.delete(shoppingItems).where(and(eq(shoppingItems.householdId, hid), eq(shoppingItems.addedManually, false))).run();
     if (rowsToInsert.length > 0) {
       tx.insert(shoppingItems)
         .values(

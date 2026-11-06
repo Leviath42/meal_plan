@@ -1,12 +1,17 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { requireSession } from '@/lib/auth-guards';
-import { recipes, recipeIngredients } from '@/lib/db/schema';
+import { requireHousehold } from '@/lib/auth-guards';
+import { ingredients, recipes, recipeIngredients } from '@/lib/db/schema';
 import { recipeInput } from '@/lib/validators/recipes';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
+
+// F17 (C-062) : recettes et liaisons scopées par foyer — toute lecture/écriture
+// filtre par le foyer de session (contrat 4b §1.1/§1.3). Les identifiants
+// d'ingrédients fournis par le formulaire sont validés contre le catalogue
+// DU FOYER : un identifiant d'un autre foyer ne peut pas être injecté.
 
 export type RecipeFormState = {
   errors?: Record<string, string[]>;
@@ -25,11 +30,23 @@ function formDataToRecord(formData: FormData): Record<string, string> {
   return record;
 }
 
+// Garde d'isolation : tous les ingrédients référencés doivent appartenir au
+// catalogue du foyer (les server actions sont invocables directement, le
+// formulaire ne suffit pas)
+function ownedIngredientCount(householdId: string, ingredientIds: string[]): number {
+  if (ingredientIds.length === 0) return 0;
+  return db
+    .select({ id: ingredients.id })
+    .from(ingredients)
+    .where(and(eq(ingredients.householdId, householdId), inArray(ingredients.id, ingredientIds)))
+    .all().length;
+}
+
 export async function createRecipe(
   prevState: RecipeFormState,
   formData: FormData
 ): Promise<RecipeFormState> {
-  const session = await requireSession();
+  const { session, householdId } = await requireHousehold();
   const rawData = formDataToRecord(formData);
   let ingredients: any;
   try {
@@ -57,18 +74,29 @@ export async function createRecipe(
   // Créateur de la recette : email de l'utilisateur connecté
   recipeData.createdBy = session.user?.email ?? null;
 
+  // Isolation (C-062) : les identifiants d'ingrédients doivent être ceux du
+  // catalogue du foyer — un autre foyer ne prête jamais ses ingrédients
+  const ingredientIds = items.map((it) => it.ingredientId);
+  if (new Set(ingredientIds).size !== ownedIngredientCount(householdId, ingredientIds)) {
+    return {
+      errors: { ingredients: ['Ingrédient introuvable dans votre catalogue'] },
+      values: rawData,
+      ingredients: ingredients
+    };
+  }
+
   // better-sqlite3 est synchrone : callback de transaction synchrone,
   // requeteurs .get()/.run() (un callback async est refuse par drizzle)
   const recipeId = db.transaction((tx) => {
     const recipe = tx
       .insert(recipes)
-      .values(recipeData)
+      .values({ ...recipeData, householdId })
       .returning({ id: recipes.id })
       .get();
 
     if (items.length > 0) {
       tx.insert(recipeIngredients).values(
-        items.map((it) => ({ ...it, recipeId: recipe.id }))
+        items.map((it) => ({ ...it, recipeId: recipe.id, householdId }))
       ).run();
     }
     return recipe.id;
@@ -82,7 +110,7 @@ export async function updateRecipe(
   prevState: RecipeFormState,
   formData: FormData
 ): Promise<RecipeFormState> {
-  await requireSession();
+  const { householdId } = await requireHousehold();
   const id = String(formData.get('id'));
   const rawData = formDataToRecord(formData);
   let ingredients: any;
@@ -109,20 +137,40 @@ export async function updateRecipe(
   }
 
   const { ingredients: items, ...recipeData } = parsed.data;
-  // Créateur de la recette : email de l'utilisateur connecté
+
+  // Isolation (C-062) : la recette modifiée doit appartenir au foyer, et les
+  // identifiants d'ingrédients être ceux du catalogue du foyer
+  const [owned] = await db
+    .select({ id: recipes.id })
+    .from(recipes)
+    .where(and(eq(recipes.id, id), eq(recipes.householdId, householdId)))
+    .limit(1);
+  if (!owned) {
+    return { errors: { general: ['Recette introuvable'] }, values: rawData };
+  }
+  const ingredientIds = items.map((it) => it.ingredientId);
+  if (new Set(ingredientIds).size !== ownedIngredientCount(householdId, ingredientIds)) {
+    return {
+      errors: { ingredients: ['Ingrédient introuvable dans votre catalogue'] },
+      values: rawData,
+      ingredients: ingredients
+    };
+  }
 
   // Mise à jour transactionnelle : recette + ingrédients, ou rien
   db.transaction((tx) => {
     tx.update(recipes)
       .set({ ...recipeData, updatedAt: new Date().toISOString() })
-      .where(eq(recipes.id, id))
+      .where(and(eq(recipes.id, id), eq(recipes.householdId, householdId)))
       .run();
 
-    tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id)).run();
+    tx.delete(recipeIngredients)
+      .where(and(eq(recipeIngredients.recipeId, id), eq(recipeIngredients.householdId, householdId)))
+      .run();
 
     if (items.length > 0) {
       tx.insert(recipeIngredients).values(
-        items.map((it) => ({ ...it, recipeId: id }))
+        items.map((it) => ({ ...it, recipeId: id, householdId }))
       ).run();
     }
   });
@@ -135,8 +183,11 @@ export async function updateRecipe(
 }
 
 export async function deleteRecipe(id: string) {
-  await requireSession();
-  await db.delete(recipes).where(eq(recipes.id, id));
+  const { householdId } = await requireHousehold();
+  // Isolation (C-062) : suppression bornée au foyer de session
+  await db
+    .delete(recipes)
+    .where(and(eq(recipes.id, id), eq(recipes.householdId, householdId)));
   revalidatePath('/recipes');
   revalidatePath('/');
   revalidatePath('/calendar');

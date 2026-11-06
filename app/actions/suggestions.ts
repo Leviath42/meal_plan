@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth-guards';
+import { requireHousehold } from '@/lib/auth-guards';
 import { findSuggestableRecipes, getUserMinDaysBetween } from '@/lib/meal-planning';
 import type { SuggestedRecipe } from '@/app/types/meal-plan';
 
@@ -29,7 +29,7 @@ export async function suggestRecipes(opts: {
   tag?: string;
 }): Promise<SuggestionsResult> {
   try {
-    const session = await requireSession();
+    const { session, householdId } = await requireHousehold();
     const userId = session.user?.id;
 
     const parsed = suggestionsInput.safeParse(opts);
@@ -46,6 +46,7 @@ export async function suggestRecipes(opts: {
     const recipes = await findSuggestableRecipes({
       date: parsed.data.date,
       minDays,
+      householdId,
       tag: parsed.data.tag,
       limit: 3,
     });

@@ -3,14 +3,27 @@
 // scripts/test-pantry.ts — le test exécute les requêtes de production, pas
 // une réplique (leçon C-055). Ce module n'est PAS un fichier « use server » :
 // les gardes de session restent dans app/actions/pantry.ts.
+//
+// F17 multi-tenant (C-062) : chaque helper prend le foyer en dernier argument.
+// Le code applicatif passe TOUJOURS le foyer de session (requireSession) ;
+// l'argument optionnel (tests runtime historiques, base mono-foyer) retombe
+// sur le foyer principal via le backfill idempotent — aucune requête ne
+// tourne non filtrée.
 
 import { db } from '@/lib/db';
 import { ingredients, pantryItems } from '@/lib/db/schema';
-import { asc, eq, sql } from 'drizzle-orm';
+import { ensurePrimaryHousehold } from '@/lib/household';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 // ---------------------------------------------------------------------------
 // CRUD stock
 // ---------------------------------------------------------------------------
+
+// Foyer effectif d'un appel : explicite (production) ou foyer principal
+// (backfill idempotent — tests runtime et dérivés mono-foyer)
+function resolveHousehold(householdId?: string): string {
+  return householdId ?? ensurePrimaryHousehold();
+}
 
 // Ligne de stock jointe au catalogue (nom + rayon pour l'affichage)
 export interface PantryRow {
@@ -25,7 +38,8 @@ export interface PantryRow {
   category: string;
 }
 
-export function listPantryItems(): PantryRow[] {
+export function listPantryItems(householdId?: string): PantryRow[] {
+  const hid = resolveHousehold(householdId);
   return db
     .select({
       id: pantryItems.id,
@@ -40,17 +54,22 @@ export function listPantryItems(): PantryRow[] {
     })
     .from(pantryItems)
     .innerJoin(ingredients, eq(pantryItems.ingredientId, ingredients.id))
+    .where(and(eq(pantryItems.householdId, hid), eq(ingredients.householdId, hid)))
     .orderBy(asc(ingredients.name))
     .all();
 }
 
-// L'ingrédient doit exister au catalogue : renvoie son unité par défaut
-// (pré-remplissage de l'UI) ou null
-export function findIngredientById(id: string): { id: string; name: string; defaultUnit: string | null } | undefined {
+// L'ingrédient doit exister au CATALOGUE DU FOYER : renvoie son unité par
+// défaut (pré-remplissage de l'UI) ou null
+export function findIngredientById(
+  id: string,
+  householdId?: string
+): { id: string; name: string; defaultUnit: string | null } | undefined {
+  const hid = resolveHousehold(householdId);
   return db
     .select({ id: ingredients.id, name: ingredients.name, defaultUnit: ingredients.defaultUnit })
     .from(ingredients)
-    .where(eq(ingredients.id, id))
+    .where(and(eq(ingredients.id, id), eq(ingredients.householdId, hid)))
     .limit(1)
     .get();
 }
@@ -64,12 +83,14 @@ export function upsertPantryItem(input: {
   quantity: number;
   unit: string;
   expiresAt: string | null;
+  householdId?: string;
 }): void {
+  const hid = resolveHousehold(input.householdId);
   db.transaction((tx) => {
     const existing = tx
       .select({ id: pantryItems.id })
       .from(pantryItems)
-      .where(eq(pantryItems.ingredientId, input.ingredientId))
+      .where(and(eq(pantryItems.ingredientId, input.ingredientId), eq(pantryItems.householdId, hid)))
       .limit(1)
       .get();
     if (existing) {
@@ -86,6 +107,7 @@ export function upsertPantryItem(input: {
       tx.insert(pantryItems)
         .values({
           ingredientId: input.ingredientId,
+          householdId: hid,
           quantity: input.quantity,
           unit: input.unit,
           expiresAt: input.expiresAt,
@@ -95,8 +117,16 @@ export function upsertPantryItem(input: {
   });
 }
 
-export function deletePantryItemById(id: string): number {
-  return db.delete(pantryItems).where(eq(pantryItems.id, id)).run().changes;
+export function deletePantryItemById(id: string, householdId?: string): number {
+  const hid = resolveHousehold(householdId);
+  const existing = db
+    .select({ id: pantryItems.id })
+    .from(pantryItems)
+    .where(and(eq(pantryItems.id, id), eq(pantryItems.householdId, hid)))
+    .limit(1)
+    .get();
+  if (!existing) return 0;
+  return db.delete(pantryItems).where(eq(pantryItems.id, existing.id)).run().changes;
 }
 
 // ---------------------------------------------------------------------------
@@ -109,12 +139,14 @@ export interface PantryStockRow {
   unit: string;
 }
 
-// Tout le stock du garde-manger (lecture récente à chaque génération : les
-// listes sont recalculées depuis la base, jamais depuis un cache)
-export function fetchPantryStock(): PantryStockRow[] {
+// Tout le stock du garde-manger du foyer (lecture récente à chaque génération :
+// les listes sont recalculées depuis la base, jamais depuis un cache)
+export function fetchPantryStock(householdId?: string): PantryStockRow[] {
+  const hid = resolveHousehold(householdId);
   return db
     .select({ ingredientId: pantryItems.ingredientId, quantity: pantryItems.quantity, unit: pantryItems.unit })
     .from(pantryItems)
+    .where(eq(pantryItems.householdId, hid))
     .all();
 }
 

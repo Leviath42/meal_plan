@@ -164,6 +164,7 @@ declare module "next-auth" {
       name?: string | null;
       role?: "ADMIN" | "MEMBER" | "GUEST";
       tokenVersion?: number;
+      householdId?: string;
       securityQuestion?: string | null;
     };
   }

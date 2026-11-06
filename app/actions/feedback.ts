@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import pkg from '../../package.json';
-import { requireAdmin, requireSession } from '@/lib/auth-guards';
+import { requireAdmin, requireHousehold } from '@/lib/auth-guards';
 import {
   checkFeedbackRateLimit,
   createFeedback,
@@ -38,7 +38,7 @@ export async function submitFeedback(
   prevState: FeedbackFormState,
   formData: FormData
 ): Promise<FeedbackFormState> {
-  const session = await requireSession();
+  const { session, householdId } = await requireHousehold();
 
   // Rate limit par utilisateur : 5 retours/heure, quota partagé entre
   // sessions (la clé est l'identifiant du compte en base)
@@ -70,6 +70,7 @@ export async function submitFeedback(
     message: parsed.data.message,
     pageUrl,
     appVersion: pkg.version,
+    householdId,
   });
 
   revalidatePath('/admin/feedback');
@@ -80,7 +81,9 @@ export async function submitFeedback(
 // par statut). Entrée ignorée silencieusement si invalide (champs cachés
 // énumérés, toute autre valeur vient d'une requête forgée).
 export async function changeFeedbackStatus(formData: FormData): Promise<void> {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const householdId = (admin.user as { householdId?: string }).householdId;
+  if (!householdId) return;
 
   const parsed = feedbackStatusInput.safeParse({
     id: formData.get('id'),
@@ -88,6 +91,6 @@ export async function changeFeedbackStatus(formData: FormData): Promise<void> {
   });
   if (!parsed.success) return;
 
-  await updateFeedbackStatus(parsed.data.id, parsed.data.status);
+  await updateFeedbackStatus(parsed.data.id, parsed.data.status, householdId);
   revalidatePath('/admin/feedback');
 }

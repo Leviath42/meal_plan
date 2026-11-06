@@ -2,6 +2,10 @@
 // Logique partagée de planification (F08 historique, F09 antidoublon,
 // F03 suggestions) : utilisée à la fois par les Server Actions et par les
 // tests d'exécution réelle (tmp/), qui rejouent exactement le même code.
+//
+// F17 multi-tenant (C-062) : les fenêtres antidoublon et les suggestions sont
+// scopées par foyer — l'argument householdId est fourni par l'action (via
+// requireHousehold), jamais par le client.
 import { and, eq, gt, isNull, lt, ne, notExists, or, sql, type SQL } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { mealPlans, recipes, users } from '@/lib/db/schema';
@@ -13,14 +17,22 @@ export type SqliteTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 // F08 - historique : mémorise la date (AAAA-MM-JJ) du repas le plus récent
 // planifié avec cette recette. Ne fait rien si une date plus récente est déjà
 // connue : le champ est un historique, jamais recalculé en cas de suppression
-// d'un plan ou de retrait de la recette.
-export function bumpRecipeLastServedAt(tx: SqliteTx, recipeId: string, date: string): void {
+// d'un plan ou de retrait de la recette. La recette est confirmée appartenir
+// au foyer par l'appelant (isolation C-062 : le filtre household est doublé
+// ici pour qu'aucun UPDATE ne traverse les foyers).
+export function bumpRecipeLastServedAt(
+  tx: SqliteTx,
+  recipeId: string,
+  date: string,
+  householdId: string,
+): void {
   tx
     .update(recipes)
     .set({ lastServedAt: date })
     .where(
       and(
         eq(recipes.id, recipeId),
+        eq(recipes.householdId, householdId),
         or(isNull(recipes.lastServedAt), lt(recipes.lastServedAt, date)),
       ),
     )
@@ -67,14 +79,18 @@ export async function getUserMinDaysBetween(userId: string): Promise<number> {
 // jours est autorisé, seul moins de X jours est refusé ; comparaison
 // lexicographique sur les dates ISO),
 // en ignorant le plan excludePlanId (mise à jour du plan lui-même).
+// F17 (C-062) : la fenêtre est celle DU FOYER — le même plat chez un autre
+// foyer ne bloque JAMAIS la planification.
 // Retourne le plan le plus proche de la date demandée, ou null.
 export async function findPlanInWindow(opts: {
   recipeId: string;
   date: string;
   minDays: number;
+  householdId: string;
   excludePlanId?: string;
 }): Promise<{ id: string; date: string } | null> {
-  const conditions = [
+  const conditions: SQL[] = [
+    eq(mealPlans.householdId, opts.householdId),
     eq(mealPlans.recipeId, opts.recipeId),
     gt(mealPlans.date, addDaysToDateStr(opts.date, -opts.minDays)),
     lt(mealPlans.date, addDaysToDateStr(opts.date, opts.minDays)),
@@ -110,13 +126,15 @@ export function antidoublonMessage(conflictDate: string, minDays: number): strin
 // que F09) et en filtrant optionnellement par tag (insensible à la casse).
 // Sélection au hasard (SQL ORDER BY RANDOM() LIMIT n), puis tri secondaire :
 // les plus anciennement servis d'abord (jamais servis en tête).
+// F17 (C-062) : candidats et exclusions scopés au foyer de session.
 export async function findSuggestableRecipes(opts: {
   date: string;
   minDays: number;
+  householdId: string;
   tag?: string;
   limit?: number;
 }): Promise<SuggestedRecipe[]> {
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [eq(recipes.householdId, opts.householdId)];
   if (opts.minDays > 0) {
     conditions.push(
       notExists(
@@ -125,6 +143,7 @@ export async function findSuggestableRecipes(opts: {
           .from(mealPlans)
           .where(
             and(
+              eq(mealPlans.householdId, opts.householdId),
               eq(mealPlans.recipeId, recipes.id),
               gt(mealPlans.date, addDaysToDateStr(opts.date, -opts.minDays)),
               lt(mealPlans.date, addDaysToDateStr(opts.date, opts.minDays)),

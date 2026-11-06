@@ -56,8 +56,11 @@ Pattern des tests runtime : base jetable `SQLITE_PATH` + `db-ensure` (cf. `scrip
 - **E4 Doublons** : import sur base déjà peuplée → titres suffixés « (2) » (règle antidoublon actuelle respectée), pas d'écrasement silencieux.
 - **E5 Essai expiré** : licence absente + essai > 30 j → export TOUJOURS autorisé, import refusé (cohérent garde proxy v3).
 
-### Vague 4b — F17 multi-tenant (contrat dédié, rappel des invariants à tester)
-Isolation stricte : deux foyers sur la même instance ne voient RIEN l'un de l'autre (recettes, planning, courses, stock, feedback, jetons de partage) — Tester chaque listage avec un compte de chaque foyer ; backfill : les données préexistantes appartiennent toutes à un foyer unique ; rollback : migration réversible documentée.
+### Vague 4b — F17 multi-tenant (contrat dédié) — ✅ vérifié en exécution 06/11/2026 (W6, C-062)
+- **Runtime** : `scripts/test-multi-tenant.ts` **45 PASS** sur base jetable SQLITE_PATH + db-ensure — backfill idempotent des 10 tables rattachées (« Foyer principal », 2e appel no-op), 2 foyers créés sur la même instance, isolation réelle PAR LISTAGES DE PRODUCTION (garde-manger `listPantryItems`, courses `generateShoppingRows` avec déduction de stock et régénération croisée sans destruction, repas du jour `getTodayMeals`, export `buildExportEnvelope`, standards `getIngredientStandardsMap`, antidoublon `findPlanInWindow` par foyer, suggestions, feedback borné), UNIQUE par foyer (même nom d'ingrédient accepté dans les DEUX foyers, rejeté en double dans le même), jeton de partage ciblé (jeton pré-4b raccroché au principal, le jeton de A ne sert JAMAIS le planning de B), MULTI_HOUSEHOLDS OFF/ON/valeurs invalides.
+- **Non-régression** : suites 4a passées SANS modification — smoke 9, import 32, onboarding 3, licence 15, pantry 29, feedback 24, standards 19, export 34, notifications 27 PASS ; eslint 0 erreur, tsc, build (AUTH_SECRET), `db:migrate` et `db:ensure` idempotent (3 exécutions = no-op) sur base jetable.
+- **Reste au chef (gate 7 + revue)** : runtime HTTP réel (login NextAuth, parcours mini inter-foyers via HTTP), grep d'isolation, branchage `test:multi-tenant` en CI, puis **validation humaine CT beta obligatoire**.
+- **Rollback** : migration purement additive (colonnes + index) ; `bash update.sh rollback` restaure la sauvegarde DB prise avant mise à jour (10 conservées) ; le backfill ne détruit jamais de données (il n'écrit qu'un identifiant de foyer commun).
 
 ## 3. Régression minimale avant promotion `beta → main`
 

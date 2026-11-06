@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { mealPlans, recipes } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
 import { validateAccessToken } from '@/app/actions/tokens';
+import { ensurePrimaryHousehold, resolveHouseholdIdForUser } from '@/lib/household';
 
 // Date locale au format YYYY-MM-DD (les dates du planning sont comparées
 // lexicographiquement, le fuseau du serveur fait foi)
@@ -44,7 +45,10 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
 const MEAL_TYPE_ORDER: string[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 
 // Repas planifiés today -> today + 90 jours, avec le titre de la recette
-async function fetchSharedMeals(startDate: string, endDate: string) {
+async function fetchSharedMeals(startDate: string, endDate: string, householdId: string | null) {
+  // F17 (C-062) : session → foyer du compte ; jeton → foyer du jeton.
+  // Jamais de planning servi sans foyer (backfill du foyer principal sinon).
+  const hid = householdId ?? ensurePrimaryHousehold();
   const rows = await db
     .select({
       id: mealPlans.id,
@@ -56,7 +60,7 @@ async function fetchSharedMeals(startDate: string, endDate: string) {
     })
     .from(mealPlans)
     .leftJoin(recipes, eq(mealPlans.recipeId, recipes.id))
-    .where(and(gte(mealPlans.date, startDate), lte(mealPlans.date, endDate)))
+    .where(and(eq(mealPlans.householdId, hid), gte(mealPlans.date, startDate), lte(mealPlans.date, endDate)))
     .orderBy(asc(mealPlans.date));
 
   // Tri chronologique : date d'abord (comparaison ISO fiable), puis ordre
@@ -73,14 +77,20 @@ async function fetchSharedMeals(startDate: string, endDate: string) {
 export async function GET(request: NextRequest) {
   // Autorisation : session valide OU jeton d'accès (calendar_read ou api)
   let authorized = false;
+  let householdId: string | null = null;
   const session = await auth();
   if (session?.user?.id) {
-    authorized = true;
+    // F17 (C-062) : foyer du compte revalidé en base
+    householdId = resolveHouseholdIdForUser(session.user.id);
+    authorized = householdId !== null;
   } else {
     const token = request.nextUrl.searchParams.get('token');
     if (token) {
       const record = await validateAccessToken(token, ['calendar_read', 'api']);
-      authorized = record !== null;
+      if (record) {
+        authorized = true;
+        householdId = record.householdId;
+      }
     }
   }
 
@@ -94,7 +104,7 @@ export async function GET(request: NextRequest) {
   const endDate = new Date(today);
   endDate.setDate(endDate.getDate() + 90);
   const end = toLocalDateStr(endDate);
-  const meals = await fetchSharedMeals(start, end);
+  const meals = await fetchSharedMeals(start, end, householdId);
 
   // Timestamp ICS de génération (UTC, format de base)
   const dtstamp = new Date()

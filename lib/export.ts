@@ -1,4 +1,4 @@
-// lib/export.ts — F18 : export JSON complet des données du foyer.
+// lib/export.ts — F18 : export JSON complet des données DU FOYER.
 //
 // Périmètre volontairement RESTREINT (contrat vague 4, W5) : recettes, liaisons
 // recette-ingrédient, ingrédients, planning, garde-manger, paramètres.
@@ -6,6 +6,11 @@
 // sessions, jetons de partage (access_tokens), licences, clients Stripe,
 // abonnements push. L'export est une LECTURE : il n'est pas soumis à la garde
 // d'essai expiré du proxy (cf. GET /settings/export).
+//
+// F17 (C-062) : l'export ne contient QUE les données du foyer demandé par
+// l'action appelante (celui de la session ADMIN). L'argument optionnel (tests
+// runtime historiques, base mono-foyer) retombe sur le foyer principal via le
+// backfill idempotent — aucune lecture sans foyer.
 
 import { db } from '@/lib/db';
 import {
@@ -16,6 +21,8 @@ import {
   pantryItems,
   appSettings,
 } from '@/lib/db/schema';
+import { ensurePrimaryHousehold } from '@/lib/household';
+import { eq } from 'drizzle-orm';
 
 export const EXPORT_FORMAT = 'meal-plan-export';
 // Version du schéma d'export : incrémenter à chaque évolution incompatible,
@@ -83,7 +90,10 @@ export interface ExportEnvelope {
 }
 
 // Lecture seule : aucune colonne des tables secrètes n'est sélectionnée.
-export async function buildExportEnvelope(): Promise<ExportEnvelope> {
+// Chaque table rattachée est filtrée par le foyer (contrat 4b §1.3) ;
+// app_settings est un réglage d'INSTANCE (global, contractuel §1.1).
+export async function buildExportEnvelope(householdId?: string): Promise<ExportEnvelope> {
+  const hid = householdId ?? ensurePrimaryHousehold();
   const [recipeRows, ingredientRows, linkRows, mealRows, pantryRows, settingsRows] =
     await Promise.all([
       db
@@ -101,7 +111,8 @@ export async function buildExportEnvelope(): Promise<ExportEnvelope> {
           created_by: recipes.created_by,
           lastServedAt: recipes.lastServedAt,
         })
-        .from(recipes),
+        .from(recipes)
+        .where(eq(recipes.householdId, hid)),
       db
         .select({
           id: ingredients.id,
@@ -109,7 +120,8 @@ export async function buildExportEnvelope(): Promise<ExportEnvelope> {
           category: ingredients.category,
           defaultUnit: ingredients.defaultUnit,
         })
-        .from(ingredients),
+        .from(ingredients)
+        .where(eq(ingredients.householdId, hid)),
       db
         .select({
           recipeId: recipeIngredients.recipeId,
@@ -118,7 +130,8 @@ export async function buildExportEnvelope(): Promise<ExportEnvelope> {
           unit: recipeIngredients.unit,
           note: recipeIngredients.note,
         })
-        .from(recipeIngredients),
+        .from(recipeIngredients)
+        .where(eq(recipeIngredients.householdId, hid)),
       db
         .select({
           date: mealPlans.date,
@@ -128,7 +141,8 @@ export async function buildExportEnvelope(): Promise<ExportEnvelope> {
           mealCourse: mealPlans.mealCourse,
           recipeId: mealPlans.recipeId,
         })
-        .from(mealPlans),
+        .from(mealPlans)
+        .where(eq(mealPlans.householdId, hid)),
       db
         .select({
           ingredientId: pantryItems.ingredientId,
@@ -136,7 +150,8 @@ export async function buildExportEnvelope(): Promise<ExportEnvelope> {
           unit: pantryItems.unit,
           expiresAt: pantryItems.expiresAt,
         })
-        .from(pantryItems),
+        .from(pantryItems)
+        .where(eq(pantryItems.householdId, hid)),
       db
         .select({
           defaultServings: appSettings.defaultServings,

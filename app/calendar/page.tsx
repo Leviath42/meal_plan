@@ -2,9 +2,12 @@ import { db } from '@/lib/db';
 import { recipes } from '@/lib/db/schema';
 import PlannerBoard from '@/app/components/PlannerBoard';
 import { getAppSettings } from '@/app/actions/settings';
+import { getCurrentHouseholdId } from '@/lib/auth-guards';
+import { eq } from 'drizzle-orm';
 
 export default async function CalendarPage() {
-  // Récupérer les recettes pour le sélecteur
+  // F17 (C-062) : recettes du FOYER de session uniquement
+  const householdId = await getCurrentHouseholdId();
   const allRecipes = await db.select({
     id: recipes.id,
     title: recipes.title,
@@ -14,7 +17,7 @@ export default async function CalendarPage() {
     defaultServings: recipes.defaultServings,
     lastServedAt: recipes.lastServedAt,
     tags: recipes.tags,
-  }).from(recipes).orderBy(recipes.title);
+  }).from(recipes).where(eq(recipes.householdId, householdId)).orderBy(recipes.title);
 
   // Nombre de couverts par défaut (page de paramétrage)
   const settings = await getAppSettings();

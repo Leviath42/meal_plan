@@ -1,15 +1,20 @@
+import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { ingredients } from '@/lib/db/schema';
+import { getCurrentHouseholdId } from '@/lib/auth-guards';
 import NewIngredientPanel from './NewIngredientPanel';
 import IngredientsList from './IngredientsList';
 
 export default async function IngredientsPage() {
-  const all = await db.select().from(ingredients).orderBy(ingredients.name);
+  // F17 (C-062) : catalogue du FOYER de session uniquement
+  const householdId = await getCurrentHouseholdId();
+  const all = await db.select().from(ingredients).where(eq(ingredients.householdId, householdId)).orderBy(ingredients.name);
 
   // Rayons existants pour la liste déroulante de création
   const categoryRows = await db
     .selectDistinct({ category: ingredients.category })
     .from(ingredients)
+    .where(eq(ingredients.householdId, householdId))
     .orderBy(ingredients.category);
   const categories = categoryRows
     .map((row) => row.category)

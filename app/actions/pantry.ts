@@ -4,8 +4,11 @@
 // requireSession (MEMBER/ADMIN écrit, GUEST refusé — cf. lib/auth-guards.ts).
 // La logique SQL vit dans app/pantry/queries.ts, partagée avec les tests
 // runtime (leçon C-055 : tester les requêtes de production, pas une réplique).
+//
+// F17 multi-tenant (C-062) : le foyer de session est passé à chaque helper —
+// le stock et le catalogue sont isolés par foyer (contrat 4b §1.3).
 
-import { requireSession } from '@/lib/auth-guards';
+import { requireHousehold } from '@/lib/auth-guards';
 import { revalidatePath } from 'next/cache';
 import { pantryItemInput, type PantryFormState } from '@/lib/validators/pantry';
 import { deletePantryItemById, findIngredientById, upsertPantryItem } from '@/app/pantry/queries';
@@ -31,7 +34,7 @@ export async function savePantryItem(
   const rawData = formDataToRecord(formData);
 
   try {
-    await requireSession();
+    const { householdId } = await requireHousehold();
 
     const parsed = pantryItemInput.safeParse(rawData);
     if (!parsed.success) {
@@ -43,7 +46,7 @@ export async function savePantryItem(
       };
     }
 
-    const ingredient = findIngredientById(parsed.data.ingredientId);
+    const ingredient = findIngredientById(parsed.data.ingredientId, householdId);
     if (!ingredient) {
       return {
         success: false,
@@ -57,6 +60,7 @@ export async function savePantryItem(
       quantity: parsed.data.quantity,
       unit: parsed.data.unit,
       expiresAt: parsed.data.expiresAt,
+      householdId,
     });
 
     revalidatePath('/pantry');
@@ -76,18 +80,18 @@ export async function savePantryItem(
   }
 }
 
-// Supprimer une ligne du garde-manger
+// Supprimer une ligne du garde-manger (uniquement dans le foyer de session)
 export async function removePantryItem(
   id: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await requireSession();
+    const { householdId } = await requireHousehold();
 
     if (typeof id !== 'string' || !id.trim()) {
       return { success: false, message: 'Identifiant invalide' };
     }
 
-    const changes = deletePantryItemById(id.trim());
+    const changes = deletePantryItemById(id.trim(), householdId);
     if (changes === 0) {
       return { success: false, message: 'Ligne introuvable' };
     }

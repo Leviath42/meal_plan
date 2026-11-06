@@ -1,10 +1,13 @@
 import { db } from '@/lib/db';
 import { recipes } from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
+import { getCurrentHouseholdId } from '@/lib/auth-guards';
 import Link from 'next/link';
 import RecipesClient from './RecipesClient';
 
 export default async function RecipesPage() {
+  // F17 (C-062) : recettes du FOYER de session uniquement
+  const householdId = await getCurrentHouseholdId();
   const all = await db.select({
     id: recipes.id,
     title: recipes.title,
@@ -15,7 +18,7 @@ export default async function RecipesPage() {
     mealCourse: recipes.mealCourse,
     tags: recipes.tags,
     createdAt: recipes.createdAt,
-  }).from(recipes).orderBy(desc(recipes.createdAt));
+  }).from(recipes).where(eq(recipes.householdId, householdId)).orderBy(desc(recipes.createdAt));
 
   return (
     <main className="px-3 sm:px-6 py-4">

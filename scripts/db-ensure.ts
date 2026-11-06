@@ -68,6 +68,32 @@ function columnExists(table: string, column: string): boolean {
   return columns.some((c) => c.name === column);
 }
 
+// Ensemble des index qui EXISTENT dans l'état final du schéma (rejeu logique
+// de tout le journal, CREATE et DROP, dans l'ordre). Nécessaire pour
+// l'idempotence quand une migration remplace un index par un autre :
+// si l'on se fiait au seul indexExists, la migration 0003 recréerait
+// `meal_plans_slot_unique` (et 0000 `ingredients_name_unique`) à chaque
+// exécution, avant que 0009 ne les re-supprime — du churn inutile, et un
+// CREATE qui échouerait si un doublon de données existait.
+const finalIndexNames = new Set<string>();
+{
+  for (const entry of journal.entries) {
+    const sqlPath = path.join(migrationsFolder, `${entry.tag}.sql`);
+    if (!existsSync(sqlPath)) continue;
+    for (const statement of readFileSync(sqlPath, 'utf8').split(
+      '--> statement-breakpoint',
+    )) {
+      const trimmed = statement.trim();
+      const createIdx = trimmed.match(
+        /^CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([\w]+)`?/i,
+      );
+      if (createIdx) finalIndexNames.add(createIdx[1]);
+      const dropIdx = trimmed.match(/^DROP\s+INDEX\s+(?:IF\s+EXISTS\s+)?`?([\w]+)`?/i);
+      if (dropIdx) finalIndexNames.delete(dropIdx[1]);
+    }
+  }
+}
+
 // Évalue si un statement est déjà matérialisé. Retourne true si le statement
 // doit être exécuté, false s'il faut le sauter, et une string en cas d'erreur
 // (forme non reconnue à vérifier à la main).
@@ -82,7 +108,18 @@ function shouldRun(statement: string): boolean | string {
   const createIndex = trimmed.match(
     /^CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([\w]+)`?/i,
   );
-  if (createIndex) return !indexExists(createIndex[1]);
+  // Un index obsolète (supprimé par une migration plus récente — ex. les
+  // UNIQUE globaux remplacés par des UNIQUE par foyer en 0009) ne doit jamais
+  // être recréé, même s'il est absent à l'instant de la migration qui le posait.
+  if (createIndex) return !indexExists(createIndex[1]) && finalIndexNames.has(createIndex[1]);
+
+  // DROP INDEX (migration 0009 : l'UNIQUE global ingredients.name devient un
+  // index PAR FOYER, idem le créneau unique meal_plans). Idempotent : déjà
+  // supprimé = on saute ; index absent de l'état final = on le supprime.
+  const dropIndex = trimmed.match(
+    /^DROP\s+INDEX\s+(?:IF\s+EXISTS\s+)?`?([\w]+)`?/i,
+  );
+  if (dropIndex) return indexExists(dropIndex[1]) && !finalIndexNames.has(dropIndex[1]);
 
   const alterAdd = trimmed.match(
     /^ALTER\s+TABLE\s+`?([\w]+)`?\s+ADD\s+(?:COLUMN\s+)?`?([\w]+)`?/i,

@@ -29,6 +29,7 @@ import {
   ingredientNameEqualsIgnoreCase,
 } from '@/lib/recipe-import-db';
 import { isWriteAllowed } from '@/lib/license';
+import { ensurePrimaryHousehold } from '@/lib/household';
 import { THEMES } from '@/lib/themes';
 import { EXPORT_FORMAT, EXPORT_VERSION } from '@/lib/export';
 
@@ -229,11 +230,11 @@ type TxClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // Antidoublon de titre : « Titre », « Titre (2) », « Titre (3) »… insensible à
 // la casse — même règle que l'import URL F07 (C-055 : LOWER(), pas ilike()).
-function uniqueRecipeTitle(tx: TxClient, title: string): string {
+function uniqueRecipeTitle(tx: TxClient, title: string, householdId: string): string {
   const rows = tx
     .select({ title: recipes.title })
     .from(recipes)
-    .where(recipeTitleEqualsIgnoreCase(title))
+    .where(recipeTitleEqualsIgnoreCase(title, householdId))
     .all();
   if (rows.length === 0) return title;
   let n = 2;
@@ -241,7 +242,7 @@ function uniqueRecipeTitle(tx: TxClient, title: string): string {
   return `${title} (${n})`;
 }
 
-function applyImport(tx: TxClient, data: ParsedPayload): void {
+function applyImport(tx: TxClient, data: ParsedPayload, householdId: string): void {
   const now = new Date().toISOString();
 
   // 1. Ingrédients : rapprochés par nom sans casse, créé sinon. Les identifiants
@@ -251,7 +252,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
     const found = tx
       .select({ id: ingredients.id })
       .from(ingredients)
-      .where(ingredientNameEqualsIgnoreCase(ing.name))
+      .where(ingredientNameEqualsIgnoreCase(ing.name, householdId))
       .limit(1)
       .all()[0];
     if (found) {
@@ -260,7 +261,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
     }
     const created = tx
       .insert(ingredients)
-      .values({ name: ing.name, category: ing.category, defaultUnit: ing.defaultUnit })
+      .values({ name: ing.name, category: ing.category, defaultUnit: ing.defaultUnit, householdId })
       .returning({ id: ingredients.id })
       .get();
     ingredientIdMap.set(ing.id, created.id);
@@ -270,7 +271,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
   // d'une recette existante), titre suffixé si déjà pris.
   const recipeIdMap = new Map<string, string>();
   for (const r of data.recipes) {
-    const title = uniqueRecipeTitle(tx, r.title);
+    const title = uniqueRecipeTitle(tx, r.title, householdId);
     const created = tx
       .insert(recipes)
       .values({
@@ -285,6 +286,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
         source: r.source,
         created_by: r.created_by,
         lastServedAt: r.lastServedAt,
+        householdId,
       })
       .returning({ id: recipes.id })
       .get();
@@ -300,6 +302,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
         quantity: li.quantity,
         unit: li.unit,
         note: li.note,
+        householdId,
       })
       .run();
   }
@@ -308,6 +311,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
   for (const mp of data.meal_plans) {
     tx.insert(mealPlans)
       .values({
+        householdId,
         date: mp.date,
         mealType: mp.mealType,
         customNote: mp.customNote,
@@ -328,6 +332,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
   for (const pi of data.pantry_items) {
     const values = {
       ingredientId: ingredientIdMap.get(pi.ingredientId)!,
+      householdId,
       quantity: pi.quantity,
       unit: pi.unit,
       expiresAt: pi.expiresAt,
@@ -365,7 +370,7 @@ function applyImport(tx: TxClient, data: ParsedPayload): void {
 
 // Point d'entrée réutilisable (action serveur et test runtime). Tout ou rien :
 // en cas d'échec — validation ou contrainte SQL au milieu — RIEN n'est écrit.
-export async function importExportData(payload: unknown): Promise<ImportResult> {
+export async function importExportData(payload: unknown, householdId?: string): Promise<ImportResult> {
   // L'import écrit en base : essai expiré ou licence inactive → refus explicite
   // (l'export, simple lecture, reste toujours autorisé — cohérent proxy.ts).
   const writeAllowed = await isWriteAllowed();
@@ -410,8 +415,16 @@ export async function importExportData(payload: unknown): Promise<ImportResult> 
     return { success: false, message: `Fichier invalide : ${message}` };
   }
 
+  // F17 (C-062) : tout l'import est écrit DANS LE FOYER demandé par l'action
+  // (celui de la session ADMIN). L'argument optionnel (tests runtime
+  // historiques, base mono-foyer) retombe sur le foyer principal via le
+  // backfill idempotent — calculé HORS transaction (le backfill ouvre la
+  // sienne, better-sqlite3 gère l'imbrication en savepoint mais on reste
+  // simple). Aucune ligne n'est écrite sans foyer.
+  const hid = householdId ?? ensurePrimaryHousehold();
+
   try {
-    db.transaction((tx) => applyImport(tx, parsed));
+    db.transaction((tx) => applyImport(tx, parsed, hid));
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     return {

@@ -3,7 +3,7 @@
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
-import { requireSession } from '@/lib/auth-guards';
+import { requireHousehold } from '@/lib/auth-guards';
 import { mealPlans, recipes } from '@/lib/db/schema';
 import {
   addDaysToDateStr,
@@ -37,7 +37,7 @@ function todayLocalStr(): string {
 // les notes libres sans recette — sont supprimés avant génération.
 export async function generateMealPlans(params: GeneratorParams): Promise<GeneratorResult> {
   try {
-    const session = await requireSession();
+    const { session, householdId } = await requireHousehold();
     const userId = session.user?.id;
 
     const parsed = generatorInput.safeParse(params);
@@ -109,6 +109,7 @@ export async function generateMealPlans(params: GeneratorParams): Promise<Genera
       .from(mealPlans)
       .where(
         and(
+          eq(mealPlans.householdId, householdId),
           gte(mealPlans.date, addDaysToDateStr(firstDate, -minDays)),
           lte(mealPlans.date, addDaysToDateStr(lastDate, minDays)),
         ),
@@ -117,13 +118,15 @@ export async function generateMealPlans(params: GeneratorParams): Promise<Genera
     // Catalogue complet : la sélection aléatoire et les filtres (mealCourse,
     // tags, fenêtre antidoublon qui évolue à chaque insertion) se font en
     // mémoire, créneau par créneau
+    // F17 (C-062) : catalogue du foyer uniquement
     const allRecipes = await db
       .select({
         id: recipes.id,
         mealCourse: recipes.mealCourse,
         tags: recipes.tags,
       })
-      .from(recipes);
+      .from(recipes)
+      .where(eq(recipes.householdId, householdId));
 
     const outcomes = decideGeneratorSlots({
       slots,
@@ -152,6 +155,7 @@ export async function generateMealPlans(params: GeneratorParams): Promise<Genera
             .delete(mealPlans)
             .where(
               and(
+                eq(mealPlans.householdId, householdId),
                 eq(mealPlans.date, outcome.date),
                 eq(mealPlans.mealType, outcome.mealType),
               ),
@@ -172,6 +176,7 @@ export async function generateMealPlans(params: GeneratorParams): Promise<Genera
         tx
           .insert(mealPlans)
           .values({
+            householdId,
             date: outcome.date,
             mealType: outcome.mealType,
             recipeId: outcome.recipeId,
@@ -185,7 +190,7 @@ export async function generateMealPlans(params: GeneratorParams): Promise<Genera
 
         // F08 - historique : date du repas le plus récent planifié avec cette recette
         if (outcome.recipeId) {
-          bumpRecipeLastServedAt(tx, outcome.recipeId, outcome.date);
+          bumpRecipeLastServedAt(tx, outcome.recipeId, outcome.date, householdId);
         }
 
         created++;

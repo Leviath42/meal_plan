@@ -270,6 +270,7 @@ Sauver avec `Ctrl+O`, `Entrée`, quitter avec `Ctrl+X`.
 | `AUTH_SECRET` | Clé qui signe les cookies de session (identifie qui est connecté) | **L'application refuse de démarrer en production** — garde volontairement ajoutée : un secret par défaut connu de tous serait une faille |
 | `AUTH_TRUST_HOST` | Autorise NextAuth à faire confiance à l'hôte appelant | **La connexion échoue** avec une erreur `UntrustedHost` : l'app est servie sur une IP LAN, pas un domaine reconnu |
 | `TZ` | Fuseau horaire du processus | Entre 22h et minuit heure française, le serveur croirait qu'on est "la veille" et se tromperait sur l'interdiction de planifier dans le passé |
+| `MULTI_HOUSEHOLDS` *(optionnel — F17/C-062)* | `true`/`1` = chaque inscription crée un foyer ISOLÉ (catalogue, recettes, planning, courses, stock, retours et partages séparés — mode hébergement mutualisé ; bouton « remplir le catalogue » sur `/welcome`) ; absente ou fausse = tout le monde rejoint le foyer principal (comportement actuel) | Rien : par défaut l'instance reste mono-famille, UX inchangée (contrat 4b §1.4) |
 | `PORT` | Port d'écoute (3000 par défaut) | — (à changer si le port est déjà pris) |
 
 Ce fichier n'est **pas** dans Git (il contient un secret) : il vit uniquement dans le conteneur.

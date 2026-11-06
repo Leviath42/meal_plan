@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { mealPlans, recipes } from '@/lib/db/schema';
-import { eq, sql } from 'drizzle-orm';
-import { requireSession } from '@/lib/auth-guards';
+import { and, eq, sql } from 'drizzle-orm';
+import { getCurrentHouseholdId } from '@/lib/auth-guards';
 import { formatNumericDate } from '@/lib/format';
 import type { Metadata } from 'next';
 
@@ -11,7 +11,8 @@ export const metadata: Metadata = { title: 'Statistiques — Meal Plan' };
 // Quatre indicateurs : recettes les plus cuisinées, répartition par type de
 // plat, utilisation du catalogue, volume de planification par mois.
 export default async function StatsPage() {
-  await requireSession();
+  // F17 (C-062) : tous les indicateurs sont ceux DU FOYER de session
+  const householdId = await getCurrentHouseholdId();
 
   // --- 1. Top des recettes les plus cuisinées (tous temps) ---
   const topRecipes = await db
@@ -23,6 +24,7 @@ export default async function StatsPage() {
     })
     .from(mealPlans)
     .innerJoin(recipes, eq(mealPlans.recipeId, recipes.id))
+    .where(and(eq(mealPlans.householdId, householdId), eq(recipes.householdId, householdId)))
     .groupBy(recipes.id, recipes.title, recipes.mealCourse)
     .orderBy(sql`count(${mealPlans.id}) desc`)
     .limit(10);
@@ -34,23 +36,27 @@ export default async function StatsPage() {
       planCount: sql<number>`count(*)`,
     })
     .from(mealPlans)
-    .where(sql`${mealPlans.recipeId} is not null`)
+    .where(and(eq(mealPlans.householdId, householdId), sql`${mealPlans.recipeId} is not null`))
     .groupBy(mealPlans.mealCourse)
     .orderBy(sql`count(*) desc`);
 
   // --- 3. Utilisation du catalogue ---
   const [catalog] = await db
     .select({ total: sql<number>`count(*)` })
-    .from(recipes);
+    .from(recipes)
+    .where(eq(recipes.householdId, householdId));
   const [plannedOnce] = await db
     .select({ count: sql<number>`count(distinct ${mealPlans.recipeId})` })
     .from(mealPlans)
-    .where(sql`${mealPlans.recipeId} is not null`);
+    .where(and(eq(mealPlans.householdId, householdId), sql`${mealPlans.recipeId} is not null`));
   const [neverPlanned] = await db
     .select({ count: sql<number>`count(*)` })
     .from(recipes)
     .where(
-      sql`${recipes.id} not in (select distinct recipe_id from meal_plans where recipe_id is not null)`
+      and(
+        eq(recipes.householdId, householdId),
+        sql`${recipes.id} not in (select distinct recipe_id from meal_plans where household_id = ${householdId} and recipe_id is not null)`,
+      )
     );
 
   // --- 4. Repas planifiés par mois (12 derniers) ---
@@ -60,6 +66,7 @@ export default async function StatsPage() {
       planCount: sql<number>`count(*)`,
     })
     .from(mealPlans)
+    .where(eq(mealPlans.householdId, householdId))
     .groupBy(sql`substr(${mealPlans.date}, 1, 7)`)
     .orderBy(sql`substr(${mealPlans.date}, 1, 7) desc`)
     .limit(12);
@@ -68,7 +75,7 @@ export default async function StatsPage() {
   const [freeNotes] = await db
     .select({ count: sql<number>`count(*)` })
     .from(mealPlans)
-    .where(sql`${mealPlans.recipeId} is null`);
+    .where(and(eq(mealPlans.householdId, householdId), sql`${mealPlans.recipeId} is null`));
 
   const totalPlans =
     byCourse.reduce((sum, row) => sum + Number(row.planCount), 0) +
