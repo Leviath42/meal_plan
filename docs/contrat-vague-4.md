@@ -61,5 +61,5 @@ Chaque worker, à la fin de sa mission, ajoute une ligne à son tableau ci-desso
 
 | Worker | Branche | Statut | Tests runtime | Reste |
 |---|---|---|---|---|
-| (à remplir par le chef de projet à chaque fusion) | | | | |
 | **W2 — F11 garde-manger (C-057)** | `feature/f11-garde-manger` | Livré, prêt pour fusion (eslint 0 err., tsc OK, build OK, npm test 9 PASS) | `scripts/test-pantry.ts` : 29 PASS (P1→P5) ; non-régression : test:import 32, onboarding 3, license 15 PASS | Validation humaine CT beta : parcours UI complet /pantry (badge périmé, décimales), refus GUEST en session réelle (P5-GUEST : hors portée d'un script sans contexte NextAuth — requireSession le garantit et l'action réelle est testée refusée sans session), teinte sombre, menu mobile < 400 px |
+| W3 — F15 feedback | `feature/f15-feedback` | Prêt pour revue (eslint 0, tsc 0, build OK) | `scripts/test-feedback.ts` 24 PASS ; smoke 9, import 32, onboarding 3, license 15 PASS | Fusion par le chef (ordre §4 : après W2) ; validation humaine CT beta : F1 (referer → page_url), F4 (MEMBER refusé sur /admin/feedback), F5 (mode sombre) |
