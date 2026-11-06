@@ -439,6 +439,16 @@ export default function ShoppingListClient({
             <p className="text-red-500 text-xs sm:text-sm">{generateState.message}</p>
           )}
 
+          {/* F11 : le garde-manger est déduit automatiquement — si une
+              quantité semble courte, vérifier le stock avant de douter
+              de la recette */}
+          <p className="text-xs sm:text-sm text-gray-500 flex items-center gap-1.5">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 10l1.5 9h11l1.5-9M9 6h6" />
+            </svg>
+            Le stock du garde-manger est déduit : ce que vous avez déjà en réserve n&apos;est pas re-demandé.
+          </p>
+
                 <div className="flex gap-3 justify-end pt-2">
                   <button
                     type="button"
