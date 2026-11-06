@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { ingredients } from '@/lib/db/schema';
+import { getIngredientStandardsMap } from '@/lib/standards';
 import { NewRecipeForm } from './NewRecipeForm';
 
 export default async function NewRecipePage() {
@@ -15,5 +16,8 @@ export default async function NewRecipePage() {
     .map((row) => row.category)
     .filter((category) => category && category.trim() !== '');
 
-  return <NewRecipeForm availableIngredients={allIngredients} categories={categories} />;
+  // F16 : quantités standard des ingrédients (pré-remplissage par couverts)
+  const standards = await getIngredientStandardsMap();
+
+  return <NewRecipeForm availableIngredients={allIngredients} categories={categories} standards={standards} />;
 }

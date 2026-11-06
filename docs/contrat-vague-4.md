@@ -62,3 +62,4 @@ Chaque worker, à la fin de sa mission, ajoute une ligne à son tableau ci-desso
 | Worker | Branche | Statut | Tests runtime | Reste |
 |---|---|---|---|---|
 | (à remplir par le chef de projet à chaque fusion) | | | | |
+| W4 — F16 quantités standard | `feature/f16-standards-quantite` | Livré, poussé, prêt pour fusion (C-059) | `scripts/test-standards.ts` 19 PASS (base jetable) + smoke 9, import 32, onboarding 3, license 15 | Brancher `npm run db:seed-standards` + ligne CI au moment de la fusion (chef de projet) ; validation humaine Q1/Q2 dans l'UI (recalcul en direct à la saisie des couverts, saisie manuelle jamais écrasée) ; peupler les standards sur le CT après fusion |

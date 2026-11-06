@@ -1,11 +1,12 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { updateRecipe, deleteRecipe } from '@/app/actions/recipes';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import IngredientsSelector from '../../IngredientsSelector';
 import ConfirmDialog from '@/app/components/ConfirmDialog';
+import type { IngredientStandardsMap } from '@/lib/standards-quantity';
 
 interface Ingredient {
   id: string;
@@ -46,16 +47,31 @@ export default function EditRecipeForm({
   availableIngredients,
   categories = [],
   existingIngredients,
+  standards = {},
 }: {
   recipe: Recipe;
   availableIngredients: Ingredient[];
   // Rayons existants pour la création rapide d'ingrédient
   categories?: string[];
   existingIngredients: RecipeIngredient[];
+  // F16 : quantités standard pour pré-remplissage selon les couverts
+  standards?: IngredientStandardsMap;
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(updateRecipe, null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // F16 : couverts saisis — contrôlés pour pré-remplir les quantités en direct
+  const stateServings = state?.values?.defaultServings as string | number | undefined;
+  const [servings, setServings] = useState<string>(String(stateServings ?? recipe.defaultServings ?? 4));
+  useEffect(() => {
+    if (stateServings != null) {
+      setServings(String(stateServings));
+    }
+  }, [stateServings]);
+  const parsedServings = Number.parseInt(servings, 10);
+  const scaledServings =
+    Number.isFinite(parsedServings) && parsedServings > 0 ? parsedServings : null;
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -188,7 +204,8 @@ export default function EditRecipeForm({
               name="defaultServings"
               type="number"
               min="1"
-              defaultValue={getFieldValue(state, 'defaultServings', recipe, 3)}
+              value={servings}
+              onChange={(e) => setServings(e.target.value)}
               required
               className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
@@ -199,6 +216,8 @@ export default function EditRecipeForm({
             availableIngredients={availableIngredients}
             categories={categories}
             existingIngredients={state?.ingredients || existingIngredients}
+            standards={standards}
+            servings={scaledServings}
           />
 
           {/* Instructions */}

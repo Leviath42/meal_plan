@@ -56,6 +56,7 @@ Bouton **Générer…** en haut du calendrier : remplit automatiquement une pér
 - **Recherche** en haut de la liste : par titre, description, tags, type de plat
 - Les recettes sont regroupées par type de plat (sections repliables)
 - **Ingrédients** : ajoute-les par recherche (mêmes mots-clés que le planning), avec quantité et unité ; crée un ingrédient à la volée s'il n'existe pas encore (le rayon se choisit par recherche ou se crée au clavier)
+- **Quantités pré-remplies** (nouveau) : quand un ingrédient a une quantité standard (pâtes 100 g/pers., riz 80 g/pers., ail 1 gousse/4 pers.…) et que tu as saisi le nombre de couverts, la quantité est pré-remplie automatiquement — par ex. 400 g de pâtes pour 4 couverts, recalculés en direct si tu changes le nombre de couverts. La valeur reste **modifiable à la main** (ta saisie n'est jamais écrasée) ; un ingrédient sans standard se comporte comme avant (champ à 1). L'administrateur enrichit les standards d'un coup : `npx tsx scripts/seed-standards.ts` (applicable plusieurs fois, ne modifie jamais les données existantes)
 
 ---
 
