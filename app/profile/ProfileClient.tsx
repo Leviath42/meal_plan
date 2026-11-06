@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { updateUserPassword, updateUserSecurityQuestion } from '@/app/actions/auth';
+import {
+  disableNotificationsAction,
+  setNotifyTimeAction,
+  subscribeToPushAction,
+} from '@/app/actions/notifications';
 
 interface ProfileClientProps {
   session: {
@@ -17,9 +22,11 @@ interface ProfileClientProps {
       securityQuestion?: string | null;
     };
   } | null;
+  // F10 — section Notifications (état serveur : heure de rappel + appareil abonné)
+  notifications?: { notifyTime: string | null; subscribed: boolean } | null;
 }
 
-export default function ProfileClient({ session }: ProfileClientProps) {
+export default function ProfileClient({ session, notifications }: ProfileClientProps) {
   const router = useRouter();
   const [formState, setFormState] = useState<{
     errors?: Record<string, string[]>;
@@ -27,7 +34,93 @@ export default function ProfileClient({ session }: ProfileClientProps) {
     message?: string;
   } | null>(null);
   const [pending, setPending] = useState(false);
-  const [activeTab, setActiveTab] = useState<'password' | 'security-question'>('password');
+  const [activeTab, setActiveTab] = useState<'password' | 'security-question' | 'notifications'>('password');
+  // F10 — Notifications
+  const notifyEnabled = !!notifications?.notifyTime;
+  const [notifPending, setNotifPending] = useState(false);
+  const [notifMessage, setNotifMessage] = useState<{ success: boolean; text: string } | null>(null);
+
+  // Clé VAPID base64url → ArrayBuffer (API PushManager)
+  function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = window.atob(base64);
+    const output = new Uint8Array(new ArrayBuffer(raw.length));
+    for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
+    return output.buffer;
+  }
+
+  // Enregistrer l'heure de rappel (ou désactiver l'activation sans toucher aux appareils)
+  const handleNotifyTimeSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!session?.user) return;
+    setNotifPending(true);
+    setNotifMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const on = formData.get('notifyEnabled') === 'on';
+    const time = (formData.get('notifyTime') as string) || '';
+
+    const result = await setNotifyTimeAction(on, time);
+    setNotifMessage({ success: result.success, text: result.message });
+    setNotifPending(false);
+  };
+
+  // Abonner CET appareil : permission navigateur + PushManager + enregistrement serveur
+  const handleSubscribePush = async () => {
+    setNotifPending(true);
+    setNotifMessage(null);
+    try {
+      const res = await fetch('/api/notifications/subscribe');
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setNotifMessage({
+          success: false,
+          text: data?.error ?? 'Notifications non disponibles sur ce serveur.',
+        });
+        setNotifPending(false);
+        return;
+      }
+      const { vapidPublicKey } = (await res.json()) as { vapidPublicKey: string };
+
+      if (typeof Notification === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        setNotifMessage({ success: false, text: 'Ce navigateur ne supporte pas les notifications push.' });
+        setNotifPending(false);
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        setNotifMessage({ success: false, text: 'Permission refusée : autorisez les notifications dans le navigateur.' });
+        setNotifPending(false);
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToArrayBuffer(vapidPublicKey),
+      });
+      const json = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+
+      const result = await subscribeToPushAction({ endpoint: json.endpoint, keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth } });
+      setNotifMessage({ success: result.success, text: result.message });
+    } catch {
+      setNotifMessage({ success: false, text: 'Impossible de s’abonner depuis cet appareil.' });
+    }
+    setNotifPending(false);
+  };
+
+  // Désactivation complète : heure à null + abonnements supprimés
+  const handleDisableNotifications = async () => {
+    setNotifPending(true);
+    setNotifMessage(null);
+    const result = await disableNotificationsAction();
+    setNotifMessage({ success: result.success, text: result.message });
+    setNotifPending(false);
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key.startsWith('meal-plan')).map((key) => caches.delete(key)));
+    }
+  };
 
   // Rediriger si pas de session — dans un effet, un push pendant le rendu
   // est un anti-pattern React
@@ -189,6 +282,16 @@ export default function ProfileClient({ session }: ProfileClientProps) {
             >
               Question secrète
             </button>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
+                activeTab === 'notifications'
+                  ? 'border-b-2 border-accent text-accent'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Notifications
+            </button>
           </div>
 
           {activeTab === 'password' && (
@@ -280,10 +383,91 @@ export default function ProfileClient({ session }: ProfileClientProps) {
             </form>
           )}
           
+          {activeTab === 'notifications' && (
+            <div className="space-y-4">
+              <div className="mb-2 p-3 bg-accent-soft border border-accent-soft rounded">
+                <p className="text-xs text-accent">
+                  {notifyEnabled
+                    ? `Rappel des repas prévus chaque jour à ${notifications?.notifyTime} (heure de Paris).`
+                    : 'Activez un rappel quotidien des repas prévus, envoyé par notification sur vos appareils.'}
+                </p>
+              </div>
+
+              {notifMessage && (
+                <div className={`px-3 py-2 rounded text-xs sm:text-sm ${
+                  notifMessage.success
+                    ? 'bg-green-50 border border-green-200 text-green-700'
+                    : 'bg-red-50 border border-red-200 text-red-700'
+                }`}>
+                  {notifMessage.text}
+                </div>
+              )}
+
+              <form onSubmit={handleNotifyTimeSave} className="space-y-3">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="notifyEnabled"
+                    defaultChecked={notifyEnabled}
+                    className="rounded border-gray-300 focus:ring-accent"
+                  />
+                  Me rappeler les repas du jour
+                </label>
+                <div>
+                  <label htmlFor="notifyTime" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                    Heure du rappel *
+                  </label>
+                  <input
+                    id="notifyTime"
+                    name="notifyTime"
+                    type="time"
+                    defaultValue={notifications?.notifyTime ?? '07:00'}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={notifPending}
+                  className="w-full bg-accent text-white rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
+                >
+                  {notifPending ? 'Enregistrement...' : 'Enregistrer l’heure'}
+                </button>
+              </form>
+
+              <div className="border-t border-gray-200 pt-3 space-y-2">
+                <p className="text-xs sm:text-sm text-gray-700">
+                  {notifications?.subscribed
+                    ? 'Cet appareil (ou un autre) est abonné aux notifications.'
+                    : 'Aucun appareil abonné pour le moment.'}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSubscribePush}
+                    disabled={notifPending}
+                    className="flex-1 border border-accent text-accent rounded py-2 text-xs sm:text-sm font-medium hover:bg-accent-soft transition-colors disabled:opacity-50"
+                  >
+                    Abonner cet appareil
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDisableNotifications}
+                    disabled={notifPending}
+                    className="flex-1 border border-red-300 text-red-700 rounded py-2 text-xs sm:text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50"
+                  >
+                    Désactiver les notifications
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <p className="mt-3 text-xs text-gray-500">
             {activeTab === 'password' 
               ? '* Pour des raisons de sécurité, vous devrez vous reconnecter après avoir changé votre mot de passe.'
-              : '* Mémorisez bien votre question et réponse secrète, elles seront nécessaires pour réinitialiser votre mot de passe.'
+              : activeTab === 'security-question'
+              ? '* Mémorisez bien votre question et réponse secrète, elles seront nécessaires pour réinitialiser votre mot de passe.'
+              : '* Le rappel part à l’heure choisie (heure de Paris) ; l’abonnement doit être accordé une fois par appareil.'
             }
           </p>
         </div>

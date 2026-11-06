@@ -1,8 +1,8 @@
-// Service Worker — coquille applicative hors-ligne (F12, partie 1 : PWA installable)
+// Service Worker — hors-ligne F12 (partie 2 : consultation complète)
 //
 // RÈGLE ABSOLUE (bug C-028, v3) : ce service worker ne touche QUE
 //   1. les navigations (mode navigate) — réseau d'abord, cache en secours ;
-//   2. les fichiers statiques explicites (/_next/static/, /icons/, manifest) —
+//   2. les fichiers statiques explicites (/_next/static/, /icons/, /favicon) —
 //      cache d'abord.
 // TOUT le reste — en particulier les fetch de données de Next.js (payloads
 // RSC émis par router.refresh(), requêtes internes du routeur) — passe
@@ -10,18 +10,32 @@
 // serveur PÉRIMÉES : c'était la cause racine des listes qui ne se mettaient
 // pas à jour après une mutation.
 //
-// Le mode "consultation hors-ligne complète" reste à faire — ROADMAPV3, phase 4.
+// F12 FIN (v7) — consultation hors-ligne des DONNÉES en lecture :
+//   - les pages de données (/calendar, /recipes, /recipes/<id>...) sont des
+//     navigations : elles sont mises en cache au passage (fiche de page
+//     complète rendue par le serveur) et resservies hors-ligne ;
+//   - l'invalidation au retour en ligne est inhérente au réseau-d'abord :
+//     un simple rechargement en ligne réécrit l'entrée du cache avec la
+//     donnée fraîche (aucun planning périmé servi au-delà du réseau down) ;
+//   - nouvelle page de secours /offline (précachée) pour une navigation
+//     jamais visitée : message propre au lieu d'une erreur du navigateur ;
+//   - les ÉCRITURES hors-ligne (POST = server actions de Next) échouent
+//     proprement : réponse 503 synthétique au lieu d'un rejet réseau brut.
 //
-// v4 : purge des caches v3 contenant les ANCIENNES icônes PWA (aplat teal
-// + disque) — l'icône assiette/couverts doit être re-téléchargée, et les
-// icônes sont en cache-first (jamais revalidées tant que le cache vit).
-// v5 : icône chronomètre + couverts (design perso, 22af57).
-// v6 : icône neutre (fond noir, 4006f1e) — les caches v5 contiennent
-// l'ancienne icône teal.
+// RÈGLE ANTI-DÉRIVE (C-038) : toute modification fait BUMPER la version du
+// cache — les caches antérieurs sont purgés à l'activation, en une règle :
+// ce fichier doit rester le seul lieu de vérité des versions. La purge
+// déconnexion (Nav.tsx) supprime tout cache préfixé « meal-plan- » : ne pas
+// changer ce préfixe.
+//
+// v4 : purge des caches v3 (anciennes icônes). v5 : icône chronomètre.
+// v6 : icône neutre (fond noir). v7 : F12 fin — page /offline précachée,
+//      secours de navigation vers /offline, échec propre des écritures
+//      hors-ligne, MAX_ENTRIES relevé pour les pages de lecture.
 
-const CACHE = 'meal-plan-v6';
-const PRECACHE = ['/', '/icons/icon-192.png?v=4', '/icons/icon-512.png?v=4'];
-const MAX_ENTRIES = 60;
+const CACHE = 'meal-plan-v7';
+const PRECACHE = ['/', '/offline', '/icons/icon-192.png?v=4', '/icons/icon-512.png?v=4'];
+const MAX_ENTRIES = 120;
 
 // Seuls ces chemins sont considérés comme des assets cachables
 // manifest.json retiré : servi dynamiquement (couleurs du thème F14),
@@ -52,8 +66,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      // Supprime aussi les caches v1/v2 : ils contiennent des payloads RSC
-      // périmés — la donnée re-cachée par la v3 est uniquement navigation/assets
+      // Supprime tous les caches antérieurs : ils peuvent contenir soit des
+      // payloads RSC périmés (v1/v2), soit des pages de données anciennes —
+      // la donnée re-cachée est uniquement navigation/assets (C-038)
       .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
@@ -62,14 +77,30 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // 0. Écritures (server actions, POST d'API) : laissées au réseau. Hors-ligne,
+  //    on renvoie une 503 synthétique plutôt que de laisser le fetch rejeter :
+  //    les mutations ne sont JAMAIS mises en cache ni rejouées, et l'app
+  //    affiche son état d'erreur propre au lieu d'un crash réseau.
+  if (request.method !== 'GET') {
+    event.respondWith(
+      fetch(request).catch(() =>
+        new Response(JSON.stringify({ offline: true, error: 'Hors-ligne : requête impossible.' }), {
+          status: 503,
+          headers: { 'content-type': 'application/json' },
+        })
+      )
+    );
+    return;
+  }
+
   // 1. Navigations : réseau d'abord (pages toujours à jour après un
-  //    déploiement), cache en secours, puis "/" si la page n'a jamais été
-  //    visitée. Les URL avec querystring ne sont pas mises en cache.
+  //    déploiement ou un retour en ligne — c'est l'invalidation du cache de
+  //    données), cache en secours (consultation hors-ligne), puis page
+  //    /offline si la page n'a jamais été visitée. Les URL avec querystring
+  //    ne sont pas mises en cache.
   if (request.mode === 'navigate') {
     if (url.search) {
       event.respondWith(
@@ -89,7 +120,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() =>
           caches
             .match(request)
-            .then((cached) => cached || caches.match('/'))
+            .then((cached) => cached || caches.match('/offline'))
         )
     );
     return;
