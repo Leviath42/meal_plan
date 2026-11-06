@@ -37,6 +37,8 @@
 
 | C-053 | 2026-11-02 | F07 — import de recette (mode sombre) | En mode sombre, la page `/recipes/import` affichait des surfaces claires (champs quasi blancs, encadré de prévisualisation clair, bordures brillantes) : le formulaire utilisait des variantes `dark:*` (bg-gray-800/900, border-gray-700), or le mode sombre de l'app remappe toute la palette Tailwind via `:root.dark` dans `styles/globals.css` (convention C-040 : mêmes classes dans les deux modes) — `dark:bg-gray-800` se résolvait donc en `#f3f4f6`, quasi blanc | Corrigé : tous les overrides `dark:*` retirés de `app/recipes/import/ImportRecipeForm.tsx` et `app/recipes/import/page.tsx` — champs, encadré, bordures, textes d'erreur et survols suivent désormais le remappage sombre comme le reste de l'app ; vérifié : plus aucun `dark:` dans ces fichiers, les classes restantes sont celles du mode clair inchangé | Basse |
 
+| C-054 | 2026-11-06 | F07 — import de recette (crash post-import) | Après le scraping et la confirmation, l'app affichait « This page couldn't load » : la recette était bien créée en base, mais le composant client `ImportRecipeForm` appelait `router.push()` PENDANT le rendu React (effet de bord interdit) — l'exception remontait dans l'error boundary Next dès que `confirmState.recipeId` était posé | Corrigé : la redirection déplacée dans un `useEffect` (déclenché quand `recipeId` arrive) — plus aucun effet de bord au rendu ; vérifié : `tsc --noEmit` OK, `next build` complet OK (l'action serveur, non modifiée, reste couverte par `test:import` en CI) | Haute |
+
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
 ---
@@ -45,7 +47,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 53 (C-001 → C-053, C-050/C-051 mergées sur beta) |
+| Corrections enregistrées | 54 (C-001 → C-054, C-050/C-051 mergées sur beta) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |

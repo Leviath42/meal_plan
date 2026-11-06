@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { previewRecipeFromUrl, confirmRecipeImport } from '@/app/actions/import-recipe';
 import Link from 'next/link';
@@ -11,10 +11,15 @@ export function ImportRecipeForm() {
   const [confirmState, confirmAction, confirmPending] = useActionState(confirmRecipeImport, null);
   const [url, setUrl] = useState('');
 
-  // La confirmation a réussi : on redirige vers la recette créée
-  if (confirmState?.recipeId) {
-    router.push(`/recipes/${confirmState.recipeId}`);
-  }
+  // La confirmation a réussi : on redirige vers la recette créée.
+  // Dans un effet : router.push pendant le rendu lève une exception React,
+  // qui remonte dans l'error boundary et affiche « This page couldn't load »
+  const recipeId = confirmState?.recipeId;
+  useEffect(() => {
+    if (recipeId) {
+      router.push(`/recipes/${recipeId}`);
+    }
+  }, [recipeId, router]);
 
   const preview = previewState?.preview;
 
