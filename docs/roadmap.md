@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-10-30 (v3.14)*
-*Version : 3.14 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-11-06 (v3.15)*
+*Version : 3.15 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -54,6 +54,8 @@ Application web **familiale** de planification des repas et gestion de recettes.
 | 1 | **F01 — Générateur de menus** — page `/calendar/generator` accessible depuis le bouton « Générer un menu… » de /calendar : plage de 1 à 30 jours (min = aujourd'hui), jours de semaine, types de repas et types de plats autorisés par repas, couverts, tags exclus, mode combler (créneaux vides) / remplacer (supprime les repas existants, notes libres incluses) ; respecte l'antidoublon F09 (fenêtre exclusive) et met à jour l'historique F08 — server action testée en runtime (34 PASS) | ✅ Livré | À valider sur le CT beta |
 | - | **Maintenance intégrée** — page `/deploy` (version chargée, mise à jour, rollback) + `update.sh` + `db:ensure` | ✅ En service | Déployé et testé sur le CT beta |
 | 4 | **F12 (partie 1)** — PWA installable : manifest, icônes maskable, Service Worker (coquille hors-ligne) | ✅ Livré | À valider sur Android : installation + ouverture hors-ligne |
+| 0 | **Onboarding self-service** (vague 3, C-051, PR #26, 02/11/2026) — `/register` redevenu public : `registerUser` crée un MEMBER directement (plus de file d'attente ADMIN, GUEST historique toujours refusé au login), bannière « compte créé » sur /login, page `/welcome` (3 écrans de démarrage) | ✅ Mergé sur `beta` | `test:onboarding` 3 PASS, en CI |
+| - | **CT de démonstration publique** (PR #17, `main`, 02/11/2026) — `scripts/seed-demo-planning.ts` : seed de planning de démo idempotent + runbook [deploiement-demo.md](deploiement-demo.md) pour un CT dédié ( vitrine pour la commercialisation) | ✅ Mergé sur `main` | Voir runbook |
 
 ### 📌 Stack Technique
 
@@ -134,8 +136,8 @@ Checklists de validation restantes, fonctionnalité par fonctionnalité :
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 46 (C-001 → C-046) |
-| Corrigées et déployées | 33 déployées ; C-046 livrée (branche `vibe/health-api-maj-conformite-5a4be7`), déploiement beta à valider |
+| Corrections enregistrées | 56 (C-001 → C-056 — synthèse détaillée dans [correctifs.md](correctifs.md)) |
+| Corrigées et déployées | 33 en production ; vague 3 (C-046 → C-052) + correctifs F07 (C-053 → C-056) mergés sur `beta`, promotion `main` à valider |
 | En traitement côté appareil | 1 (C-027 : supprimer l'entrée parasite du gestionnaire de mots de passe) |
 | Critiques | 3 — toutes trouvées par l'audit du 2026-10-08 (C-007, C-011, C-030) |
 | Décisions en suspens | C-011 : branches/tags réécrits et jetons révoqués le 24/10/2026 ; reste le réalignement des clones/CT (purge Support GitHub écartée par décision, risque résiduel accepté) |
@@ -165,8 +167,9 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 
 ### F07 - Import de Recettes depuis URL — 🟢 mergé sur `beta` (PR #25, 05/11/2026)
 - ✅ Extraction Schema.org (JSON-LD Recipe), fallback og: Marmiton/750g, prévisualisation avant import, doublon de titre suffixé, ingrédients inconnus créés au catalogue
-- ✅ Fichiers : `lib/recipe-import.ts`, `app/actions/import-recipe.ts`, `app/recipes/import/` ; test runtime 16 PASS en CI (`test:import`)
-- Reste : validation humaine sur CT beta + vraies pages Marmiton/750g
+- ✅ Fichiers : `lib/recipe-import.ts`, `app/actions/import-recipe.ts`, `app/recipes/import/` ; test runtime en CI (`test:import`)
+- ✅ **Durci après la première validation humaine (06/11/2026)** : C-053 mode sombre respecté (le remappage `:root.dark` suffit) ; C-054 crash « This page couldn't load » après confirmation (`router.push` au rendu → `useEffect`) ; C-055 `ilike()` inexistant en SQLite → `LOWER(col) = LOWER(?)` dans helpers partagés action + test (le test répliquait la requête avec `eq`, d'où 16 PASS CI alors que le code plantait) ; C-056 parseur d'ingrédients refait — lignes fragmentées nom/quantité recollées, qualificatifs isolés rattachés, unités multi-mots normalisées (cuillère à soupe, g…), fractions, fallback og:+microdata pour TOUS les sites (fini Marmiton/750g only), UA navigateur (fini les 403). `test:import` 16→32 PASS (les scripts de test tournent désormais aussi sous Windows)
+- Reste : validation humaine sur CT beta + vraies pages (en cours — le point d'entrée durci est poussé, un site précis en échec = envoi de l'URL pour ajustement)
 
 ### F10 - Notifications du Repas du Jour
 - Notifications push (PWA) quotidiennes à heure configurable : « Aujourd'hui : [Nom du repas] »
@@ -289,4 +292,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | V3.11 (archivée) | 2026-10-24 | F15 Système de retours clients (feedback) ajouté à la Phase 4 ; création des documents legal-commercialisation.md et etat-des-lieux-commercialisation.md (dossier lancement) |
 | V3.12 (archivée) | 2026-10-26 | Conformité : ajout du suivi des versions des CGV (art. 19) + liaison licence ↔ version CGV acceptée à chaque vente |
 | **V3.13 (archivée)** | 2026-10-26 | Précision d'implémentation CGV (métadonnées `cgv_version`/`license_date` au webhook) + suspension/réactivation de licence (action admin tracée) |
-| **V3.14 (ce document)** | 2026-10-30 | Ajout **F16 — règles de quantité standard par ingrédient** en Phase 4 (suggestion de quantité selon le nombre de couverts, pour faciliter la création de recettes) |
+| **V3.14 (archivée)** | 2026-10-30 | Ajout **F16 — règles de quantité standard par ingrédient** en Phase 4 (suggestion de quantité selon le nombre de couverts, pour faciliter la création de recettes) |
+| **V3.15 (ce document)** | 2026-11-06 | Point post-vague 3 : corrections 46→56, onboarding self-service (C-051, PR #26) et CT démo publique (PR #17, `main`) enregistrés au tableau des livrés, F07 durci après validation humaine (C-053 → C-056, `test:import` 32 PASS) |
