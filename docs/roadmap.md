@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-11-06 (v3.16)*
-*Version : 3.16 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-11-07 (v3.17)*
+*Version : 3.17 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -255,6 +255,15 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - Piste d'implémentation : table `ingredient_standards` (ingrédient ou famille, quantité_ref, nb_couverts_ref) + pré-remplissage du champ quantité dans le formulaire de recette ; démarrer sur une trentaine d'ingrédients courants plutôt qu'une base exhaustive
 - Estimation : 1-2 jours — ajouté le 30 oct. 2026 sur demande de Nicolas
 
+### F19 - Accompagnements liés aux plats
+- Chaque recette peut référencer des **accompagnements proposés** et/ou un **accompagnement par défaut** (ex. risotto → légumes rôtis, riz, polenta)
+- Au moment de planifier un repas sur le calendrier : sélection de l'accompagnement directement dans le modal (propositions de la recette + recherche libre dans le catalogue via `RecipePicker`), champ optionnel — rien d'imposé
+- Génération de la liste de courses : les ingrédients de l'accompagnement choisi sont ajoutés à ceux du plat (échelle des couverts commune)
+- Piste d'implémentation : accompagnement = recette du catalogue (flag ou type de plat « accompagnement ») + table de liaison `recipe_sides` (recipe_id, side_recipe_id, is_default) ; le choix planifié est stocké côté repas (`side_recipe_id` nullable, migration) — pas de duplication de recettes
+- Générateur de menus : v1 = accompagnement par défaut automatique ; l'aléatoire parmi les propositions peut venir ensuite
+- Bénéfice : repas complet planifié en une action, accompagnement moins souvent oublié, listes de courses plus justes
+- Estimation : 1-2 jours — ajouté le 07 nov. 2026 sur demande de Nicolas
+
 ---
 
 ## 🎨 Finitions / Backlog (basse priorité)
@@ -311,4 +320,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | **V3.13 (archivée)** | 2026-10-26 | Précision d'implémentation CGV (métadonnées `cgv_version`/`license_date` au webhook) + suspension/réactivation de licence (action admin tracée) |
 | **V3.14 (archivée)** | 2026-10-30 | Ajout **F16 — règles de quantité standard par ingrédient** en Phase 4 (suggestion de quantité selon le nombre de couverts, pour faciliter la création de recettes) |
 | **V3.15 (archivée)** | 2026-11-06 | Point post-vague 3 : corrections 46→56, onboarding self-service (C-051, PR #26) et CT démo publique (PR #17, `main`) enregistrés au tableau des livrés, F07 durci après validation humaine (C-053 → C-056, `test:import` 32 PASS) |
-| **V3.16 (ce document)** | 2026-11-06 | **Lancement vague 4** : F17 multi-tenant et F18 export/import confirmés prioritaires en Phase 4 ; contrat figé ([contrat-vague-4.md](contrat-vague-4.md) — migration 0008, nav, workers W1-W5, fusion séquentielle, 4b multi-tenant seul) ; gates qualité étendues + plan de test/débogage ([test-plan-vague-4.md](test-plan-vague-4.md)) |
+| **V3.16 (archivée)** | 2026-11-06 | **Lancement vague 4** : F17 multi-tenant et F18 export/import confirmés prioritaires en Phase 4 ; contrat figé ([contrat-vague-4.md](contrat-vague-4.md) — migration 0008, nav, workers W1-W5, fusion séquentielle, 4b multi-tenant seul) ; gates qualité étendues + plan de test/débogage ([test-plan-vague-4.md](test-plan-vague-4.md)) |
+| **V3.17 (ce document)** | 2026-11-07 | Ajout **F19 — accompagnements liés aux plats** en Phase 4 : accompagnements proposés et/ou par défaut par recette, sélection directe au moment de planifier, ingrédients consolidés dans la liste de courses |
