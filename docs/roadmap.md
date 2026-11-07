@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-11-07 (v3.17)*
-*Version : 3.17 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-11-07 (v3.18)*
+*Version : 3.18 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -264,6 +264,14 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - Bénéfice : repas complet planifié en une action, accompagnement moins souvent oublié, listes de courses plus justes
 - Estimation : 1-2 jours — ajouté le 07 nov. 2026 sur demande de Nicolas
 
+### F20 - Création de recette à la volée depuis le modal de planification
+- Dans le modal de planification (et partout où `RecipePicker` sert à chercher une recette) : si la recherche ne renvoie aucun résultat, proposer un bouton « Créer \"<texte recherché>\" »
+- Création rapide : titre pré-rempli avec le texte recherché, type de plat pré-coché selon le contexte du créneau, le reste (ingrédients, étapes) complété ensuite depuis la page recette — pas de formulaire complet dans le modal
+- Après création : la nouvelle recette est directement sélectionnée dans le créneau en cours, pas de re-recherche
+- Piste d'implémentation : extension de `RecipePicker` (état « aucun résultat » + callback onQuickCreate) + server action de création minimale (titre + type de plat, Zod, permission MEMBER) ; redirection vers la page recette pour compléter
+- Bénéfice : supprime l'aller-retour calendrier → catalogue → calendrier quand la recette n'existe pas encore ; moins de friction pour l'utilisateur occasionnel
+- Estimation : 0,5-1 jour — demandé par Nicolas le 07/11/2026 (F20)
+
 ---
 
 ## 🎨 Finitions / Backlog (basse priorité)
@@ -321,4 +329,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | **V3.14 (archivée)** | 2026-10-30 | Ajout **F16 — règles de quantité standard par ingrédient** en Phase 4 (suggestion de quantité selon le nombre de couverts, pour faciliter la création de recettes) |
 | **V3.15 (archivée)** | 2026-11-06 | Point post-vague 3 : corrections 46→56, onboarding self-service (C-051, PR #26) et CT démo publique (PR #17, `main`) enregistrés au tableau des livrés, F07 durci après validation humaine (C-053 → C-056, `test:import` 32 PASS) |
 | **V3.16 (archivée)** | 2026-11-06 | **Lancement vague 4** : F17 multi-tenant et F18 export/import confirmés prioritaires en Phase 4 ; contrat figé ([contrat-vague-4.md](contrat-vague-4.md) — migration 0008, nav, workers W1-W5, fusion séquentielle, 4b multi-tenant seul) ; gates qualité étendues + plan de test/débogage ([test-plan-vague-4.md](test-plan-vague-4.md)) |
-| **V3.17 (ce document)** | 2026-11-07 | Ajout **F19 — accompagnements liés aux plats** en Phase 4 : accompagnements proposés et/ou par défaut par recette, sélection directe au moment de planifier, ingrédients consolidés dans la liste de courses |
+| **V3.17 (archivée)** | 2026-11-07 | Ajout **F19 — accompagnements liés aux plats** en Phase 4 : accompagnements proposés et/ou par défaut par recette, sélection directe au moment de planifier, ingrédients consolidés dans la liste de courses |
+| **V3.18 (ce document)** | 2026-11-07 | Ajout **F20 — création de recette à la volée** en Phase 4 : bouton de création dans `RecipePicker` quand la recherche ne trouve rien, titre pré-rempli, nouvelle recette sélectionnée directement dans le créneau |
