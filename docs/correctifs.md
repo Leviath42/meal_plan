@@ -62,7 +62,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 62 (C-001 → C-062 ; C-057 → C-061 mergées sur beta ; C-062 rendu par W6, en attente de fusion) |
+| Corrections enregistrées | 62 (C-001 → C-062 ; C-057 → C-062 mergées sur beta) |
 | Corrigées et déployées | 33 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |

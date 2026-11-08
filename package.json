@@ -24,7 +24,8 @@
     "test:standards": "tsx scripts/test-standards.ts",
     "db:seed-standards": "tsx scripts/seed-standards.ts",
     "test:export": "tsx scripts/test-export.ts",
-    "test:notifications": "tsx scripts/test-notifications.ts"
+    "test:notifications": "tsx scripts/test-notifications.ts",
+    "test:multi-tenant": "tsx scripts/test-multi-tenant.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
