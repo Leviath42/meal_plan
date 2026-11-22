@@ -1,7 +1,11 @@
 import { Inter } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
+import { and, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { feedback } from '@/lib/db/schema';
+import { resolveHouseholdIdForUser } from '@/lib/household';
 import { getPublicAppSettings } from '@/app/actions/settings';
 import { getTheme, themeCssVariables } from '@/lib/themes';
 import Nav from './Nav';
@@ -78,6 +82,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // getAppSettings exige une session ; page publique/login : défauts teal
   }
 
+  // Badges de la nav (F15) : pour l'ADMIN uniquement, comptage des retours
+  // « nouveau » de SON foyer (F17 / C-062 — isolation inter-foyers). Requête
+  // par rendu serveur du layout : la nav est dynamique (auth() + cookies()),
+  // pas de cache de rendu à invalider.
+  let newFeedbackCount = 0;
+  const adminId = session?.user?.role === 'ADMIN' ? session.user.id : null;
+  if (adminId) {
+    try {
+      const householdId = resolveHouseholdIdForUser(adminId);
+      if (householdId) {
+        const rows = await db
+          .select({ id: feedback.id })
+          .from(feedback)
+          .where(and(eq(feedback.householdId, householdId), eq(feedback.status, 'nouveau')));
+        newFeedbackCount = rows.length;
+      }
+    } catch {
+      // Base pas encore migrée (feedback/household_id) : badge silencieux
+    }
+  }
+
   return (
     // suppressHydrationWarning : pour les visiteurs sans cookie, le script
     // pose .dark après le rendu serveur (préférence système) — différence
@@ -96,7 +121,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)" />
       <body className={inter.className + ' h-full bg-gray-50 text-xs sm:text-sm'}>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <Nav session={session} />
+        <Nav session={session} newFeedbackCount={newFeedbackCount} />
         <div>{children}</div>
         <ServiceWorkerRegister />
       </body>

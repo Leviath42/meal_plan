@@ -23,7 +23,16 @@ const MAIN_ITEMS: NavItem[] = [
   { href: '/pantry', label: 'Garde-manger' },
 ];
 
-export default function Nav({ session }: { session: Session | null }) {
+// newFeedbackCount : retours « nouveau »du foyer de l'admin (rendu serveur du
+// layout). Badge visible sur « Plus »et sur l'entrée « Retours »: l'admin
+// voit l'alerte sans ouvrir le menu, ni se rendre sur /admin/feedback.
+export default function Nav({
+  session,
+  newFeedbackCount = 0,
+}: {
+  session: Session | null;
+  newFeedbackCount?: number;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -82,6 +91,18 @@ export default function Nav({ session }: { session: Session | null }) {
     router.refresh();
   };
 
+  // Badge pastille du compteur (F15) : 9+ si le count dépasse, min-w pour éviter
+  // le tremblement de la barre entre 1 et 2 chiffres.
+  const feedbackBadge = (count: number) =>
+    isAdmin && count > 0 ? (
+      <span
+        aria-label={count + ' retour(s) non trié(s)'}
+        className='ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold align-middle'
+      >
+        {count > 9 ? '9+' : count}
+      </span>
+    ) : null;
+
   const linkClass = (href: string) =>
     `text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith(href) ? 'font-medium text-accent' : ''}`;
 
@@ -110,6 +131,7 @@ export default function Nav({ session }: { session: Session | null }) {
                     className={`flex items-center gap-1 text-xs sm:text-sm transition-colors whitespace-nowrap ${moreItems.some((i) => pathname.startsWith(i.href)) ? 'font-medium text-accent' : 'text-gray-600 hover:text-accent'}`}
                   >
                     Plus
+                    {feedbackBadge(newFeedbackCount)}
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -125,6 +147,7 @@ export default function Nav({ session }: { session: Session | null }) {
                           className={`block px-4 py-2 text-xs sm:text-sm transition-colors ${pathname.startsWith(item.href) ? 'font-medium text-accent' : 'text-gray-600 hover:bg-accent-soft hover:text-accent'}`}
                         >
                           {item.label}
+                          {item.href === '/feedback' && feedbackBadge(newFeedbackCount)}
                         </Link>
                       ))}
                       <div className="border-t border-gray-100 my-1" />
@@ -179,12 +202,14 @@ export default function Nav({ session }: { session: Session | null }) {
               {MAIN_ITEMS.map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`${linkClass(item.href)} py-2`}>
                   {item.label}
+                  {item.href === '/feedback' && feedbackBadge(newFeedbackCount)}
                 </Link>
               ))}
               {moreItems.length > 0 && <div className="border-t border-gray-100 mt-1 pt-1" />}
               {moreItems.map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`${linkClass(item.href)} py-2`}>
                   {item.label}
+                  {item.href === '/feedback' && feedbackBadge(newFeedbackCount)}
                 </Link>
               ))}
               <div className="border-t border-gray-200 pt-2 mt-1">
