@@ -35,6 +35,7 @@ import { getMealPlans, addMealPlan, deleteMealPlan, updateMealPlan } from '@/app
 import { suggestRecipes } from '@/app/actions/suggestions';
 import type { MealPlan, MealType, Recipe, SuggestedRecipe } from '@/app/types/meal-plan';
 import RecipePicker from '@/app/components/RecipePicker';
+import { getFrenchHoliday } from '@/lib/holidays-fr';
 
 interface PlannerBoardProps {
   recipes: Recipe[];
@@ -61,6 +62,7 @@ interface DayData {
   dateStr: string;
   isToday: boolean;
   isPast: boolean;
+  holiday: string | null;
   plans: MealPlan[];
 }
 
@@ -1331,6 +1333,12 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
         </span>
         {' · '}
         {mainDay.plans.length} repas
+        {mainDay.holiday && (
+          <>
+            {' \u00b7 '}
+            <span className="text-red-500">{mainDay.holiday}</span>
+          </>
+        )}
       </p>
 
       {/* Repas planifiés */}
@@ -1385,6 +1393,7 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
         dateStr,
         isToday: dateStr === getDateString(new Date()),
         isPast: date < new Date(new Date().setHours(0, 0, 0, 0)),
+        holiday: getFrenchHoliday(date),
         plans: mealPlans.filter(mp => mp.date === dateStr)
       };
     });
@@ -1427,6 +1436,11 @@ export default function PlannerBoard({ recipes = [], daysCount = 7, footer, enab
                   >
                     {formatShortDay(dayData.date)}. {dayData.date.getDate()}
                   </button>
+                  {dayData.holiday && (
+                    <div className="text-[10px] leading-tight text-red-500 truncate" title={dayData.holiday}>
+                      {dayData.holiday}
+                    </div>
+                  )}
                 </DroppableDayZone>
               ))}
             </div>
