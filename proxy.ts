@@ -7,6 +7,7 @@ export default auth((req) => {
   // Routes publiques toujours accessibles
   const publicRoutes = [
     '/api/auth',
+    '/api/health',
     '/login',
     '/register',
     '/public/calendar',
