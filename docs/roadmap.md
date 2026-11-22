@@ -1,7 +1,7 @@
 # Meal Plan - ROADMAP V3 - État Réel et Suite du Projet
 
-*Dernière mise à jour : 2026-11-07 (v3.18)*
-*Version : 3.18 — Les versions précédentes sont archivées dans [archives/](archives/)*
+*Dernière mise à jour : 2026-11-22 (v3.19)*
+*Version : 3.19 — Les versions précédentes sont archivées dans [archives/](archives/)*
 *Basé sur : [cahier-des-charges.md](cahier-des-charges.md) (cahier des charges)*
 
 ---
@@ -281,6 +281,12 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - 16 assertions de référence 2025-2027 (scripts/test-holidays.ts, npm run test:holidays, branché dans la CI)
 - Mergé sur beta via PR #33 le 22/11/2026 ; Alsace-Moselle volontairement hors périmètre
 
+### Corrections UX bêta du 22/11/2026 (C-063 → C-065)
+- **C-063** : page « Utilisateurs » (`/register`) redevenue accessible à l’ADMIN — l’onboarding self-service renvoyait tout utilisateur connecté vers l’accueil
+- **C-064** : bouton « Envoyer un autre retour » réparé sur `/feedback` (état `useActionState` jamais réinitialisé)
+- **C-065** : menu hiérarchisé (niveau 1 : Calendrier, Recettes, Courses, Garde-manger ; le reste dans « Plus », Licences admin-only) et paramètres par sections (Compte / Mes préférences / Apparence / Foyer / Système), sections admin masquées pour les utilisateurs sans droits
+- Commits 9b4471b + a201f51, déployés sur le CT bêta le 22/11/2026 — détail : [correctifs.md](correctifs.md)
+
 ---
 
 ---
@@ -341,4 +347,4 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | **V3.15 (archivée)** | 2026-11-06 | Point post-vague 3 : corrections 46→56, onboarding self-service (C-051, PR #26) et CT démo publique (PR #17, `main`) enregistrés au tableau des livrés, F07 durci après validation humaine (C-053 → C-056, `test:import` 32 PASS) |
 | **V3.16 (archivée)** | 2026-11-06 | **Lancement vague 4** : F17 multi-tenant et F18 export/import confirmés prioritaires en Phase 4 ; contrat figé ([contrat-vague-4.md](contrat-vague-4.md) — migration 0008, nav, workers W1-W5, fusion séquentielle, 4b multi-tenant seul) ; gates qualité étendues + plan de test/débogage ([test-plan-vague-4.md](test-plan-vague-4.md)) |
 | **V3.17 (archivée)** | 2026-11-07 | Ajout **F19 — accompagnements liés aux plats** en Phase 4 : accompagnements proposés et/ou par défaut par recette, sélection directe au moment de planifier, ingrédients consolidés dans la liste de courses |
-| **V3.18 (ce document)** | 2026-11-07 | Ajout **F20 — création de recette à la volée** en Phase 4 : bouton de création dans `RecipePicker` quand la recherche ne trouve rien, titre pré-rempli, nouvelle recette sélectionnée directement dans le créneau |
+| **V3.18 (archivée)** | 2026-11-07 | Ajout **F20 — création de recette à la volée** en Phase 4 : bouton de création dans `RecipePicker` quand la recherche ne trouve rien, titre pré-rempli, nouvelle recette sélectionnée directement dans le créneau ; **V3.19 (ce document)** 2026-11-22 : corrections UX C-063 → C-065 issues des signalements bêta (page Utilisateurs, bouton de retour, menu hiérarchisé, paramètres par droits) |
