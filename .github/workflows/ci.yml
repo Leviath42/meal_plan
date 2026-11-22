@@ -55,6 +55,7 @@ jobs:
           npm run test:export
           npm run test:notifications
           npm run test:multi-tenant
+          npm run test:holidays
 
   audit:
     name: Audit dépendances (production, high+)
