@@ -1,26 +1,73 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from "next-auth/react";
 import { Session } from "next-auth";
 import ThemeToggle from './ThemeToggle';
 
+// Navigation : niveau 1 = usage quotidien (Calendrier, Recettes, Courses,
+// Garde-manger). Le reste vit dans « Plus » (Ingrédients, Stats, Retours,
+// Paramètres, Licences admin), pour ne plus noyer la barre de 8 liens à plat.
+
+interface NavItem {
+  href: string;
+  label: string;
+}
+
+const MAIN_ITEMS: NavItem[] = [
+  { href: '/calendar', label: 'Calendrier' },
+  { href: '/recipes', label: 'Recettes' },
+  { href: '/shopping-list', label: 'Courses' },
+  { href: '/pantry', label: 'Garde-manger' },
+];
+
 export default function Nav({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement | null>(null);
+  const isAdmin = session?.user?.role === 'ADMIN';
 
-  // Touche Échap : fermer le menu mobile quand il est ouvert
+  // Éléments secondaires : visibles de tous ; Licences réservée admin
+  const moreItems: NavItem[] = [
+    { href: '/ingredients', label: 'Ingrédients' },
+    { href: '/stats', label: 'Stats' },
+    { href: '/feedback', label: 'Retours' },
+    { href: '/settings', label: 'Paramètres' },
+    ...(isAdmin ? [{ href: '/admin/licenses', label: 'Licences' }] : []),
+  ];
+
+  // Touche Échap ET clic hors du menu « Plus » : fermer ce qui est ouvert
   useEffect(() => {
-    if (!isMobileMenuOpen) return;
+    if (!isMobileMenuOpen && !isMoreOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsMobileMenuOpen(false);
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+        setIsMoreOpen(false);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isMoreOpen]);
+
+  useEffect(() => {
+    if (!isMoreOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMoreOpen]);
+
+  // Fermer le menu « Plus » quand on navigue
+  useEffect(() => {
+    setIsMoreOpen(false);
+  }, [pathname]);
 
   const handleSignOut = async () => {
     // Vider le cache du service worker : il contient des pages rendues avec
@@ -35,36 +82,62 @@ export default function Nav({ session }: { session: Session | null }) {
     router.refresh();
   };
 
+  const linkClass = (href: string) =>
+    `text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith(href) ? 'font-medium text-accent' : ''}`;
+
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-12 sm:h-14">
-          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-base sm:text-lg font-bold text-accent truncate">
+          <Link href="/" onClick={() => { setIsMobileMenuOpen(false); setIsMoreOpen(false); }} className="text-base sm:text-lg font-bold text-accent truncate">
             Meal Plan
           </Link>
 
           <div className="hidden md:flex gap-3 lg:gap-4 items-center">
             {session ? (
               <>
-                <Link href="/calendar" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/calendar') ? 'font-medium text-accent' : ''}`}>
-                  Calendrier
-                </Link>
-                <Link href="/recipes" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/recipes') ? 'font-medium text-accent' : ''}`}>
-                  Recettes
-                </Link>
-                <Link href="/ingredients" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/ingredients') ? 'font-medium text-accent' : ''}`}>
-                  Ingrédients
-                </Link>
-                <Link href="/shopping-list" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
-                <Link href="/pantry" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/pantry') ? 'font-medium text-accent' : ''}`}>Garde-manger</Link>
-                <Link href="/stats" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/stats') ? 'font-medium text-accent' : ''}`}>Stats</Link>
-                <Link href="/feedback" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/feedback') ? 'font-medium text-accent' : ''}`}>Retours</Link>
-                <Link href="/settings" className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
-                <Link href="/admin/licenses" className="text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors whitespace-nowrap">Licences</Link>
-                <span className="text-gray-300 hidden lg:inline">|</span>
-                <button onClick={handleSignOut} className="text-xs sm:text-sm text-gray-600 hover:text-red-600 transition-colors whitespace-nowrap">
-                  Déconnexion
-                </button>
+                {MAIN_ITEMS.map((item) => (
+                  <Link key={item.href} href={item.href} className={linkClass(item.href)}>
+                    {item.label}
+                  </Link>
+                ))}
+
+                <div className="relative" ref={moreRef}>
+                  <button
+                    onClick={() => setIsMoreOpen(!isMoreOpen)}
+                    aria-haspopup="menu"
+                    aria-expanded={isMoreOpen}
+                    className={`flex items-center gap-1 text-xs sm:text-sm transition-colors whitespace-nowrap ${moreItems.some((i) => pathname.startsWith(i.href)) ? 'font-medium text-accent' : 'text-gray-600 hover:text-accent'}`}
+                  >
+                    Plus
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isMoreOpen && (
+                    <div role="menu" className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-30">
+                      {moreItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          role="menuitem"
+                          onClick={() => setIsMoreOpen(false)}
+                          className={`block px-4 py-2 text-xs sm:text-sm transition-colors ${pathname.startsWith(item.href) ? 'font-medium text-accent' : 'text-gray-600 hover:bg-accent-soft hover:text-accent'}`}
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                      <div className="border-t border-gray-100 my-1" />
+                      <button
+                        onClick={handleSignOut}
+                        role="menuitem"
+                        className="block w-full text-left px-4 py-2 text-xs sm:text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        Déconnexion
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <Link href="/login" className="text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors">Se connecter</Link>
@@ -74,7 +147,12 @@ export default function Nav({ session }: { session: Session | null }) {
 
           <div className="md:hidden flex items-center gap-1">
             {session ? (
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-1.5 sm:p-2 rounded text-gray-600 hover:text-accent hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent" aria-label="Menu">
+              <button
+                onClick={() => { setIsMobileMenuOpen(!isMobileMenuOpen); setIsMoreOpen(false); }}
+                className="p-1.5 sm:p-2 rounded text-gray-600 hover:text-accent hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent"
+                aria-label="Menu"
+                aria-expanded={isMobileMenuOpen}
+              >
                 <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -98,21 +176,17 @@ export default function Nav({ session }: { session: Session | null }) {
         {isMobileMenuOpen && session && (
           <div className="md:hidden relative z-20 bg-white border-t border-gray-100 px-3 sm:px-4 pb-3">
             <div className="flex flex-col gap-2">
-              <Link href="/calendar" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/calendar') ? 'font-medium text-accent' : ''}`}>
-                Calendrier
-              </Link>
-              <Link href="/recipes" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/recipes') ? 'font-medium text-accent' : ''}`}>
-                Recettes
-              </Link>
-              <Link href="/ingredients" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/ingredients') ? 'font-medium text-accent' : ''}`}>
-                Ingrédients
-              </Link>
-              <Link href="/shopping-list" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 whitespace-nowrap ${pathname.startsWith('/shopping-list') ? 'font-medium text-accent' : ''}`}>Courses</Link>
-              <Link href="/pantry" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 whitespace-nowrap ${pathname.startsWith('/pantry') ? 'font-medium text-accent' : ''}`}>Garde-manger</Link>
-              <Link href="/stats" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/stats') ? 'font-medium text-accent' : ''}`}>Stats</Link>
-              <Link href="/feedback" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/feedback') ? 'font-medium text-accent' : ''}`}>Retours</Link>
-              <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className={`text-xs sm:text-sm text-gray-600 hover:text-accent transition-colors py-2 ${pathname.startsWith('/settings') ? 'font-medium text-accent' : ''}`}>Paramètres</Link>
-
+              {MAIN_ITEMS.map((item) => (
+                <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`${linkClass(item.href)} py-2`}>
+                  {item.label}
+                </Link>
+              ))}
+              {moreItems.length > 0 && <div className="border-t border-gray-100 mt-1 pt-1" />}
+              {moreItems.map((item) => (
+                <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`${linkClass(item.href)} py-2`}>
+                  {item.label}
+                </Link>
+              ))}
               <div className="border-t border-gray-200 pt-2 mt-1">
                 <button onClick={handleSignOut} className="w-full text-left text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors py-2">
                   Déconnexion

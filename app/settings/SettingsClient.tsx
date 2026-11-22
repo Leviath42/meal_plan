@@ -4,7 +4,7 @@ import { useActionState, useState, useTransition, type FormEvent } from 'react';
 import Link from 'next/link';
 import { updateDefaultServings, updateMinDaysBetween, updateTheme } from '@/app/actions/settings';
 import { importAllData } from '@/app/actions/export';
-import { THEMES, getTheme, themeMealColors } from '@/lib/themes';
+import { THEMES, themeMealColors } from '@/lib/themes';
 
 interface SettingsClientProps {
   role?: string | null;
@@ -21,21 +21,32 @@ const ROLE_LABELS: Record<string, string> = {
   GUEST: 'Invité (en attente de validation)',
 };
 
-// Page de paramétrage : seul l'administrateur peut modifier les paramètres,
-// les autres membres les consultent en lecture seule.
+const ROLE_BADGES: Record<string, string> = {
+  ADMIN: 'bg-red-100 text-red-800',
+  MEMBER: 'bg-green-100 text-green-800',
+  GUEST: 'bg-yellow-100 text-yellow-800',
+};
+
+// Cartoule de section : titre + contenu aéré, texte lisible (text-sm).
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+      <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
 export default function SettingsClient({ role, defaultServings, minDaysBetween, theme }: SettingsClientProps) {
   const [servings, setServings] = useState<string>(String(defaultServings));
   const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
-  // Antidoublon (F09) : préférence personnelle de l'utilisateur
   const [minDays, setMinDays] = useState<string>(String(minDaysBetween));
-  // Palette (F14) : ADMIN choisit, tous voient
   const [themeId, setThemeId] = useState<string>(theme);
   const [themeFeedback, setThemeFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [themePending, startThemeTransition] = useTransition();
   const [minDaysFeedback, setMinDaysFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [isMinDaysPending, startMinDaysTransition] = useTransition();
-  // F18 export/import : action serveur ADMIN + état du formulaire d'import
   const [importState, importFormAction, isImportPending] = useActionState(importAllData, null);
 
   const isAdmin = role === 'ADMIN';
@@ -43,24 +54,21 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-
     const value = parseInt(servings, 10);
     if (Number.isNaN(value)) {
       setFeedback({ success: false, message: 'Le nombre de couverts doit être un entier' });
       return;
     }
-
     startTransition(async () => {
       try {
         const result = await updateDefaultServings(value);
         setFeedback({ success: result.success, message: result.message });
       } catch {
-        setFeedback({ success: false, message: 'Une erreur est survenue lors de l\'enregistrement' });
+        setFeedback({ success: false, message: "Une erreur est survenue lors de l'enregistrement" });
       }
     });
   };
 
-  // Enregistrer la palette de couleurs (F14)
   const handleThemeChange = (id: string) => {
     setThemeId(id);
     startThemeTransition(async () => {
@@ -73,151 +81,93 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
     });
   };
 
-  // Enregistrer l'intervalle antidoublon (F09)
   const handleMinDaysSubmit = (event: FormEvent) => {
     event.preventDefault();
-
     const value = parseInt(minDays, 10);
     if (Number.isNaN(value)) {
-      setMinDaysFeedback({ success: false, message: 'L\'intervalle doit être un nombre entier de jours' });
+      setMinDaysFeedback({ success: false, message: "L'intervalle doit être un nombre entier de jours" });
       return;
     }
-
     startMinDaysTransition(async () => {
       try {
         const result = await updateMinDaysBetween(value);
         setMinDaysFeedback({ success: result.success, message: result.message });
       } catch {
-        setMinDaysFeedback({ success: false, message: 'Une erreur est survenue lors de l\'enregistrement' });
+        setMinDaysFeedback({ success: false, message: "Une erreur est survenue lors de l'enregistrement" });
       }
     });
   };
 
+  // Sections de liens : on ne montre à chacun que ce dont il a les droits.
+  const accountLinks = (
+    <div className="flex flex-wrap gap-x-5 gap-y-1">
+      <Link href="/profile" className="text-sm text-accent hover:underline">Profil</Link>
+    </div>
+  );
+
+  const householdLinks = (
+    <div className="flex flex-wrap gap-x-5 gap-y-1">
+      <Link href="/register" className="text-sm text-accent hover:underline">Utilisateurs</Link>
+      <Link href="/share" className="text-sm text-accent hover:underline">Partage</Link>
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
-      <h1 className="text-lg font-bold text-gray-800">Paramètres</h1>
+    <div className="space-y-4">
+      <h1 className="text-lg sm:text-xl font-bold text-gray-800">Paramètres</h1>
 
-      {/* Rôle de l'utilisateur connecté */}
-      <div>
-        <span className="text-sm text-gray-600">Votre rôle : </span>
-        <span className="text-sm font-medium text-gray-800">{roleLabel}</span>
-      </div>
-
-      {/* Liens vers les pages Utilisateurs, Partage et Profil (retirés du menu) */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-200 pt-3">
-        <Link href="/profile" className="text-sm text-accent hover:underline">
-          Profil
-        </Link>
-        {isAdmin && (
-          <Link href="/register" className="text-sm text-accent hover:underline">
-            Utilisateurs
-          </Link>
-        )}
-        {isAdmin && (
-          <Link href="/share" className="text-sm text-accent hover:underline">
-            Partage
-          </Link>
-        )}
-        {isAdmin && (
-          <Link href="/deploy" className="text-sm text-accent hover:underline">
-            Update
-          </Link>
-        )}
-      </div>
-
-      {/* Nombre de couverts par défaut */}
-      <form onSubmit={handleSubmit} className="space-y-3">
+      {/* Compte : visible de tous */}
+      <Section title="Compte">
         <div>
-          <label htmlFor="default-servings" className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre de couverts par défaut
-          </label>
-          <input
-            id="default-servings"
-            type="number"
-            value={servings}
-            onChange={(e) => setServings(e.target.value)}
-            min="1"
-            max="20"
-            disabled={!isAdmin}
-            className="w-full sm:w-32 p-2 border rounded bg-white text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Cette valeur pré-remplit le champ « Nombre de couverts » lorsqu&apos;un repas est
-            créé dans le calendrier.
-          </p>
+          <span className="text-sm text-gray-600">Votre rôle : </span>
+          <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${ROLE_BADGES[role ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
+            {roleLabel}
+          </span>
         </div>
+        {accountLinks}
+      </Section>
 
-        {isAdmin ? (
-          <button
-            type="submit"
-            className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover"
-            disabled={isPending}
-          >
-            {isPending ? 'Enregistrement...' : 'Enregistrer'}
+      {/* Mes préférences : personnelles, visible de tous */}
+      <Section title="Mes préférences">
+        <form onSubmit={handleMinDaysSubmit} className="space-y-3">
+          <div>
+            <label htmlFor="min-days-between" className="block text-sm font-medium text-gray-700 mb-1">
+              Intervalle minimum entre deux plans de la même recette (jours)
+            </label>
+            <input
+              id="min-days-between"
+              type="number"
+              value={minDays}
+              onChange={(e) => setMinDays(e.target.value)}
+              min="0"
+              max="60"
+              className="w-full sm:w-32 p-2 border rounded bg-white text-gray-800"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Une recette ne peut pas être replanifiée à moins de ce nombre de jours
+              d&apos;une autre planification. 0 = contrôle désactivé (défaut : 7 jours).
+            </p>
+          </div>
+          <button type="submit" className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm" disabled={isMinDaysPending}>
+            {isMinDaysPending ? 'Enregistrement...' : 'Enregistrer'}
           </button>
-        ) : (
-          <p className="text-xs text-gray-500">
-            Seul un administrateur peut modifier ces paramètres.
-          </p>
-        )}
+          {minDaysFeedback && (
+            <p className={`text-sm ${minDaysFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
+              {minDaysFeedback.message}
+            </p>
+          )}
+        </form>
+      </Section>
 
-        {feedback && (
-          <p className={`text-sm ${feedback.success ? 'text-green-600' : 'text-red-500'}`}>
-            {feedback.message}
-          </p>
-        )}
-      </form>
-
-      {/* Mes préférences : intervalle antidoublon (F09) */}
-      <form onSubmit={handleMinDaysSubmit} className="border-t border-gray-200 pt-3 space-y-3">
-        <h2 className="text-sm font-medium text-gray-700">Mes préférences</h2>
-        <div>
-          <label htmlFor="min-days-between" className="block text-sm font-medium text-gray-700 mb-1">
-            Intervalle minimum entre deux plans de la même recette (jours)
-          </label>
-          <input
-            id="min-days-between"
-            type="number"
-            value={minDays}
-            onChange={(e) => setMinDays(e.target.value)}
-            min="0"
-            max="60"
-            className="w-full sm:w-32 p-2 border rounded bg-white text-gray-800"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Une recette ne peut pas être replanifiée à moins de ce nombre de jours
-            d&apos;une autre planification. 0 = contrôle désactivé (défaut : 7 jours).
-          </p>
-        </div>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover"
-          disabled={isMinDaysPending}
-        >
-          {isMinDaysPending ? 'Enregistrement...' : 'Enregistrer'}
-        </button>
-        {minDaysFeedback && (
-          <p className={`text-sm ${minDaysFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
-            {minDaysFeedback.message}
-          </p>
-        )}
-      </form>
-
-      {/* Palette de couleurs (F14) + bascule clair/sombre */}
-      <div className="border-t border-gray-200 pt-3 space-y-3">
-        <h2 className="text-sm font-medium text-gray-700">Apparence</h2>
-
-        {/* Bascule clair/sombre : mention, la bascule vit dans la navigation */}
+      {/* Apparence : palette = choix du foyer, réservé à l'admin */}
+      <Section title="Apparence">
         <p className="text-xs text-gray-500">
           Le mode clair ou sombre se règle via la bascule dans la barre de navigation.
         </p>
-
-        {/* Palette de couleurs */}
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-1">Palette de couleurs</h3>
           <p className="text-xs text-gray-500 mb-2">
             La palette teinte les boutons, liens et étiquettes du calendrier (mode clair et sombre).
-            {isAdmin ? '' : ' Seul un administrateur peut la changer.'}
           </p>
           <div className="flex flex-wrap gap-2">
             {THEMES.map((themeDef) => {
@@ -244,7 +194,6 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
                       {themeDef.label}
                     </span>
                   </div>
-                  {/* Aperçu des étiquettes de repas du calendrier */}
                   <div className="flex gap-1 flex-wrap max-w-[220px]">
                     {(['breakfast', 'lunch', 'snack', 'dinner'] as const).map((mealType) => (
                       <span key={mealType} className={`px-1.5 py-0.5 rounded-full text-[10px] ${colors[mealType]}`}>
@@ -262,32 +211,58 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
             </p>
           )}
         </div>
-      </div>
+      </Section>
 
-      {/* F18 : export/import JSON complet (ADMIN uniquement) */}
+      {/* Foyer : réglages du foyer, ADMIN uniquement */}
       {isAdmin && (
-        <section className="border-t border-gray-200 pt-3 space-y-3">
-          <h2 className="text-sm font-medium text-gray-700">Export / Import</h2>
+        <Section title="Foyer">
+          {householdLinks}
+          <form onSubmit={handleSubmit} className="space-y-3 border-t border-gray-100 pt-3">
+            <div>
+              <label htmlFor="default-servings" className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre de couverts par défaut
+              </label>
+              <input
+                id="default-servings"
+                type="number"
+                value={servings}
+                onChange={(e) => setServings(e.target.value)}
+                min="1"
+                max="20"
+                className="w-full sm:w-32 p-2 border rounded bg-white text-gray-800"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Cette valeur pré-remplit le champ « Nombre de couverts » lorsqu&apos;un repas est
+                créé dans le calendrier.
+              </p>
+            </div>
+            <button type="submit" className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm" disabled={isPending}>
+              {isPending ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+            {feedback && (
+              <p className={`text-sm ${feedback.success ? 'text-green-600' : 'text-red-500'}`}>
+                {feedback.message}
+              </p>
+            )}
+          </form>
+        </Section>
+      )}
 
-          {/* Export : simple lien GET (lecture), il reste possible même en
-              essai expiré — les seules écritures y sont bloquées */}
+      {/* Système : export/import + mise à jour, ADMIN uniquement */}
+      {isAdmin && (
+        <Section title="Système">
           <div className="space-y-1">
-            <h3 className="text-sm font-medium text-gray-700">Exporter mes données</h3>
+            <h3 className="text-sm font-medium text-gray-700">Exporter les données</h3>
             <p className="text-xs text-gray-500">
               Télécharge tout le foyer en un fichier JSON : recettes, ingrédients, planning,
               garde-manger et paramètres. Aucun mot de passe, jeton ni clé de licence n&apos;est inclus.
             </p>
-            <a
-              href="/settings/export"
-              download
-              className="inline-block px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm"
-            >
+            <a href="/settings/export" download className="inline-block px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm">
               Exporter (JSON)
             </a>
           </div>
 
-          {/* Import : transaction atomique — tout ou rien */}
-          <form action={importFormAction} className="space-y-2" encType="multipart/form-data">
+          <form action={importFormAction} className="space-y-2 border-t border-gray-100 pt-3" encType="multipart/form-data">
             <h3 className="text-sm font-medium text-gray-700">Importer un fichier</h3>
             <p className="text-xs text-gray-500">
               Restaure un fichier d&apos;export précédent. Tout se passe en une seule
@@ -303,11 +278,7 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
               disabled={isImportPending}
               className="block w-full text-sm text-gray-700 border rounded p-2 bg-white file:mr-3 file:px-3 file:py-1 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700"
             />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm"
-              disabled={isImportPending}
-            >
+            <button type="submit" className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover text-sm" disabled={isImportPending}>
               {isImportPending ? 'Import en cours...' : 'Importer'}
             </button>
             {!isImportPending && importState?.message && (
@@ -316,7 +287,11 @@ export default function SettingsClient({ role, defaultServings, minDaysBetween, 
               </p>
             )}
           </form>
-        </section>
+
+          <div className="border-t border-gray-100 pt-3">
+            <Link href="/deploy" className="text-sm text-accent hover:underline">Mettre à jour l&apos;application</Link>
+          </div>
+        </Section>
       )}
     </div>
   );
