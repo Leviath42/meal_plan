@@ -168,16 +168,18 @@ export default function RegisterClient({ session, users: initialUsers, currentUs
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showCreateModal]);
 
-  // Rediriger les non-admin dans un effet : un push pendant le rendu
-  // est un anti-pattern React
-  // Page publique d'inscription : un utilisateur déjà connecté est renvoyé à l'accueil
+  // Page publique d'inscription : un visiteur déjà connecté NON-admin est
+  // renvoyé à l'accueil. Un ADMIN reste ici : /register héberge la gestion
+  // des utilisateurs (lien Paramètres → Utilisateurs) et permet aussi de
+  // créer un compte en étant connecté (modal).
+  const isAdmin = session?.user?.role === 'ADMIN';
   useEffect(() => {
-    if (session) {
+    if (session && !isAdmin) {
       router.push('/');
     }
-  }, [session, router]);
+  }, [session, isAdmin, router]);
 
-  if (session) {
+  if (session && !isAdmin) {
     return null;
   }
 

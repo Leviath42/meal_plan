@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { submitFeedback } from '@/app/actions/feedback';
 import type { FeedbackFormState } from '@/lib/validators/feedback';
 
@@ -16,12 +16,23 @@ export default function FeedbackForm({ categoryOptions }: { categoryOptions: Cat
   const [selected, setSelected] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [formKey, setFormKey] = useState(0);
+  // « Envoyer un autre retour » : l'état de useActionState n'étant pas
+  // réinitialisable, un drapeau dismissed masque la confirmation jusqu'à
+  // ce qu'un nouvel envoi produise un nouveau résultat.
+  const [dismissed, setDismissed] = useState(false);
+  const lastResult = useRef(state);
+  useEffect(() => {
+    if (state !== lastResult.current) {
+      lastResult.current = state;
+      setDismissed(false);
+    }
+  }, [state]);
 
   const fieldError = (field: string) => state?.errors?.[field]?.[0];
 
   // Le retour a été envoyé : on affiche la confirmation à la place du
   // formulaire ; « envoyer un autre retour » remet tout à zéro.
-  if (state?.success) {
+  if (state?.success && !dismissed) {
     return (
       <div className="rounded border border-accent bg-accent-soft p-4 space-y-3">
         <p className="text-sm font-medium">{state.message}</p>
@@ -31,6 +42,7 @@ export default function FeedbackForm({ categoryOptions }: { categoryOptions: Cat
             setSelected(null);
             setMessage('');
             setFormKey((k) => k + 1);
+            setDismissed(true);
           }}
           className="bg-accent text-white rounded px-3 py-2 text-xs sm:text-sm hover:bg-accent-hover transition-colors"
         >
