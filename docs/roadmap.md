@@ -275,6 +275,14 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - Bénéfice : supprime l'aller-retour calendrier → catalogue → calendrier quand la recette n'existe pas encore ; moins de friction pour l'utilisateur occasionnel
 - Estimation : 0,5-1 jour — demandé par Nicolas le 07/11/2026 (F20)
 
+### F21 - Jours fériés France dans le planning (MP10)
+- Les 11 jours fériés (métropole) s'affichent en rouge sur la carte du jour principal et sous les en-têtes du planning (accueil + calendrier complet)
+- Calcul local sans appel réseau (lib/holidays-fr.ts, algorithme grégorien de Pâques) : zéro dépendance, zéro point de défaillance — décision MP10 du 22/11/2026 (une API externe n'apportait rien pour une donnée déterministe)
+- 16 assertions de référence 2025-2027 (scripts/test-holidays.ts, npm run test:holidays, branché dans la CI)
+- Mergé sur beta via PR #33 le 22/11/2026 ; Alsace-Moselle volontairement hors périmètre
+
+---
+
 ---
 
 ## 🎨 Finitions / Backlog (basse priorité)
