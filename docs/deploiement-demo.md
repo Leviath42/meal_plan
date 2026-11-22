@@ -1,6 +1,6 @@
 # Démo publique — runbook de déploiement (Proxmox)
 
-*Instance de démonstration de la **vraie application**, exposée sur `demo.mealplan.neliora.fr`. Données fictives, réinitialisées chaque nuit. Dernière mise à jour : 2026-10-27.*
+*Instance de démonstration de la **vraie application**, exposée sur `demo-mealplan.neliora.fr`. Données fictives, réinitialisées chaque nuit. Dernière mise à jour : 2026-10-27.*
 
 ## Objectif et architecture
 
@@ -76,7 +76,7 @@ Durée : ~30 s d'indisponibilité à 04 h 35. La seed recrée une semaine datée
 
 ## 5. Supervision
 
-Uptime Kuma (CT 111) : moniteur **Mealplan-demo** → `https://demo.mealplan.neliora.fr/login`, codes acceptés `200-299, 301-308` (même contournement que la prod tant que `/api/health` n'existe pas), notification sur le canal existant.
+Uptime Kuma (CT 111) : moniteur **Mealplan-demo** → `https://demo-mealplan.neliora.fr/login`, codes acceptés `200-299, 301-308` (même contournement que la prod tant que `/api/health` n'existe pas), notification sur le canal existant.
 
 ## 6. Sécurité — assomptions assumées (pré-lancement)
 
@@ -97,15 +97,20 @@ Puis refaire le snapshot pristine (section 3) pour que le reset nocturne reparte
 
 ## 8. Lien depuis le site (quand la démo est validée)
 
-- Teaser mealplan.neliora.fr : bouton « Essayer la démo » → `https://demo.mealplan.neliora.fr` + identifiants du compte démo + mention « données fictives, réinitialisées chaque nuit ».
+- Teaser mealplan.neliora.fr : bouton « Essayer la démo » → `https://demo-mealplan.neliora.fr` + identifiants du compte démo + mention « données fictives, réinitialisées chaque nuit ».
 - Vitrine neliora.fr : bouton « Voir la démo » à côté de « Découvrir Meal Plan ».
 
 ## Checkpoint
 
 - [ ] CT 107 créé, onboot, IP fixe 192.168.1.55
-- [ ] Tunnel opérationnel : `https://demo.mealplan.neliora.fr` répond en HTTPS
+- [ ] Tunnel opérationnel : `https://demo-mealplan.neliora.fr` répond en HTTPS
 - [ ] Compte démo MEMBER créé et validé ; admin fort, non publié
 - [ ] Seed + planning démo : semaine complète visible sans rien faire
 - [ ] `demo-pristine.db` + cron 04:35 testés une fois à la main
 - [ ] Moniteur Kuma « Mealplan-demo » ajouté, notification branchée
 - [ ] Registre homelab mis à jour avec le CT 107
+
+## REX — tunnel démo (22/11/2026)
+
+- **SSL 1 seul niveau neliora.fr** : le certificat Universal SSL Cloudflare couvre le wildcard 1 niveau (*.neliora.fr). Un hostname à 2 sous-niveaux (demo.mealplan.neliora.fr) fait échouer le handshake TLS sans Advanced Certificate Manager (environ 10 $/mois). Utiliser la forme demo-mealplan.neliora.fr (1 sous-niveau).
+- La route DNS automatique du tunnel create ne vérifie pas ce point : toujours valider le hostname avant de le poser dans les configs.
