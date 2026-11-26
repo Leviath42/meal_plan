@@ -56,6 +56,7 @@
 | C-063 | 2026-11-22 | Page « Utilisateurs » inatteignable pour l'ADMIN | L'onboarding self-service (PR #26) avait ajouté sur `/register` un `router.push('/')` pour TOUTE session connectée suivi d'un `return null` : l'ADMIN cliquant « Utilisateurs » (Paramètres) était renvoyé à l'accueil et la gestion des comptes (validation GUEST, rôles, suppression, création) était morte — constaté en usage réel bêta | Redirection limitée aux non-admin, l'ADMIN reste sur la page : gestion des utilisateurs et modal « + Nouvel utilisateur » redevenus accessibles (commit 9b4471b, branches `fix/mp-ux-b1-20261122` puis `beta`, déployé sur CT 202 le 22/11). Vérifié en session réelle avec un compte ADMIN de test : « Gestion des utilisateurs » rendu côté serveur | Haute |
 | C-064 | 2026-11-22 | Bouton « Envoyer un autre retour » inerte sur /feedback | `useActionState` : l'état de succès n'est pas réinitialisable ; le bouton remettait les states locaux (catégorie, message, formKey) à zéro mais le rendu restait bloqué sur le bloc de confirmation | Drapeau `dismissed` masquant la confirmation jusqu'au prochain résultat (remis à faux à chaque changement d'état via `useRef`/`useEffect`) ; le formulaire réapparaît bien après « Envoyer un autre retour » (commit 9b4471b) | Moyenne |
 | C-065 | 2026-11-22 | Menu surchargé et paramètres peu lisibles | 8 liens de même poids à plat dans la nav (« Licences » visible des non-admin), paramètres en un bloc `text-xs` où sections et liens admin apparaissaient désactivés — mais visibles — aux utilisateurs sans droits | Menu : niveau 1 = Calendrier, Recettes, Courses, Garde-manger ; le reste (Ingrédients, Stats, Retours, Paramètres, Licences admin-only, Déconnexion) dans un menu « Plus » (dropdown desktop, regroupé en mobile, fermeture Échap/clic extérieur/navigation). Paramètres : sections cartoulées Compte / Mes préférences / Apparence / Foyer / Système, sections et liens ADMIN masqués pour MEMBER/GUEST, textes en `text-sm` (commit a201f51, déployé sur CT 202 le 22/11). Vérifié en sessions réelles MEMBER (Foyer/Système/Utilisateurs/Partage/Licences absents du rendu) et ADMIN (tout présent) | Moyenne |
+| C-067 | 2026-11-26 | Retours — doublon admin dans le menu | L'entrée admin « Retours clients » dupliquait « Retours » dans le menu avec le même badge (l'admin voyait deux lignes badgées) ; le tri des retours exigeait une page séparée /admin/feedback | Section admin (compteurs, filtres, changement de statut) intégrée à la page /feedback sous le formulaire (FeedbackAdmin.tsx), visible ADMIN uniquement ; /admin/feedback redirige vers /feedback en conservant les filtres ; entrée de menu « Retours clients » supprimée, badge unique sur « Retours » | Moyenne |
 
 *Statuts : `À corriger` / `En cours` / `Corrigé (commit)` / `Rejeté (raison)` — Priorités : `Critique` / `Haute` / `Moyenne` / `Basse`.*
 
@@ -65,7 +66,7 @@
 
 | Indicateur | Valeur |
 |---|---|
-| Corrections enregistrées | 65 (C-001 → C-065 ; C-057 → C-065 mergées sur beta) |
+| Corrections enregistrées | 67 (C-001 → C-067 ; C-057 → C-067 mergées sur beta) |
 | Corrigées et déployées | 36 |
 | En traitement manuel côté appareil | 1 (C-027 : entrée parasite du gestionnaire de mots de passe à supprimer sur chaque appareil) |
 | Critiques | 3 (C-007, C-011, C-030 — les trois trouvées par l'audit) |

@@ -73,7 +73,7 @@ export async function submitFeedback(
     householdId,
   });
 
-  revalidatePath('/admin/feedback');
+  revalidatePath('/feedback');
   // Badge de la nav (F15) : purger aussi le layout pour que le compteur
   // de retours « nouveau » soit recalculé au rendu suivant.
   revalidatePath('/', 'layout');
@@ -95,7 +95,7 @@ export async function changeFeedbackStatus(formData: FormData): Promise<void> {
   if (!parsed.success) return;
 
   await updateFeedbackStatus(parsed.data.id, parsed.data.status, householdId);
-  revalidatePath('/admin/feedback');
+  revalidatePath('/feedback');
   // Badge de la nav (F15) : purger aussi le layout pour que le compteur
   // de retours « nouveau » soit recalculé au rendu suivant.
   revalidatePath('/', 'layout');

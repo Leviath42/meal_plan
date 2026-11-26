@@ -287,6 +287,8 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - **C-064** : bouton « Envoyer un autre retour » réparé sur `/feedback` (état `useActionState` jamais réinitialisé)
 - **C-065** : menu hiérarchisé (niveau 1 : Calendrier, Recettes, Courses, Garde-manger ; le reste dans « Plus », Licences admin-only) et paramètres par sections (Compte / Mes préférences / Apparence / Foyer / Système), sections admin masquées pour les utilisateurs sans droits
 - **C-066** : badge admin de retours non triés dans la nav (F15) — un retour envoyé par un membre alerte l'admin dans la barre de menu sans ouvrir la page de tri
+
+- **C-067 (26/11)** : fusion du tri admin dans la page /feedback (section « Retours du foyer » sous le formulaire, ADMIN uniquement), /admin/feedback redirige vers /feedback, entrée de menu « Retours clients » supprimée et badge unique sur « Retours » (fin du doublon badgé dans le menu)
 - Commits 9b4471b + a201f51 + 43da4d6, déployés sur le CT bêta le 22/11/2026 — détail : [correctifs.md](correctifs.md)
 
 ---
@@ -350,4 +352,5 @@ Déploiement complet (Proxmox + tunnel Cloudflare + dépannage) : **[deploiement
 | **V3.16 (archivée)** | 2026-11-06 | **Lancement vague 4** : F17 multi-tenant et F18 export/import confirmés prioritaires en Phase 4 ; contrat figé ([contrat-vague-4.md](contrat-vague-4.md) — migration 0008, nav, workers W1-W5, fusion séquentielle, 4b multi-tenant seul) ; gates qualité étendues + plan de test/débogage ([test-plan-vague-4.md](test-plan-vague-4.md)) |
 | **V3.17 (archivée)** | 2026-11-07 | Ajout **F19 — accompagnements liés aux plats** en Phase 4 : accompagnements proposés et/ou par défaut par recette, sélection directe au moment de planifier, ingrédients consolidés dans la liste de courses |
 | **V3.18 (archivée)** | 2026-11-07 | Ajout **F20 — création de recette à la volée** en Phase 4 : bouton de création dans `RecipePicker` quand la recherche ne trouve rien, titre pré-rempli, nouvelle recette sélectionnée directement dans le créneau ; **V3.19 (ce document)** 2026-11-22 : corrections UX C-063 → C-065 issues des signalements bêta (page Utilisateurs, bouton de retour, menu hiérarchisé, paramètres par droits) |
-| **V3.20 (ce document)** | 2026-11-22 | **Badge nav des retours** (F15/C-066) : comptage serveur des retours « nouveau » du foyer admin, pastille sur « Plus » et « Retours », revalidation du layout au submit/tri ; entrée menu admin « Retours clients » (8d4fa70) — déployé sur le CT bêta le 22/11 |
+| **V3.21 (ce document)** | 2026-11-26 | **Fusion tri admin des retours dans /feedback** (C-067) : section « Retours du foyer » sous le formulaire (ADMIN), redirection /admin/feedback → /feedback, badge nav unique, entrée de menu « Retours clients » supprimée |
+| **V3.20** | 2026-11-22 | **Badge nav des retours** (F15/C-066) : comptage serveur des retours « nouveau » du foyer admin, pastille sur « Plus » et « Retours », revalidation du layout au submit/tri ; entrée menu admin « Retours clients » (8d4fa70) — déployé sur le CT bêta le 22/11 |

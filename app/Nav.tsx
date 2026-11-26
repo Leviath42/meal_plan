@@ -25,7 +25,7 @@ const MAIN_ITEMS: NavItem[] = [
 
 // newFeedbackCount : retours « nouveau »du foyer de l'admin (rendu serveur du
 // layout). Badge visible sur « Plus »et sur l'entrée « Retours »: l'admin
-// voit l'alerte sans ouvrir le menu, ni se rendre sur /admin/feedback.
+// voit l'alerte sans ouvrir le menu — le tri se fait sur /feedback (C-067).
 export default function Nav({
   session,
   newFeedbackCount = 0,
@@ -46,10 +46,8 @@ export default function Nav({
     { href: '/stats', label: 'Stats' },
     { href: '/feedback', label: 'Retours' },
     { href: '/settings', label: 'Paramètres' },
-    // C-066 : entrée admin de tri des retours — le badge de la nav alerte,
-    // cette entrée y mène sans taper l'URL à la main.
+    // C-067 : le tri admin vit sur /feedback, plus d'entrée séparée.
     ...(isAdmin ? [
-      { href: '/admin/feedback', label: 'Retours clients' },
       { href: '/admin/licenses', label: 'Licences' },
     ] : []),
   ];
@@ -152,7 +150,7 @@ export default function Nav({
                           className={`block px-4 py-2 text-xs sm:text-sm transition-colors ${pathname.startsWith(item.href) ? 'font-medium text-accent' : 'text-gray-600 hover:bg-accent-soft hover:text-accent'}`}
                         >
                           {item.label}
-                          {(item.href === '/feedback' || item.href === '/admin/feedback') && feedbackBadge(newFeedbackCount)}
+                          {item.href === '/feedback' && feedbackBadge(newFeedbackCount)}
                         </Link>
                       ))}
                       <div className="border-t border-gray-100 my-1" />
@@ -207,14 +205,14 @@ export default function Nav({
               {MAIN_ITEMS.map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`${linkClass(item.href)} py-2`}>
                   {item.label}
-                  {(item.href === '/feedback' || item.href === '/admin/feedback') && feedbackBadge(newFeedbackCount)}
+                  {item.href === '/feedback' && feedbackBadge(newFeedbackCount)}
                 </Link>
               ))}
               {moreItems.length > 0 && <div className="border-t border-gray-100 mt-1 pt-1" />}
               {moreItems.map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`${linkClass(item.href)} py-2`}>
                   {item.label}
-                  {(item.href === '/feedback' || item.href === '/admin/feedback') && feedbackBadge(newFeedbackCount)}
+                  {item.href === '/feedback' && feedbackBadge(newFeedbackCount)}
                 </Link>
               ))}
               <div className="border-t border-gray-200 pt-2 mt-1">
