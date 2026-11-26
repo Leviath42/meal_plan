@@ -24,7 +24,7 @@ const MAIN_ITEMS: NavItem[] = [
 ];
 
 // newFeedbackCount : retours « nouveau »du foyer de l'admin (rendu serveur du
-// layout). Badge visible sur « Plus »et sur l'entrée « Retours »: l'admin
+// layout). Badge visible sur « Plus »et sur l'entrée « Suggestions et bugs »: l'admin
 // voit l'alerte sans ouvrir le menu — le tri se fait sur /feedback (C-067).
 export default function Nav({
   session,
@@ -44,7 +44,7 @@ export default function Nav({
   const moreItems: NavItem[] = [
     { href: '/ingredients', label: 'Ingrédients' },
     { href: '/stats', label: 'Stats' },
-    { href: '/feedback', label: 'Retours' },
+    { href: '/feedback', label: 'Suggestions et bugs' },
     { href: '/settings', label: 'Paramètres' },
     // C-067 : le tri admin vit sur /feedback, plus d'entrée séparée.
     ...(isAdmin ? [

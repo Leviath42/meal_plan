@@ -11,7 +11,7 @@ import {
 import FeedbackForm from './FeedbackForm';
 import FeedbackAdmin from './FeedbackAdmin';
 
-export const metadata: Metadata = { title: 'Retours — Meal Plan' };
+export const metadata: Metadata = { title: 'Suggestions et bugs — Meal Plan' };
 
 // F15 — Formulaire de retour : page en session uniquement (GUEST ne peut pas
 // envoyer de retour, l'action revalide le rôle de toute façon). Pour l'ADMIN,
@@ -43,7 +43,7 @@ export default async function FeedbackPage({
   return (
     <main className="px-3 sm:px-6 py-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-lg sm:text-xl font-bold mb-3">Retours</h1>
+        <h1 className="text-lg sm:text-xl font-bold mb-3">Suggestions et bugs</h1>
         {session.user.role === 'GUEST' ? (
           <p className="text-xs sm:text-sm text-gray-600">
             Votre compte est en attente de validation : un administrateur doit d’abord valider votre

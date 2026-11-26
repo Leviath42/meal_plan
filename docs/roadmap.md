@@ -288,7 +288,7 @@ Audit du repo contre une checklist « socle d'une application commerciale B2B/B2
 - **C-065** : menu hiérarchisé (niveau 1 : Calendrier, Recettes, Courses, Garde-manger ; le reste dans « Plus », Licences admin-only) et paramètres par sections (Compte / Mes préférences / Apparence / Foyer / Système), sections admin masquées pour les utilisateurs sans droits
 - **C-066** : badge admin de retours non triés dans la nav (F15) — un retour envoyé par un membre alerte l'admin dans la barre de menu sans ouvrir la page de tri
 
-- **C-067 (26/11)** : fusion du tri admin dans la page /feedback (section « Retours du foyer » sous le formulaire, ADMIN uniquement), /admin/feedback redirige vers /feedback, entrée de menu « Retours clients » supprimée et badge unique sur « Retours » (fin du doublon badgé dans le menu)
+- **C-067 (26/11)** : fusion du tri admin dans la page /feedback (section « Retours du foyer » sous le formulaire, ADMIN uniquement), /admin/feedback redirige vers /feedback, entrée de menu « Retours clients » supprimée et badge unique sur « Retours » (fin du doublon badgé dans le menu) ; libellé « Retours » renommé « Suggestions et bugs » (menu + page, demande du propriétaire)
 - Commits 9b4471b + a201f51 + 43da4d6, déployés sur le CT bêta le 22/11/2026 — détail : [correctifs.md](correctifs.md)
 
 ---
